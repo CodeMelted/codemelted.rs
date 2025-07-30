@@ -1,0 +1,26 @@
+---
+title: Storage Use Case Object Hierarchy
+---
+classDiagram
+  direction TB
+  namespace codemelted {
+    class CObject
+    class disk_write_file
+    class disk_read_file
+    class storage_save_file
+    class storage_init
+    class storage_clear
+    class storage_get
+    class storage_length
+    class storage_remove
+    class storage_set
+  }
+  storage_init --> disk_read_file: calls
+  storage_init --> CObject: initializes
+  storage_save_file --> CObject: reads from
+  storage_save_file --> disk_write_file: calls
+  storage_clear --> storage_save_file: updates
+  storage_get --> CObject: reads from
+  storage_length --> CObject: reads from
+  storage_remove --> storage_save_file: updates
+  storage_set --> storage_save_file: updates

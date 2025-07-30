@@ -1,0 +1,22 @@
+---
+title: DB Use Case Object Hierarchy
+---
+classDiagram
+  direction LR
+  namespace codemelted {
+    class db_exists
+    class db_manage
+    class db_query
+    class db_update
+    class db_version
+    class disk_exists
+  }
+  namespace rusqlite {
+    class Connection
+    class version
+  }
+  db_exists --> disk_exists: uses
+  db_manage --> Connection: uses / creates
+  db_query --> Connection: uses / creates
+  db_update --> Connection: uses / creates
+  db_version --> version: uses

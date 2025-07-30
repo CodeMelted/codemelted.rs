@@ -1,0 +1,76 @@
+---
+title: Network Use Case Object Hierarchy
+---
+classDiagram
+  direction LR
+  namespace codemelted {
+    class CFetchAction {
+      +Delete
+      +Get
+      +Put
+      +Post
+    }
+    class CFetchRequest {
+      +new(CFetchAction, String) CFetchRequest
+      +basic_auth(username, password)
+      +bearer_auth(token)
+      +body(CObject)
+      +form(HashMap)
+      +header(key, value)
+      -send() Future
+    }
+    class CFetchResponse {
+      +status() u16
+      +status_text() String
+      +data_as_bytes() Option
+      +data_as_json() Option
+      +data_as_string() Option
+    }
+    class CServerRequest
+    class CServerResponse
+    class CNetworkServeHandler {
+      +fn(CServerRequest) CServerResponse
+    }
+    class CWebSocketProtocol
+    class CProtocolHandler {
+      +id() String
+      +is_running() bool
+      +get_message() Result
+      +post_message(T) Result
+      +terminate()
+    }
+    class network_fetch
+    class network_serve
+    class network_upgrade_websocket
+  }
+  namespace reqwest {
+    class RequestBuilder
+  }
+  namespace rouille {
+    class Request
+    class Response
+    class Websocket
+  }
+  namespace tokio {
+    class Runtime {
+      +block_on(Future) T
+    }
+  }
+  CFetchRequest --> CFetchAction: uses
+  CFetchRequest --> RequestBuilder: uses
+  CFetchRequest --> CFetchResponse: creates
+  CServerRequest --> Request: typed as
+  CServerResponse --> Response: typed as
+  CNetworkServeHandler --> CServerRequest: receives
+  CNetworkServeHandler --> CServerResponse: creates
+  CNetworkServeHandler --> network_upgrade_websocket: calls
+  CWebSocketProtocol --> CProtocolHandler: implements
+  CWebSocketProtocol --> Websocket: uses
+  network_fetch --> CFetchRequest: takes
+  network_fetch --> CFetchResponse: returns
+  network_fetch --> Runtime: uses
+  network_serve --> CNetworkServeHandler: calls
+  network_upgrade_websocket --> CServerRequest: processes
+  network_upgrade_websocket --> CWebSocketProtocol: creates
+
+

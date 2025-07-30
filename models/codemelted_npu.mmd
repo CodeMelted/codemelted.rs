@@ -1,0 +1,15 @@
+---
+title: NPU Use Case Object Hierarchy
+---
+classDiagram
+  direction TB
+  namespace codemelted {
+    class CMathFormula {
+      -math(self, Vector) f64
+    }
+    class npu_compute
+    class npu_math
+    class CObject
+  }
+  npu_compute --> CObject: consumes / creates
+  npu_math --> CMathFormula: uses

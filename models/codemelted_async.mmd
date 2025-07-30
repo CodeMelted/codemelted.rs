@@ -1,0 +1,48 @@
+---
+title: Async Use Case Object Hierarchy
+---
+classDiagram
+  direction LR
+  namespace codemelted {
+    class CProtocolHandler {
+      +id() String
+      +is_running() bool
+      +get_message() Result
+      +post_message(T) Result
+      +terminate()
+    }
+    class CTaskCB {
+      +fn(Option) Option
+    }
+    class CTaskResult {
+      +has_completed() bool
+      +value() Option
+    }
+    class CTimerCB {
+      +fn()
+    }
+    class CTimerResult {
+      +has_completed() bool
+      +stop()
+    }
+    class CWorkerCB {
+      +fn(T) T
+    }
+    class CWorkerProtocol
+    class async_task
+    class async_timer
+    class async_worker
+  }
+  namespace std {
+    class thread
+  }
+  CTaskResult --> CTaskCB: calls
+  CTaskResult --> thread: uses
+  CTimerResult --> CTimerCB: calls
+  CTimerResult --> thread: uses
+  CWorkerProtocol --> CWorkerCB: calls
+  CWorkerProtocol --> CProtocolHandler: implements
+  CWorkerProtocol --> thread: uses
+  async_task --> CTaskResult: creates
+  async_timer --> CTimerResult: creates
+  async_worker --> CWorkerProtocol: creates

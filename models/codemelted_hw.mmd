@@ -1,0 +1,72 @@
+---
+title: HW Use Case Object Hierarchy
+---
+classDiagram
+  direction LR
+  namespace codemelted {
+    class CBluetoothInfo {
+      +address() String
+      +id() String
+    }
+    class CSerialPortData {
+      +BaudRate
+      +DataBits
+      +FlowControl
+      +Parity
+      +StopBits
+      +Timeout
+      +Break
+      +ClearBuffer
+      +CarrierDetect
+      +ClearToSend
+      +DataSetReady
+      +DataTerminalReady
+      +RequestToSend
+      +RingIndicator
+      +DataBytes
+      +as_bool(self) bool
+      +as_bytes(self) Vec
+      +as_data_bits(self) DataBits
+      +as_flow_control(self) FlowControl
+      +as_parity(self) Parity
+      +as_stop_bits(self) StopBits
+      +as_timeout(self) Duration
+      +as_u32(self) u32
+      +get_message_request(self) String
+    }
+    class CSerialPortProtocol {
+      -port SerialPort
+    }
+    class CProtocolHandler {
+      +id() String
+      +is_running() bool
+      +get_message() Result
+      +post_message(T) Result
+      +terminate()
+    }
+    class hw_available_bluetooth_devices
+    class hw_available_serial_ports
+    class hw_open_bluetooth_device
+    class hw_open_serial_port
+  }
+  namespace btleplug {
+    class Peripheral
+  }
+  namespace serialport {
+    class DataBits
+    class FlowControl
+    class Parity
+    class SerialPort
+    class SerialPortInfo
+    class StopBits
+  }
+  CBluetoothInfo --> Peripheral: uses
+  CSerialPortData --> DataBits: uses
+  CSerialPortData --> FlowControl: uses
+  CSerialPortData --> Parity: uses
+  CSerialPortData --> StopBits: uses
+  CSerialPortProtocol --> CProtocolHandler: implements
+  CSerialPortProtocol --> CSerialPortData: reads / writes
+  hw_available_bluetooth_devices --> CBluetoothInfo: creates
+  hw_available_serial_ports --> SerialPortInfo: uses
+  hw_open_serial_port --> CSerialPortProtocol: creates
