@@ -1,10 +1,3 @@
-<!--
-TITLE: CodeMelted Rust Crate
-PUBLISH_DATE: 2025-May-31
-AUTHOR: Mark Shaffer
-KEYWORDS: CodeMeltedDEV, raspberry-pi, modules, cross-platform, gps, html-css-javascript, flutter-apps, pwsh, pwsh-lib, js-module, flutter-library, deno-module, pwsh-scripts, pwsh-module, rust, rust-lib
-DESCRIPTION: The *CodeMelted Rust Crate* is an implementation of the CodeMelted DEV 14 identified domain use cases. These domains are areas a software engineer should be familiar with regardless of programming language, SDK, or chosen framework. This crate brings those use cases to the Rust programming language to aid software engineers in building native applications quickly and securely.
--->
 <center>
   <br /><img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-developer.png" /><br />
 </center>
@@ -22,15 +15,16 @@ The *CodeMelted Rust Crate* is an implementation of the [CodeMelted DEV](https:/
   - [Asynchronous Processing Notes](#asynchronous-processing-notes)
 - [MODULE INFORMATION](#module-information)
   - [Crate Dependencies](#crate-dependencies)
+  - [Crate Versioning](#crate-versioning)
   - [License](#license)
 
 # GETTING STARTED
 
 ## Features
 
-<center><img src="https://codemelted.com/developer/codemelted_dev/models/all/use-case-model.drawio.png" /></center>
+<center><img src="https://codemelted.com/developer/mdbook/models/all/use-case-model.drawio.png" /></center>
 
-1. The `codemelted.rs` is a single file implementing the [CodeMelted DEV](https://codemelted.com/developer/codemelted_dev/index.html) domain specific use cases.
+1. The `codemelted.rs` is a single file implementing the [Domain Use Cases](https://codemelted.com/developer/mdbook/index.html) domain specific use cases.
 2. These use cases straddle areas of knowledge software engineers should be familiar with regardless of a given programming language, SDK, or chosen framework.
 3. Each of the use cases are implemented as a series of `uc_xxx` functions reflecting the use case diagram above.
 4. The `codemelted.rs` is organized by each implemented use case with data definitions first and function implementations after.
@@ -49,10 +43,10 @@ use codemelted::{CLogLevel, CLogRecord, CLoggedEventHandler};
 fn log_handler(data: CLogRecord) {
   // Do something, say post to the cloud about the event
 }
-codemelted::logger_set_log_handler(Some(log_handler));
+codemelted::logger_handler(Some(log_handler));
 
 // Set the log level
-codemelted::logger_set_log_level(CLogLevel::Warning);
+codemelted::logger_level(CLogLevel::Warning);
 
 // Now later on in your code....
 // This will be reported to the console and then to the CLoggedEventHandler.

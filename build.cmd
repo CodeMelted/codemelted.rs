@@ -1,0 +1,1 @@
+:: TBD - Consolidate build.ps1 into this script.
