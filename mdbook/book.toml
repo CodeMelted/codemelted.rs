@@ -1,7 +1,7 @@
 [book]
-title = "The CodeMelted DEV Rosetta Stone"
+title = "codemelted.rs: The Swiss Army Knife Full Stack Solution"
 authors = ["Mark Shaffer"]
-description = "An implementation of 14 domain specific use cases in different programming languages forming a translation between those given languages and providing a swiss-army knife module for the identified language / SDK."
+description = "An implementation of 14 domain specific use cases to bring a full stack solution for CLI, services, and web development."
 language = "en"
 multilingual = false
 src = "src"
@@ -11,8 +11,8 @@ create-missing = false
 
 [output.html]
 default-theme = "navy"
-site-url = "https://developer.codemelted.com/projects/rosetta-stone"
-git-repository-url = "https://github.com/codemelted/codemelted_developer"
+site-url = "https://rs.codemelted.com/mdbook"
+git-repository-url = "https://github.com/codemelted/codemelted.rs"
 additional-js = ["mermaid.min.js", "mermaid-init.js"]
 
 [preprocessor]
