@@ -25,30 +25,32 @@ The following are the items recommended for installation to properly make use of
 
 ### GitHub
 
-- [ ] [git](https://git-scm.com/downloads)
-- [ ] [GitHub Desktop](https://desktop.github.com/)
+- [git](https://git-scm.com/downloads)
+- [GitHub Desktop](https://desktop.github.com/)
 
 ### Programming Languages
 
-- [ ] [Deno](https://deno.com/)
-- [ ] [NodeJS](https://nodejs.org/en)
-- [ ] [Rust](https://doc.rust-lang.org/book/ch01-01-installation.html)
+- [Deno](https://deno.com/)
+- [NodeJS](https://nodejs.org/en)
+- [Rust](https://doc.rust-lang.org/book/ch01-01-installation.html)
+- [PowerShell Core](https://github.com/PowerShell/PowerShell)
 
 ### VS Code
 
 **The Application:**
 
-- [ ] [VS Code](https://code.visualstudio.com/)
+- [VS Code](https://code.visualstudio.com/)
 
 **Extensions:**
 
-- [ ] [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
-- [ ] [Dart](https://marketplace.visualstudio.com/items?itemName=Dart-Code.dart-code)
-- [ ] [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno)
-- [ ] [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
-- [ ] [Markdown All in One](https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one)
-- [ ] [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid)
-- [ ] [Rust](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- [Code Spell Checker](https://marketplace.visualstudio.com/items?itemName=streetsidesoftware.code-spell-checker)
+- [Dart](https://marketplace.visualstudio.com/items?itemName=Dart-Code.dart-code)
+- [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno)
+- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+- [Markdown All in One](https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one)
+- [Markdown Preview Mermaid Support](https://marketplace.visualstudio.com/items?itemName=bierner.markdown-mermaid)
+- [PowerShell](https://marketplace.visualstudio.com/items?itemName=ms-vscode.PowerShell)
+- [Rust](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 
 # Repo Structure
 
@@ -56,8 +58,7 @@ The following are the items recommended for installation to properly make use of
 
 **Execute:**
 
-- Linux / Mac : `./build.sh --flag`
-- Windows     : `build --flag`
+`./build.ps1 --action`
 
 **Flags:**
 
@@ -65,7 +66,6 @@ The following are the items recommended for installation to properly make use of
 - `--make`    : Executes the multiple builds for the crate, CLI, and WASM targets.
 - `--test`    : Executes the different tests for the `codemelted.rs` and `codemelted.js` modules.
 - `--publish` : Publishes the `codemelted.rs` crate and CLI to `crates.io`
-- `--setup`   : Automated option to setup a computer to utilize this repo.
 
 ## Main Repo
 

@@ -1,7 +1,7 @@
 [package]
 name = "codemelted"
 version = "25.1.2"
-description = "The CodeMelted Rust Crate is an implementation of the CodeMelted DEV twelve identified domain use cases. These domains are areas of study a software engineer should be familiar with regardless of programming language, SDK, or chosen framework. This crate brings these twelve domains to the Rust programming language to aid software engineers in building native applications quickly and securely."
+description = "The aim of this project is to deliver a swiss army knife module to aid software engineers for building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets."
 authors = ["Mark Shaffer <mark.shaffer@codemelted.com>"]
 keywords = ["console", "json", "logger", "process", "ui"]
 categories = ["concurrency", "database", "filesystem", "mathematics", "network-programming"]
@@ -9,6 +9,7 @@ readme = "README.md"
 edition = "2024"
 homepage = "https://rs.codemelted.com/crate"
 repository = "https://github.com/codemelted/codemelted.rs"
+
 license = "MIT"
 publish = true
 
@@ -17,7 +18,7 @@ path = 'codemelted.rs'
 
 # Used for test purposes when developing items
 # [[bin]]
-# name = 'codemelted_tester'
+# name = 'codemelted'
 # path = 'codemelted.rs'
 
 [dependencies]

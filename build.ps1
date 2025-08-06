@@ -1,4 +1,4 @@
-#!/usr/bin/pwsh
+[string]$GEN_HTML_PERL_SCRIPT = "c:/ProgramData/chocolatey/lib/lcov/tools/bin/genhtml"#!/usr/bin/pwsh
 # =============================================================================
 # MIT License
 #
@@ -23,6 +23,8 @@
 # IN THE SOFTWARE.
 # =============================================================================
 
+[string]$GEN_HTML_PERL_SCRIPT = "c:/ProgramData/chocolatey/lib/lcov/tools/bin/genhtml"
+
 # Helper function to format message output from the build script.
 function message([string]$msg) {
   Write-Host
@@ -31,35 +33,75 @@ function message([string]$msg) {
 }
 
 switch ($args[0]) {
-  "--deploy-website" {
-
+  "--deploy" {
+    message "Now uploading codemelted.com/developer content."
+    Move-Item -Path docs -Destination developer -ErrorAction Stop
+    Compress-Archive -Path developer -DestinationPath developer.zip -Force
+    $hostService = $env:CODEMELTED_USER_AND_IP + $env:CODEMELTED_HOME
+    scp developer.zip $hostService
+    ssh $env:CODEMELTED_USER_AND_IP
+    Remove-Item -Path developer.zip
+    Remove-Item -Path developer -Recurse -Force
+    Set-Location $PSScriptRoot
+    message "Upload completed."
   }
   "--make" {
     message "Now building the codemelted.rs documentation."
     cargo clean
     cargo doc --no-deps --lib
-    Set-Location $PSScriptRoot/swiss-army-knife-book
+    Set-Location $PSScriptRoot/mdbook
     mdbook clean
     mdbook build
     Set-Location $PSScriptRoot
     message "codemelted.rs documentation completed."
 
+    message "Now building codemelted.js module."
+    Set-Location $PSScriptRoot/js
+    Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
+    jsdoc ./codemelted.js --destination docs
+    Copy-Item jsdoc-default.css -Destination docs/styles
+    Copy-Item codemelted.js -Destination docs
+    Set-Location $PSScriptRoot
+    message "build completed."
+
     message "codemelted.rs Now building docs website."
     Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
     New-Item -Path docs/codemelted.rs -ItemType Directory
-    New-Item -Path docs/swiss-army-knife-book -ItemType Directory
-    Copy-Item -Path swiss-army-knife-book/book/* -Destination docs/swiss-army-knife-book -Force -Recurse
+    New-Item -Path docs/mdbook -ItemType Directory
+    New-Item -Path docs/js -ItemType Directory
+    Copy-Item -Path mdbook/book/* -Destination docs/mdbook -Force -Recurse
     Copy-Item -Path target/doc/* -Destination docs/codemelted.rs -Force -Recurse
+    Copy-Item -Path js/docs/* -Destination docs/js -Force -Recurse
     Copy-Item -Path index.html -Destination docs -Force
     message "codemelted.rs docs website completed."
   }
   "--test" {
+    message "Now testing codemelted.js."
+    Set-Location $PSScriptRoot/js
+    deno test --allow-env --allow-net --allow-read --allow-sys --allow-write --coverage=coverage --no-config test_deno.ts
+    deno coverage coverage --lcov > coverage/lcov.info
+    if ($IsLinux -or $IsMacOS) {
+      genhtml -o coverage --ignore-errors unused,inconsistent --dark-mode coverage/lcov.info
+    } else {
+      $exists = Test-Path -Path $GEN_HTML_PERL_SCRIPT -PathType Leaf
+      if ($exists) {
+        perl $GEN_HTML_PERL_SCRIPT -o coverage coverage/lcov.info
+      }
+      else {
+        Write-Host "WARNING: genhtml not installed for windows. Run " +
+        "'choco install lcov' for pwsh terminal as Admin to install it."
+      }
+    }
+    Move-Item -Path coverage -Destination docs -Force
+    Set-Location $PSScriptRoot
+    message "codemelted.js testing completed."
+
     message "Now testing the codemelted.rs module"
     cargo test
     message "codemelted.rs module testing completed."
   }
-  "--publish-crate" {
-
+  "--publish" {
+    message "TBD"
   }
-  default { Write-Host "ERROR: Invalid parameter specified." }
+  default { Write-Warning "ERROR: Invalid parameter specified." }
 }

@@ -26,7 +26,7 @@
       position: fixed;
       right: 0;
       top: 0;
-      bottom: 95px;
+      bottom: 105px;
       display: grid;
       grid-template-rows: auto auto auto auto auto auto;
     }
@@ -43,24 +43,26 @@
     .content-container {
       top: 0px;
       right: 55px;
-      bottom: 95px;
+      bottom: 105px;
     }
   </style>
 </head><body>
   <div class="content-nav">
-    <a id="swiss-army-knife-book"   onclick="onAnchorClicked('swiss-army-knife-book'); return false;" title="codemelted.rs The Swiss Army Knife of Code"><img src="https://codemelted.com/assets/favicon/apple-touch-icon.png" /></a>
-    <a id="codemelted.rs"    onclick="onAnchorClicked('codemelted.rs'); return false;" title="Rust Module"><img src="https://codemelted.com/assets/images/icon-rust.png" /></a>
+    <a id="mdbook"        onclick="onAnchorClicked('mdbook'); return false;" title="codemelted.rs The Swiss Army Knife of Code"><img src="https://codemelted.com/assets/favicon/apple-touch-icon.png" /></a>
+    <a id="codemelted.rs" onclick="onAnchorClicked('codemelted.rs'); return false;" title="codemelted.rs Module"><img src="https://codemelted.com/assets/images/icon-rust.png" /></a>
+    <a id="js"            onclick="onAnchorClicked('js'); return false;" title="codemelted.js Namespace"><img src="https://codemelted.com/assets/images/icon-js.png" /></a>
   </div>
   <div class="content-container">
-    <iframe id="frmContent" src="swiss-army-knife-book/index.html" frameborder="0" width="100%" height="100%" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+    <iframe id="frmContent" src="mdbook/index.html" frameborder="0" width="100%" height="100%" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
   </div>
   <codemelted-navigation></codemelted-navigation>
   <script>
     // setup our page controls
     const frmContent = document.getElementById("frmContent");
     const anchors = {
-      "swiss-army-knife-book"   : `swiss-army-knife-book/index.html?rand=${Math.random()}`,
-      "codemelted.rs"           : `codemelted.rs/codemelted/index.html?rand=${Math.random()}`,
+      "mdbook"        : `mdbook/index.html?rand=${Math.random()}`,
+      "codemelted.rs" : `codemelted.rs/codemelted/index.html?rand=${Math.random()}`,
+      "js"            : `js/index.html?rand=${Math.random()}`,
     };
 
     // Setup our initial page state.

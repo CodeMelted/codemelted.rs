@@ -3,9 +3,11 @@
 </center>
 <h1><img style="height: 35px;" src="https://codemelted.com/assets/images/icon-rust.png" /> CodeMelted Rust Crate</h1>
 
-*LAST UPDATED: 2025-May-31*
+*LAST UPDATED: 2025-Aug-05*
 
-The *CodeMelted Rust Crate* is an implementation of the [CodeMelted DEV](https://codemelted.com/developer/codemelted_dev/index.html) 14 identified domain use cases. These domains are areas of study a software engineer should be familiar with regardless of programming language, SDK, or chosen framework. This crate brings those use cases to the Rust programming language to aid software engineers in building native applications quickly and securely.
+The aim of this project is to deliver a swiss army knife module to aid software engineers in building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets.
+
+The module serves as a consumable crate for software engineers to build their own custom backend / desktop services applications. Secondly built into the module is a Command Line Interface (CLI) to target script based solutions with a powerful CLI that will work the same regardless of the operating system. Lastly parts of the module along with the `codemelted.js` implementing the `codemelted` namespace will build a WASM / JS consumable modules to build powerful Single / Progressive Web Applications.
 
 **Table of Contents**
 
@@ -43,10 +45,10 @@ use codemelted::{CLogLevel, CLogRecord, CLoggedEventHandler};
 fn log_handler(data: CLogRecord) {
   // Do something, say post to the cloud about the event
 }
-codemelted::logger_handler(Some(log_handler));
+codemelted::logger_set_log_handler(Some(log_handler));
 
 // Set the log level
-codemelted::logger_level(CLogLevel::Warning);
+codemelted::logger_set_log_level(CLogLevel::Warning);
 
 // Now later on in your code....
 // This will be reported to the console and then to the CLoggedEventHandler.

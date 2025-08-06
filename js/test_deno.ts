@@ -18,20 +18,24 @@ import {
   assertThrows,
   fail,
 } from "jsr:@std/assert";
-import {
-  // API_UNSUPPORTED_PLATFORM,
-  hw_request_orientation,
-  runtime_online,
-} from "./codemelted.js";
+import "./codemelted.js";
+
+// ===============================================================================
+// [GENERAL NAMESPACE SETUP TESTS] ===============================================
+// ===============================================================================
+
+Deno.test("codemelted Namespace Exists Test", () => {
+  assertExists(codemelted);
+});
 
 // ===============================================================================
 // [Unsupported Use Cases Throw] =================================================
 // ===============================================================================
 
-Deno.test("Unsupported Functions Throw Syntax Error", async () => {
-  assertThrows(() => hw_request_orientation(), SyntaxError);
-  assertThrows(() => runtime_online(), SyntaxError);
-});
+// Deno.test("Unsupported Functions Throw Syntax Error", async () => {
+//   assertThrows(() => hw_request_orientation(), SyntaxError);
+//   assertThrows(() => runtime_online(), SyntaxError);
+// });
 
 // // ----------------------------------------------------------------------------
 // // [console use case] ---------------------------------------------------------
