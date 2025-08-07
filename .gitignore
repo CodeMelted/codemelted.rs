@@ -22,3 +22,5 @@ target
 book/
 docs/
 .DS_Store
+*.zip
+developer/

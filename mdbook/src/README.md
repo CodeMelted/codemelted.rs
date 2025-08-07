@@ -1,10 +1,10 @@
 <center>
-  <img style="width: 100%; max-width: 400px;" src="https://codemelted.com/assets/images/logo-codemelted-developer.png" />
+  <img style="width: 100%; max-width: 400px;" src="https://codemelted.com/assets/images/logo-codemelted-rs.png" />
 </center>
 <br />
 <h1><img style="height: 35px;" src="https://codemelted.com/assets/favicon/apple-touch-icon.png" /> codemelted.rs: : The Swiss Army Knife Full Stack Solution</h1>
 
-*BY: Mark Shaffer / LAST UPDATED: 2025-mmm-dd*
+*BY: Mark Shaffer / LAST UPDATED: 2025-Aug-06*
 
 "Write once, run anywhere (WORA)" was the famous slogan made by Sun Microsystems in 1995. At the time, this technology allowed for easy full stack engineering allowing you to target dedicated workstations and on-premises servers. So long as a Java Runtime Environment existed, you could run your code. Java was unable to keep to their slogan as web browsers became more advanced, mobile devices became ubiquitous, and companies no longer required dedicated servers.
 
@@ -26,5 +26,5 @@ Enter the **codemelted.rs** project. The aim of this project is to deliver a swi
 
 <center><b>Revision History</b></center><br />
 
-- **<u>2025-mmm-dd (M. Shaffer)</u>:** Initial release of the document refactoring from the original codemelted-dev (discontinued) concept and now focusing on this more targeted solution.
+- **<u>2025-Aug-06 (M. Shaffer)</u>:** Initial release of the document refactoring from the original codemelted-dev (discontinued) concept and now focusing on this more targeted solution.
 

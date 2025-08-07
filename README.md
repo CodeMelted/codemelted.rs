@@ -1,9 +1,9 @@
 <center>
-  <br /><img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-developer.png" /><br />
+  <br /><img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-rs.png" /><br />
 </center>
-<h1><img style="height: 35px;" src="https://codemelted.com/assets/images/icon-rust.png" /> CodeMelted Rust Crate</h1>
+<h1><img style="height: 35px;" src="https://codemelted.com/assets/images/icon-rust.png" /> codemelted.rs Crate</h1>
 
-*LAST UPDATED: 2025-Aug-05*
+*LAST UPDATED: 2025-Aug-06*
 
 The aim of this project is to deliver a swiss army knife module to aid software engineers in building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets.
 

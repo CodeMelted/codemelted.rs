@@ -3,13 +3,13 @@
 /**
  * @file <br />
  * <img style="width: 100%; max-width: 375px;"
- *  src="https://codemelted.com/assets/images/logo-codemelted-developer.png"
+ *  src="https://codemelted.com/assets/images/logo-codemelted-rs.png"
  * />
  * <p>
  * Something Something Star Wars.
  * </p>
  * <h2> Use Cases </h2>
- * <img src="https://codemelted.com/developer/codemelted_dev/models/all/use-case-model.drawio.png" />
+ * <img src="https://codemelted.com/developer/mdbook/models/all/use-case-model.drawio.png" />
  * <p>
  * Something Something Star Wars.
  * </p>

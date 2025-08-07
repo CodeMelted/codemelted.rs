@@ -1,7 +1,7 @@
 <center>
   <img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-developer.png" /></a><br />
 </center>
-<h1><img style="height: 35px;" src="https://codemelted.com/assets/favicon/apple-touch-icon.png" /> CodeMelted DEV Project</h1>
+<h1><img style="height: 35px;" src="https://codemelted.com/assets/favicon/apple-touch-icon.png" /> codemelted.rs Project</h1>
 
 The following document will help you setup this repo for local development by
 1. Installing the necessary tools to build / test the `codemelted.rs` module.
