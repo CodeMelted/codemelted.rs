@@ -101,7 +101,12 @@ switch ($args[0]) {
     message "codemelted.rs module testing completed."
   }
   "--publish" {
-    message "TBD"
+    $answer = Read-Host -Prompt "Publish Crate (y/N)?"
+    if ($answer -eq "y") {
+      cargo publish
+    } else {
+      cargo publish --dry-run
+    }
   }
   default { Write-Warning "ERROR: Invalid parameter specified." }
 }
