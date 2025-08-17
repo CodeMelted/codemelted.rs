@@ -7,7 +7,7 @@ keywords = ["console", "json", "logger", "process", "ui"]
 categories = ["concurrency", "database", "filesystem", "mathematics", "network-programming"]
 readme = "README.md"
 edition = "2024"
-homepage = "https://rs.codemelted.com/crate"
+homepage = "https://rs.codemelted.com/rs/crate"
 repository = "https://github.com/codemelted/codemelted.rs"
 
 license = "MIT"
