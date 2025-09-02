@@ -76,29 +76,33 @@ switch ($args[0]) {
     message "codemelted.rs docs website completed."
   }
   "--test" {
-    message "Now testing codemelted.js."
-    Set-Location $PSScriptRoot/js
-    deno test --allow-env --allow-net --allow-read --allow-sys --allow-write --coverage=coverage --no-config test_deno.ts
-    deno coverage coverage --lcov > coverage/lcov.info
-    if ($IsLinux -or $IsMacOS) {
-      genhtml -o coverage --ignore-errors unused,inconsistent --dark-mode coverage/lcov.info
-    } else {
-      $exists = Test-Path -Path $GEN_HTML_PERL_SCRIPT -PathType Leaf
-      if ($exists) {
-        perl $GEN_HTML_PERL_SCRIPT -o coverage coverage/lcov.info
+    $option = $args[1]
+    if ($option -eq "js" -or [string]::IsNullOrWhiteSpace($option)) {
+      message "Now testing codemelted.js."
+      Set-Location $PSScriptRoot/js
+      deno test --allow-env --allow-net --allow-read --allow-sys --allow-write --coverage=coverage --no-config test_deno.ts
+      deno coverage coverage --lcov > coverage/lcov.info
+      if ($IsLinux -or $IsMacOS) {
+        genhtml -o coverage --ignore-errors unused,inconsistent --dark-mode coverage/lcov.info
+      } else {
+        $exists = Test-Path -Path $GEN_HTML_PERL_SCRIPT -PathType Leaf
+        if ($exists) {
+          perl $GEN_HTML_PERL_SCRIPT -o coverage coverage/lcov.info
+        }
+        else {
+          Write-Host "WARNING: genhtml not installed for windows. Run " +
+          "'choco install lcov' for pwsh terminal as Admin to install it."
+        }
       }
-      else {
-        Write-Host "WARNING: genhtml not installed for windows. Run " +
-        "'choco install lcov' for pwsh terminal as Admin to install it."
-      }
+      Move-Item -Path coverage -Destination docs -Force
+      Set-Location $PSScriptRoot
+      message "codemelted.js testing completed."
     }
-    Move-Item -Path coverage -Destination docs -Force
-    Set-Location $PSScriptRoot
-    message "codemelted.js testing completed."
-
-    message "Now testing the codemelted.rs module"
-    cargo test
-    message "codemelted.rs module testing completed."
+    if ($option -eq "rust" -or [string]::IsNullOrWhiteSpace($option)) {
+      message "Now testing the codemelted.rs module"
+      cargo test
+      message "codemelted.rs module testing completed."
+    }
   }
   "--publish" {
     $answer = Read-Host -Prompt "Publish Crate (y/N)?"
