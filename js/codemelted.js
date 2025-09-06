@@ -76,14 +76,14 @@
 globalThis["codemelted"] = (function() {
 
   // ==========================================================================
-  // [FAKE OUT DEFINITIONS] ====================================================
+  // [FAKE OUT DEFINITIONS] ===================================================
   // ==========================================================================
 
   /**
    * Defined to support proper typing in the JSDocs when type checking in a
    * TypeScript environment.
-   * NOTE: Defined to support proper typing in the JSDocs when type checking in a
-   *       TypeScript environment.
+   * NOTE: Defined to support proper typing in the JSDocs when type checking
+   *       in a TypeScript environment.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent
    * @typedef {object} DeviceOrientationEvent
    * @property {boolean} absolute A boolean that indicates whether or not the
@@ -102,12 +102,12 @@ globalThis["codemelted"] = (function() {
    */
 
   /**
-   * The GeolocationCoordinates interface represents the position and altitude
-   * of the device on Earth, as well as the accuracy with which these properties
-   * are calculated. The geographic position information is provided in terms of
-   * World Geodetic System coordinates (WGS84).
-   * NOTE: Defined to support proper typing in the JSDocs when type checking in a
-   *       TypeScript environment.
+   * The GeolocationCoordinates interface represents the position and
+   * altitude of the device on Earth, as well as the accuracy with which
+   * these  properties are calculated. The geographic position information is
+   * provided in terms of World Geodetic System coordinates (WGS84).
+   * NOTE: Defined to support proper typing in the JSDocs when type checking
+   *       in a TypeScript environment.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates
    * @typedef {object} GeolocationCoordinates
    * @property {number} latitude Returns a double representing the position's
@@ -117,8 +117,8 @@ globalThis["codemelted"] = (function() {
    * @property {number | null} altitude Returns a double representing the
    * position's altitude in meters, relative to nominal sea level. This value
    * can be null if the implementation cannot provide the data.
-   * @property {number} accuracy Returns a double representing the accuracy of
-   * the latitude and longitude properties, expressed in meters.
+   * @property {number} accuracy Returns a double representing the accuracy
+   * of the latitude and longitude properties, expressed in meters.
    * @property {number | null} altitudeAccuracy Returns a double representing
    * the accuracy of the altitude expressed in meters. This value can be null
    * if the implementation cannot provide the data.
@@ -126,73 +126,75 @@ globalThis["codemelted"] = (function() {
    * direction towards which the device is facing. This value, specified in
    * degrees, indicates how far off from heading true north the device is. 0
    * degrees represents true north, and the direction is determined clockwise
-   * (which means that east is 90 degrees and west is 270 degrees). If speed is
-   * 0 or the device is unable to provide heading information, heading is null.
-   * @property {number | null} speed Returns a double representing the velocity
-   * of the device in meters per second. This value can be null.
+   * (which means that east is 90 degrees and west is 270 degrees). If speed
+   * is 0 or the device is unable to provide heading information, heading is
+   * null.
+   * @property {number | null} speed Returns a double representing the
+   * velocity of the device in meters per second. This value can be null.
    */
 
   /**
-   * Interface adds to HTMLElement the properties and methods needed to support
-   * basic media-related capabilities that are common to audio and video.
-   * NOTE: Defined to support proper typing in the JSDocs when type checking in
-   *       a TypeScript environment.
+   * Interface adds to HTMLElement the properties and methods needed to
+   * support basic media-related capabilities that are common to audio and
+   * video.
+   * NOTE: Defined to support proper typing in the JSDocs when type checking
+   *       in a TypeScript environment.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement
    * @typedef {object} HTMLAudioElement
    * @property {number} currentTime specifies the current playback time in
    * seconds.
-   * @property {number} playbackRate property sets the rate at which the media
-   * is being played back. This is used to implement user controls for fast
-   * forward, slow motion, and so forth. The normal playback rate is multiplied
-   * by this value to obtain the current rate, so a value of 1.0 indicates
-   * normal speed.
+   * @property {number} playbackRate property sets the rate at which the
+   * media is being played back. This is used to implement user controls for
+   * fast forward, slow motion, and so forth. The normal playback rate is
+   * multiplied by this value to obtain the current rate, so a value of 1.0
+   * indicates normal speed.
    * @property {number} volume sets the volume at which the media will be
    * played.
    * @property {function} load resets the media element to its initial state
    * and begins the process of selecting a media source and loading the media
    * in preparation for playback to begin at the beginning.
-   * @property {function} pause will pause playback of the media, if the media
-   * is already in a paused state this method will have no effect.
-   * @property {function} play method attempts to begin playback of the media.
-   * It returns a Promise which is resolved when playback has been successfully
-   * started.
+   * @property {function} pause will pause playback of the media, if the
+   * media is already in a paused state this method will have no effect.
+   * @property {function} play method attempts to begin playback of the
+   * media. It returns a Promise which is resolved when playback has been
+   * successfully started.
    * @property {function} onerror Handles the error events.
    * @property {function} onended Handles the onended events.
    * @property {Event} error event is fired when the resource could not be
    * loaded due to an error (for example, a network connectivity problem).
    * @property {Event} ended event is fired when playback or streaming has
-   * stopped because the end of the media was reached or because no further data
-   * is available.
+   * stopped because the end of the media was reached or because no further
+   * data is available.
    */
 
   /**
-   * NOTE: Defined to support proper typing in the JSDocs when type checking in
-   *       a TypeScript environment.
+   * NOTE: Defined to support proper typing in the JSDocs when type checking
+   *       in a TypeScript environment.
    * @typedef {object} HTMLElement
    */
 
   /**
-   * The SerialPort interface of the Web Serial API provides access to a serial
-   * port on the host device.
-   * NOTE: Defined to support proper typing in the JSDocs when type checking in a
-   *       TypeScript environment.
+   * The SerialPort interface of the Web Serial API provides access to a
+   * serial port on the host device.
+   * NOTE: Defined to support proper typing in the JSDocs when type checking
+   *       in a TypeScript environment.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/SerialPort
    * @typedef {object} SerialPort
    * @property {boolean} connected Returns a boolean value that indicates
    * whether the port is logically connected to the device.
-   * @property {ReadableStream} readable Returns a ReadableStream for receiving
-   * data from the device connected to the port.
+   * @property {ReadableStream} readable Returns a ReadableStream for
+   * receiving data from the device connected to the port.
    * @property {WritableStream} writable Returns a WritableStream for sending
    * data to the device connected to the port.
    * @property {function} forget Returns a Promise that resolves when access
-   * to the serial port is revoked. Calling this "forgets" the device, resetting
-   * any previously-set permissions so the calling site can no longer
-   * communicate with the port.
+   * to the serial port is revoked. Calling this "forgets" the device,
+   * resetting any previously-set permissions so the calling site can no
+   * longer communicate with the port.
    * @property {function} getInfo Returns an object containing identifying
    * information for the device available via the port.
    * @property {function} open Returns a Promise that resolves when the port
-   * is opened. By default the port is opened with 8 data bits, 1 stop bit and
-   * no parity checking.
+   * is opened. By default the port is opened with 8 data bits, 1 stop bit
+   * and no parity checking.
    * @property {function} setSignals Sets control signals on the port and
    * returns a Promise that resolves when they are set.
    * @property {function} getSignals Returns a Promise that resolves with an
@@ -205,15 +207,16 @@ globalThis["codemelted"] = (function() {
    * Represents a speech request. It contains the content the speech service
    * should read and information about how to read it (e.g., language,
    * pitch and volume.)
-   * NOTE: Defined to support proper typing in the JSDocs when type checking in
-   *       a TypeScript environment.
+   * NOTE: Defined to support proper typing in the JSDocs when type checking
+   *       in a TypeScript environment.
    * @see https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesisUtterance
    * @typedef {object} SpeechSynthesisUtterance
-   * @property {number} rate gets and sets the speed at which the utterance will
-   * be spoken.
-   * @property {number} volume gets and sets the volume that the utterance will
-   * be spoken.
-   * @property {Event} end fired when the utterance has finished being spoken.
+   * @property {number} rate gets and sets the speed at which the utterance
+   * will be spoken.
+   * @property {number} volume gets and sets the volume that the utterance
+   * will be spoken.
+   * @property {Event} end fired when the utterance has finished being
+   * spoken.
    * @property {Event} error fired when an error occurs that prevents the
    * utterance from being successfully spoken.
    */
@@ -226,10 +229,11 @@ globalThis["codemelted"] = (function() {
    * Provides the request actions of the [ui_action] function all.
    * @memberof codemelted
    * @enum {object}
-   * @property {string} Focus Makes a request to bring the window to the front.
-   * It may fail due to user settings and the window isn't guaranteed to be
-   * front most before this method returns.
-   * @property {string} MoveBy moves the current window by a specified amount.
+   * @property {string} Focus Makes a request to bring the window to the
+   * front. It may fail due to user settings and the window isn't guaranteed
+   * to be front most before this method returns.
+   * @property {string} MoveBy moves the current window by a specified
+   * amount.
    * @property {string} MoveTo moves the current window to the specified
    * coordinates.
    * @property {string} Print Opens the print dialog to print the current
@@ -237,12 +241,12 @@ globalThis["codemelted"] = (function() {
    * @property {string} ResizeBy resizes the current window by a specified
    * amount.
    * @property {string} ResizeTo dynamically resizes the window.
-   * @property {string} Scroll scrolls the window to a particular place in the
-   * document.
+   * @property {string} Scroll scrolls the window to a particular place in
+   * the document.
    * @property {string} ScrollBy scrolls the document in the window by the
    * given amount.
-   * @property {string} ScrollTo scrolls to a particular set of coordinates in
-   * the document.
+   * @property {string} ScrollTo scrolls to a particular set of coordinates
+   * in the document.
    * @property {string} Share invokes the native sharing mechanism of the
    * device to share data such as text, URLs, or files. The available share
    * targets depend on the device, but might include the clipboard, contacts
@@ -268,8 +272,8 @@ globalThis["codemelted"] = (function() {
   });
 
   /**
-   * Error thrown when the module is not used as intended providing the error
-   * for a developer to fix their code.
+   * Error thrown when the module is not used as intended providing the
+   * error for a developer to fix their code.
    * @constant {SyntaxError}
    * @memberof codemelted
    */
@@ -305,12 +309,13 @@ globalThis["codemelted"] = (function() {
    * @memberof codemelted
    */
   const API_UNSUPPORTED_RUNTIME = new SyntaxError(
-    "codemelted.js module function called on an unsupported JavaScript runtime!"
+    "codemelted.js module function called on an unsupported " +
+    "JavaScript runtime!"
   );
 
   /**
-   * Provides the request for executing audio playback in an HTML document via
-   * the [ui_audio] function call.
+   * Provides the request for executing audio playback in an HTML document
+   * via the [ui_audio] function call.
    * @memberof codemelted
    * @enum {object}
    * @property {string} File Loads and plays back an audio file hosted on the
@@ -327,14 +332,14 @@ globalThis["codemelted"] = (function() {
    * Provides the ability to connect to different server protocols.
    * @memberof codemelted
    * @enum {object}
-   * @property {string} BroadcastChannel The Broadcast Channel API allows basic
-   * communication between browsing contexts (that is, windows, tabs, frames,
-   * or iframes) and workers on the same origin.
-   * @property {string} EventSource An EventSource instance opens a persistent
-   * connection to an HTTP server, which sends events in text/event-stream
-   * format.
-   * @property {string} WebSocket  provides the API for creating and managing a
-   * WebSocket connection to a server, as well as for sending and receiving
+   * @property {string} BroadcastChannel The Broadcast Channel API allows
+   * basic communication between browsing contexts (that is, windows, tabs,
+   * frames, or iframes) and workers on the same origin.
+   * @property {string} EventSource An EventSource instance opens a
+   * persistent connection to an HTTP server, which sends events in
+   * text/event-stream format.
+   * @property {string} WebSocket  provides the API for creating and managing
+   * a WebSocket connection to a server, as well as for sending and receiving
    * data on the connection.
    */
   const CONNECT_REQUEST = Object.freeze({
@@ -344,8 +349,9 @@ globalThis["codemelted"] = (function() {
   });
 
   /**
-   * Provides the request to render a bottom sheet set of options to support a
-   * Single Page Application (SPA) document to get information from the user.
+   * Provides the request to render a bottom sheet set of options to support
+   * a Single Page Application (SPA) document to get information from the
+   * user.
    * @memberof codemelted
    * @enum {object}
    * @property {string} Alert Displays a snack bar to alert the user of a
@@ -355,9 +361,10 @@ globalThis["codemelted"] = (function() {
    * @property {string} Close Will asynchronously close an open page.
    * @property {string} Confirm Provides a half-page confirmation Yes / No
    * question to the user.
-   * @property {string} Custom Provides a full page custom dialog to the user.
-   * @property {string} Loading Provides a loading half-page dialog closed via
-   * the Close request.
+   * @property {string} Custom Provides a full page custom dialog to the
+   * user.
+   * @property {string} Loading Provides a loading half-page dialog closed
+   * via the Close request.
    * @property {string} Prompt Provides a half-page text field prompt input
    * box.
    */
@@ -380,8 +387,8 @@ globalThis["codemelted"] = (function() {
    * installed Progressive Web Application.
    * @property {string} SecureContext indicating whether the current context
    * is secure (true) or not (false).
-   * @property {string} TouchEnabled Identifies if the browser is accessible via
-   * a touch device.
+   * @property {string} TouchEnabled Identifies if the browser is accessible
+   * via a touch device.
    */
   const IS_REQUEST = Object.freeze({
     PWA: "PWA",
@@ -413,15 +420,15 @@ globalThis["codemelted"] = (function() {
    * @enum {object}
    * @property {string} Alert instructs the browser to display a dialog with
    * an optional message, and to wait until the user dismisses the dialog.
-   * @property {string} Confirm instructs the browser to display a dialog with
-   * an optional message, and to wait until the user either confirms or cancels
-   * the dialog.
+   * @property {string} Confirm instructs the browser to display a dialog
+   * with an optional message, and to wait until the user either confirms or
+   * cancels the dialog.
    * @property {string} Prompt instructs the browser to display a dialog with
    * an optional message prompting the user to input some text, and to wait
    * until the user either submits the text or cancels the dialog.
-   * @property {string} Post safely enables cross-origin communication between
-   * Window objects; e.g., between a page and a pop-up that it spawned, or
-   * between a page and an iframe embedded within it.
+   * @property {string} Post safely enables cross-origin communication
+   * between Window objects; e.g., between a page and a pop-up that it
+   * spawned, or between a page and an iframe embedded within it.
    */
   const MESSAGE_REQUEST = Object.freeze({
     Alert: "alert",
@@ -436,40 +443,44 @@ globalThis["codemelted"] = (function() {
    * @memberof codemelted
    * @enum {object}
    * @property {string} AvailableHeight the height of the screen, in pixels,
-   * minus permanent or semipermanent user interface features displayed by the
-   * operating system, such as the Taskbar on Windows.
-   * @property {string} AvailableWidth the amount of horizontal space in pixels
-   * available to the window.
+   * minus permanent or semipermanent user interface features displayed by
+   * the operating system, such as the Taskbar on Windows.
+   * @property {string} AvailableWidth the amount of horizontal space in
+   * pixels available to the window.
    * @property {string} ColorDepth the color depth of the screen.
-   * @property {string} DevicePixelRatio the ratio of the resolution in physical
-   * pixels to the resolution in CSS pixels for the current display device.
+   * @property {string} DevicePixelRatio the ratio of the resolution in
+   * physical pixels to the resolution in CSS pixels for the current display
+   * device.
    * @property {string} Height the height of the screen in pixels.
-   * @property {string} InnerHeight the interior height of the window in pixels,
-   * including the height of the horizontal scroll bar, if present.
-   * @property {string} InnerWidth interior width of the window in pixels (that
-   * is, the width of the window's layout viewport). That includes the width of
-   * the vertical scroll bar, if one is present.
+   * @property {string} InnerHeight the interior height of the window in
+   * pixels, including the height of the horizontal scroll bar, if present.
+   * @property {string} InnerWidth interior width of the window in pixels
+   * (that is, the width of the window's layout viewport). That includes the
+   * width of the vertical scroll bar, if one is present.
    * @property {string} OuterHeight the height in pixels of the whole browser
    * window, including any sidebar, window chrome, and window-resizing
    * borders/handles.
    * @property {string} OuterWidth the width of the outside of the browser
    * window. It represents the width of the whole browser window including
-   * sidebar (if expanded), window chrome and window resizing borders/handles.
+   * sidebar (if expanded), window chrome and window resizing borders /
+   * handles.
    * @property {string} PixelDepth the bit depth of the screen.
-   * @property {string} ScreenLeft the horizontal distance, in CSS pixels, from
-   * the left border of the user's browser viewport to the left side of the
+   * @property {string} ScreenLeft the horizontal distance, in CSS pixels,
+   * from the left border of the user's browser viewport to the left side of
+   * the screen.
+   * @property {string} ScreenOrientationAngle the document's current
+   * orientation angle.
+   * @property {string} ScreenOrientationType the document's current
+   * orientation type, one of portrait-primary, portrait-secondary,
+   * landscape-primary, or landscape-secondary.
+   * @property {string} ScreenTop the vertical distance, in CSS pixels, from
+   * the top border of the user's browser viewport to the top side of the
    * screen.
-   * @property {string} ScreenOrientationAngle the document's current orientation
-   * angle.
-   * @property {string} ScreenOrientationType the document's current orientation
-   * type, one of portrait-primary, portrait-secondary, landscape-primary, or
-   * landscape-secondary.
-   * @property {string} ScreenTop the vertical distance, in CSS pixels, from the
-   * top border of the user's browser viewport to the top side of the screen.
    * @property {string} ScreenX the horizontal distance, in CSS pixels, of the
-   * left border of the user's browser viewport to the left side of the screen.
-   * @property {string} ScreenY the vertical distance, in CSS pixels, of the top
-   * border of the user's browser viewport to the top edge of the screen.
+   * left border of the user's browser viewport to the left side of the
+   * screen.
+   * @property {string} ScreenY the vertical distance, in CSS pixels, of the
+   * top border of the user's browser viewport to the top edge of the screen.
    * @property {string} ScrollX the number of pixels by which the document is
    * currently scrolled horizontally. This value is subpixel precise in modern
    * browsers, meaning that it isn't necessarily a whole number.
@@ -520,7 +531,8 @@ globalThis["codemelted"] = (function() {
    * [CSerialPortProtocol].
    * @property {string} RingIndicator Line control status of the
    * [CSerialPortProtocol].
-   * @property {string} DataBytes Read / Write from the [CSerialPortProtocol].
+   * @property {string} DataBytes Read / Write from the
+   * [CSerialPortProtocol].
    */
   const SERIAL_PORT_DATA_REQUEST = Object.freeze({
     Break: "Break",
@@ -534,8 +546,8 @@ globalThis["codemelted"] = (function() {
   });
 
   /**
-   * Provides the type of storage to utilize with each of the [storage_xxx] use
-   * case functions. They all default to STORAGE_TYPE.Local.
+   * Provides the type of storage to utilize with each of the [storage_xxx]
+   * use case functions. They all default to STORAGE_TYPE.Local.
    * @memberof codemelted
    * @enum {object}
    * @property {string} Cookie
@@ -555,9 +567,10 @@ globalThis["codemelted"] = (function() {
   /**
    * Object created from a call to the [ui_audio] function to allow for audio
    * playback on a document. This object is only valid with the data it is
-   * created with. Once playback is completed or stopped, it can only be started
-   * (i.e. played) again. To change the audio source requires a call to
-   * [ui_audio] to get a new audio player.
+   * created with. Once playback is completed or stopped, it can only be
+   * started (i.e. played) again. To change the audio source requires a call
+   * to [ui_audio] to get a new audio player.
+   * @class
    * @memberof codemelted
    */
   class CAudioPlayer {
@@ -571,8 +584,8 @@ globalThis["codemelted"] = (function() {
     /**
      * Sets an error handler to listen for errors that may occur when
      * utilizing the audio player.
-     * @param {CEventHandler} handler The handler to listen for errors
-     * with the audio player.
+     * @param {CEventHandler} handler The handler to listen for
+     * errors with the audio player. {@link codemelted.CEventHandler}
      */
     set onerror(handler) {
       codemelted.json_check_type({
@@ -591,8 +604,9 @@ globalThis["codemelted"] = (function() {
 
     /**
      * Signal fired when the audio player has completed the audio source.
-     * @param {CEventHandler} handler Handler that signals the audio player has
-     * completed playing the data source.
+     * @param {CEventHandler} handler Handler that signals the
+     * audio player has completed playing the data source.
+     * {@link codemelted.CEventHandler}
      */
     set onended(handler) {
       codemelted.json_check_type({
@@ -669,6 +683,7 @@ globalThis["codemelted"] = (function() {
      * Will resume the audio player from a paused state.
      * @returns {Promise<CResult>} Identifying success / failure of
      * transitioning to the new audio state.
+     * {@link codemelted.CResult}
      * @throws {API_MISUSE} if you call when in an invalid state.
      */
     async resume() {
@@ -717,6 +732,7 @@ globalThis["codemelted"] = (function() {
      * Will play the audio player from a stopped state.
      * @returns {Promise<CResult>} Identifying success / failure of
      * transitioning to the new audio state.
+     * {@link codemelted.CResult}
      * @throws {API_MISUSE} if you call when in an invalid state.
      */
     async play() {
@@ -764,8 +780,8 @@ globalThis["codemelted"] = (function() {
 
     /**
      * Constructor for the class.
-     * @param {string} request {@link AUDIO_REQUEST} property identifying which
-     * audio source to utilize.
+     * @param {string} request {@link AUDIO_REQUEST} property identifying
+     * which audio source to utilize.
      * @param {string} data The data associated with the request.
      */
     constructor(request, data) {
@@ -1122,7 +1138,8 @@ globalThis["codemelted"] = (function() {
     /**
      * Gracefully close the server. No more new connections will be accepted,
      * while pending requests will be allowed to finish.
-     * @returns {Promise<CResult>}
+     * @returns {Promise<CResult>}  The result of the shutdown.
+     * {@link codemelted.CResult}
      */
     async shutdown() {
       try {
@@ -1219,8 +1236,8 @@ globalThis["codemelted"] = (function() {
 
     /**
      * Constructor for the object.
-     * @param {CTimerCB} task
-     * @param {number} interval
+     * @param {CTimerCB} task The task to run. {@link codemelted.CTimerCB}
+     * @param {number} interval The interval to repeat.
      */
     constructor(task, interval) {
       this.#id = setInterval(task, interval);
@@ -1232,9 +1249,9 @@ globalThis["codemelted"] = (function() {
   // ==========================================================================
 
   /**
-   * Support object for the [CProtocolHandler] and any other object to provide
-   * a result where either the value or the error can be signaled for later
-   * checking by a user.
+   * Support object for the [CProtocolHandler] and any other object to
+   * provide a result where either the value or the error can be signaled for
+   * later checking by a user.
    * @memberof codemelted
    */
   class CResult {
@@ -1267,8 +1284,8 @@ globalThis["codemelted"] = (function() {
     is_ok() { return !this.is_error(); }
 
     /**
-     * Hold the value of the given result or nothing if the [CResult] is being
-     * used to signal there was no error.
+     * Hold the value of the given result or nothing if the [CResult] is
+     * being used to signal there was no error.
      * @returns {any}
      */
     value() { return this.#value; }
@@ -1290,8 +1307,9 @@ globalThis["codemelted"] = (function() {
   }
 
   /**
-   * The result object from a [network_fetch] call containing any data from the
-   * call along with the HTTP Status Code of the transaction.
+   * The result object from a [network_fetch] call containing any data
+   * from the call along with the HTTP Status Code of the transaction.
+   * {@link codemelted.CResult}
    * @memberof codemelted
    * @extends {CResult}
    */
@@ -1300,14 +1318,16 @@ globalThis["codemelted"] = (function() {
     #status = -1;
 
     /**
-     * Will get the data if it is a Uint8Array or null if not that object type.
+     * Will get the data if it is a Uint8Array or null if not that object
+     * type.
      * @readonly
      * @type {Uint8Array?}
      */
     get asBinary() {
-      return codemelted.json_check_type({type: Uint8Array, data: this.value()})
-        ? this.value()
-        : null;
+      return codemelted.json_check_type({type: Uint8Array,
+        data: this.value()})
+          ? this.value()
+          : null;
     }
 
     /**
@@ -1393,8 +1413,8 @@ globalThis["codemelted"] = (function() {
   /**
    * Defines the "rules" for objects that will setup a protocol that directly
    * exchanges data with an external item, will continuously run until
-   * terminated, requires the ability to know it is running, and get any errors
-   * that have occurred during its run.
+   * terminated, requires the ability to know it is running, and get any
+   * errors that have occurred during its run.
    * @memberof codemelted
    */
   class CProtocolHandler {
@@ -1405,7 +1425,8 @@ globalThis["codemelted"] = (function() {
      * Gets the latest data received from the protocol.
      * @param {string} [request] Optional request string to add additional
      * queries from the protocol.
-     * @returns {Promise<CResult>}
+     * @returns {Promise<CResult>} The result of the request
+     * {@link codemelted.CResult}
      */
     async get_message(request="") { throw API_NOT_IMPLEMENTED; }
 
@@ -1424,7 +1445,8 @@ globalThis["codemelted"] = (function() {
     /**
      * Posts a given message to the given implementing protocol.
      * @param {any} data
-     * @returns {Promise<CResult>}
+     * @returns {Promise<CResult>} The result of the request.
+     * {@link codemelted.CResult}
      */
     async post_message(data) { throw API_NOT_IMPLEMENTED; }
 
@@ -1448,7 +1470,7 @@ globalThis["codemelted"] = (function() {
    * The BroadcastChannel interface represents a named channel that any browsing
    * context of a given origin can subscribe to. It allows communication between
    * different documents (in different windows, tabs, frames or iframes) of the
-   * same origin.
+   * same origin. {@link codemelted.CProtocolHandler}
    * @memberof codemelted
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API
    * @extends {CProtocolHandler}
@@ -1467,8 +1489,9 @@ globalThis["codemelted"] = (function() {
      * Gets the latest data received from the protocol.
      * @override
      * @param {string} [request=""] NOT USED.
-     * @returns {Promise<CResult>} The result containing the given information.
-     * Errors are processed first if they have been received.
+     * @returns {Promise<CResult>} The result containing the given
+     * information. Errors are processed first if they have been received.
+     * {@link codemelted.CResult}
      */
     async get_message(request="") {
       if (!this.is_running) {
@@ -1500,15 +1523,16 @@ globalThis["codemelted"] = (function() {
 
     /**
      * Sends a message, which can be of any kind of Object, to each listener
-     * in any browsing context with the same origin. The message is transmitted
-     * as a message event targeted at each BroadcastChannel bound to the
-     * channel.
+     * in any browsing context with the same origin. The message is
+     * transmitted as a message event targeted at each BroadcastChannel
+     * bound to the channel.
      * @override
      * @param {any} data Data to be sent to the other window. The data is
      * serialized using the structured clone algorithm. This means you can
      * pass a broad variety of data objects safely to the destination window
      * without having to serialize them yourself.
      * @returns {Promise<CResult>} The result of the transmission.
+     * {@link codemelted.CResult}
      */
     async post_message(data) {
       if (!this.is_running()) {
@@ -1562,7 +1586,7 @@ globalThis["codemelted"] = (function() {
   /**
    * Opens a persistent connection to an HTTP server, which sends events in
    * text/event-stream format. The connection remains open until terminate is
-   * called.
+   * called. {@link codemelted.CProtocolHandler}
    * @memberof codemelted
    * @see https://developer.mozilla.org/en-US/docs/Web/API/EventSource
    * @extends {CProtocolHandler}
@@ -1611,8 +1635,9 @@ globalThis["codemelted"] = (function() {
      * Gets the latest data received from the protocol.
      * @override
      * @param {string} [request=""] NOT USED.
-     * @returns {Promise<CResult>} The result containing the given information.
-     * Errors are processed first if they have been received.
+     * @returns {Promise<CResult>} The result containing the given
+     * information. Errors are processed first if they have been received.
+     * {@link codemelted.CResult}
      */
     async get_message(request="") {
       if (!this.is_running()) {
@@ -1646,7 +1671,8 @@ globalThis["codemelted"] = (function() {
      * NOT USED. DON'T CALL.
      * @override
      * @param {any} data
-     * @returns {Promise<CResult>}
+     * @returns {Promise<CResult>} The result of the transaction.
+     * {@link codemelted.CResult}
      */
     async post_message(data) { throw API_NOT_IMPLEMENTED; }
 
@@ -1689,6 +1715,7 @@ globalThis["codemelted"] = (function() {
   /**
    * Implements the orientation protocol to determine your application's
    * position in 3D space based on the sensors on the device.
+   * {@link codemelted.CProtocolHandler}
    * @memberof codemelted
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/deviceorientation_event
@@ -1733,6 +1760,7 @@ globalThis["codemelted"] = (function() {
      * @override
      * @param {any} data
      * @returns {Promise<CResult>}
+     * {@link codemelted.CResult}
      */
     post_message(data) { throw API_NOT_IMPLEMENTED; }
 
@@ -1765,9 +1793,10 @@ globalThis["codemelted"] = (function() {
 
       // Setup to listen for device orientation changes.
       // @ts-ignore Object exists in browser runtime.
-      this.#onDeviceOrientation = (/** @type {DeviceOrientationEvent} */ e) => {
-        this.#data.updateDeviceOrientation(e);
-      };
+      this.#onDeviceOrientation =
+        (/** @type {DeviceOrientationEvent} */ e) => {
+          this.#data.updateDeviceOrientation(e);
+        };
       // @ts-ignore Object exists in browser runtime.
       globalThis.addEventListener(
         "deviceorientation",
@@ -1795,7 +1824,7 @@ globalThis["codemelted"] = (function() {
    * connection to the requested serial port connected to the host computer.
    * With the opened serial port, utilize the [CSerialPort::get_message] and
    * [CSerialPort::post_message] to interact with the port until it is
-   * [CSerialPort::terminate].
+   * [CSerialPort::terminate]. {@link codemelted.CProtocolHandler}
    * @memberof codemelted
    * @extends {CProtocolHandler}
    */
@@ -1806,11 +1835,13 @@ globalThis["codemelted"] = (function() {
     /**
      * Reads the requested data from the currently connected serial port.
      * @override
-     * @param {string} request The {@link SERIAL_PORT_DATA_REQUEST} to read the current
-     * state of the serial port or actual data. The supported items to query are
+     * @param {string} request The
+     * {@link codemelted.SERIAL_PORT_DATA_REQUEST} to read  the current state
+     * of the serial port or actual data. The supported items to query are
      * ClearToSend, CarrierDetect, DataSetReady, RingIndicator, and DataBytes.
-     * @returns {Promise<CResult>} holding the data associated with the request.
-     * A rejected promise is the result of an API violation.
+     * @returns {Promise<CResult>} holding the data associated with the
+     * request. A rejected promise is the result of an API violation.
+     * {@link codemelted.CResult}
      */
     async get_message(request) {
       try {
@@ -1868,18 +1899,21 @@ globalThis["codemelted"] = (function() {
     }
 
     /**
-     * Will process the data request and perform the requested transaction with
-     * the connected serial port returning a result of if it was successfully
-     * carried out.
+     * Will process the data request and perform the requested transaction
+     * with the connected serial port returning a result of if it was
+     * successfully carried out.
      * @override
-     * @param {CSerialPortPostRequest} data The request to make to the connected
-     * serial port with associated data.
+     * @param {CSerialPortPostRequest} data The request to make to the
+     * connected serial port with associated data.
+     * {@link codemelted.CSerialPortPostRequest}
      * @return {Promise<CResult>} The result of the posted data to the port.
      * A rejected promise is the result of an API violation.
+     * {@link codemelted.CResult}
      */
     async post_message(data) {
       try {
-        codemelted.json_check_type({type: "object", data: data, shouldThrow: true});
+        codemelted.json_check_type({type: "object", data: data,
+          shouldThrow: true});
         let request = data.request;
         switch (request) {
           case SERIAL_PORT_DATA_REQUEST.DataTerminalReady:
@@ -1955,6 +1989,7 @@ globalThis["codemelted"] = (function() {
   /**
    * Provides the API for creating and managing a WebSocket connection to a
    * server, as well as for sending and receiving data on the connection.
+   * {@link codemelted.CProtocolHandler}
    * @memberof codemelted
    * @see https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
    * @extends {CProtocolHandler}
@@ -2024,8 +2059,9 @@ globalThis["codemelted"] = (function() {
      * Gets the latest data received from the protocol.
      * @override
      * @param {string} [request=""] NOT USED.
-     * @returns {Promise<CResult>} The result containing the given information.
-     * Errors are processed first if they have been received.
+     * @returns {Promise<CResult>} The result containing the given
+     * information. Errors are processed first if they have been received.
+     * {@link codemelted.CResult}
      */
     async get_message(request="") {
       if (!this.is_running) {
@@ -2063,11 +2099,12 @@ globalThis["codemelted"] = (function() {
      * the socket is closed automatically.
      * @see https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send#data
      * @override
-     * @param {string | ArrayBuffer | Blob } data Data to send to the server for
-     * further processing.
+     * @param {string | ArrayBuffer | Blob } data Data to send to the server
+     * for further processing.
      * @returns {Promise<CResult>} The result of the transmission. A failure
      * will result in a disconnect and reconnect of the underlying protocol
      * socket.
+     * {@link codemelted.CResult}
      */
     async post_message(data) {
       if (!this.is_running) {
@@ -2176,6 +2213,7 @@ globalThis["codemelted"] = (function() {
    * @memberof codemelted
    * @callback CLogHandler
    * @param {CLogRecord} record The record logged.
+   * {@link codemelted.CLogRecord}
    * @returns {void}
    */
 
@@ -2189,12 +2227,13 @@ globalThis["codemelted"] = (function() {
 
   /**
    * The data that supports a [CSerialPortProtocol::get_message] or
-   * [CSerialPortProtocol::post_message] function calls to communicate with the
-   * connected serial port.
+   * [CSerialPortProtocol::post_message] function calls to communicate with
+   * the connected serial port.
    * @memberof codemelted
    * @typedef {object} CSerialPortPostRequest
-   * @property {string} request The {@link SERIAL_PORT_DATA_REQUEST} to either
-   * read or write to the serial port via the [CSerialPortProtocol].
+   * @property {string} request The
+   * {@link codemelted.SERIAL_PORT_DATA_REQUEST} to either read or write to
+   * the serial port via the [CSerialPortProtocol].
    * @property {any} data The data associated with the request.
    */
 
@@ -2482,6 +2521,7 @@ globalThis["codemelted"] = (function() {
 
   /**
    * Holds the logger handler for post logging events.
+   * {@link codemelted.CLogHandler}
    * @memberof codemelted
    * @private
    * @type {CLogHandler?}
@@ -2533,16 +2573,42 @@ globalThis["codemelted"] = (function() {
     // ========================================================================
 
     /**
+     * Will put a currently running async task to sleep for a specified delay
+     * in milliseconds.
+     * @memberof codemelted
+     * @param {number} delay Time is milliseconds to delay the task.
+     * @returns {Promise<void>} The promise to await on for the delay.
+     * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
+     * {@link codemelted.API_NOT_IMPLEMENTED},
+     * {@link codemelted.API_TYPE_VIOLATION}, or
+     * {@link codemelted.API_UNSUPPORTED_RUNTIME} codemelted.js module API
+     * violations. You should not try-catch these as they serve as asserts
+     * to the developer.
+     * @example
+     * // From within an async function, sleep 2 seconds.
+     * await codemelted.async_sleep(2000);
+     */
+    async_sleep: function(delay) {
+      this.json_check_type({type: "number", data: delay, shouldThrow: true});
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve();
+        }, delay);
+      });
+    },
+
+    /**
      * Will execute an asynchronous task with the ability to delay it into the
      * future and return a result if necessary.
      * @memberof codemelted
      * @param {object} params The named parameters.
      * @param {CTaskCB} params.task The task to run.
+     * {@link codemelted.CTaskCB}
      * @param {any} [params.data] The optional data to pass to the task.
      * @param {number} [params.delay=0] The delay to schedule the task in the
      * future.
      * @returns {Promise<CResult>} A future promise with the result of the
-     * task.
+     * task. {@link codemelted.CResult}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -2571,11 +2637,12 @@ globalThis["codemelted"] = (function() {
      * Creates an asynchronous repeating task on the main thread.
      * @memberof codemelted
      * @param {object} params The named parameters.
-     * @param {CTimerCB} params.task The task to run on the specified interval.
+     * @param {CTimerCB} params.task The task to run on the specified
+     * interval. {@link codemelted.CTimerCB}
      * @param {number} params.interval The interval in milliseconds to repeat
      * the given task.
-     * @returns {CTimerResult} The timer that runs the task on the specified
-     * interval.
+     * @returns {CTimerResult} The timer that runs the task on
+     * the specified interval. {@link codemelted.CTimerResult}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -2592,7 +2659,8 @@ globalThis["codemelted"] = (function() {
         count: 0,
         shouldThrow: true
       });
-      this.json_check_type({type: "number", data: interval, shouldThrow: true});
+      this.json_check_type({type: "number", data: interval,
+        shouldThrow: true});
       return new CTimerResult(task, interval);
     },
 
@@ -2610,31 +2678,6 @@ globalThis["codemelted"] = (function() {
      */
     async_worker: function() {
       throw API_NOT_IMPLEMENTED;
-    },
-
-    /**
-     * Will put a currently running async task to sleep for a specified delay
-     * in milliseconds.
-     * @memberof codemelted
-     * @param {number} delay Time is milliseconds to delay the task.
-     * @returns {Promise<void>} The promise to await on for the delay.
-     * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
-     * {@link codemelted.API_NOT_IMPLEMENTED},
-     * {@link codemelted.API_TYPE_VIOLATION}, or
-     * {@link codemelted.API_UNSUPPORTED_RUNTIME} codemelted.js module API
-     * violations. You should not try-catch these as they serve as asserts
-     * to the developer.
-     * @example
-     * // From within an async function, sleep 2 seconds.
-     * await codemelted.async_sleep(2000);
-     */
-    async_sleep: function(delay) {
-      this.json_check_type({type: "number", data: delay, shouldThrow: true});
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve();
-        }, delay);
-      });
     },
 
     // ========================================================================
@@ -2657,7 +2700,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     console_alert: function(message = "") {
-      this.json_check_type({type: "string", data: message, shouldThrow: true});
+      this.json_check_type({type: "string", data: message,
+        shouldThrow: true});
       if (this.runtime_is_deno()) {
         globalThis.alert(message);
       } else if (this.runtime_is_nodejs()) {
@@ -2667,8 +2711,8 @@ globalThis["codemelted"] = (function() {
     },
 
     /**
-     * Prompts (via STDOUT) for a user to make a choice (via STDIN) between an
-     * array of choices
+     * Prompts (via STDOUT) for a user to make a choice (via STDIN) between
+     * an array of choices
      * @memberof codemelted
      * @param {object} params The named parameters.
      * @param {string} [params.message=""] The message to write to STDOUT.
@@ -2685,7 +2729,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     console_choose: function({message = "", choices}) {
-      this.json_check_type({type: "string", data: message, shouldThrow: true});
+      this.json_check_type({type: "string", data: message,
+        shouldThrow: true});
       this.json_check_type({type: Array, data: choices, shouldThrow: true});
       if (this.runtime_is_deno()) {
         const prompt = message.trim().length > 0
@@ -2734,7 +2779,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     console_confirm: function(message = "") {
-      this.json_check_type({type: "string", data: message, shouldThrow: true});
+      this.json_check_type({type: "string", data: message,
+        shouldThrow: true});
       if (this.runtime_is_deno()) {
         const prompt = message.trim().length > 0
           ? message
@@ -2761,7 +2807,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     console_password: function(message = "") {
-      this.json_check_type({type: "string", data: message, shouldThrow: true});
+      this.json_check_type({type: "string", data: message,
+        shouldThrow: true});
       if (this.runtime_is_deno()) {
         const prompt = message.trim().length > 0
           ? message
@@ -2807,7 +2854,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     console_prompt: function(message = "") {
-      this.json_check_type({type: "string", data: message, shouldThrow: true});
+      this.json_check_type({type: "string", data: message,
+        shouldThrow: true});
       if (this.runtime_is_deno()) {
         const prompt = message.trim().length > 0
           ? message
@@ -2835,7 +2883,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     console_writeln: function(message = "") {
-      this.json_check_type({type: "string", data: message, shouldThrow: true});
+      this.json_check_type({type: "string", data: message,
+        shouldThrow: true});
       if (this.runtime_is_deno() || this.runtime_is_nodejs()) {
         globalThis.console.log(message);
       }
@@ -2982,7 +3031,8 @@ globalThis["codemelted"] = (function() {
      * Determines if the specified item (filename or directory) exists.
      * @memberof codemelted
      * @param {string} filename The source item to copy.
-     * @returns {CFileInfo?} Identifying success (exists) or null if not found.
+     * @returns {CFileInfo?} Identifying success (exists) or null
+     * if not found. {@link codemelted.CFileInfo}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -2993,7 +3043,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     disk_exists: function(filename) {
-      this.json_check_type({type: "string", data: filename, shouldThrow: true});
+      this.json_check_type({type: "string", data: filename,
+        shouldThrow: true});
       if (this.runtime_is_deno()) {
         try {
           // @ts-ignore Will exist in Deno runtime.
@@ -3010,7 +3061,8 @@ globalThis["codemelted"] = (function() {
      * List the files in the specified source location.
      * @memberof codemelted
      * @param {string} path The directory to list.
-     * @returns {CFileInfo[]?} Identifying success (exists) or null if not found.
+     * @returns {CFileInfo[]?} Identifying success (exists) or null if not
+     * found.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -3045,8 +3097,8 @@ globalThis["codemelted"] = (function() {
      * Makes a directory at the specified location.
      * @memberof codemelted
      * @param {string} path The directory to create.
-     * @returns {CResult} Identifying success (created) or an error specifying why
-     * the creation failed.
+     * @returns {CResult} Identifying success (created) or an error
+     * specifying why the creation failed.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -3113,7 +3165,7 @@ globalThis["codemelted"] = (function() {
      * @param {boolean} [params.isTextFile=false] Identifies whether to retrieve
      * the data as Uint8Array or as a string.
      * @returns {Promise<CResult>} The result containing the requested data or
-     * reason for failure.
+     * reason for failure. {@link codemelted.CResult}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -3125,7 +3177,8 @@ globalThis["codemelted"] = (function() {
      */
     disk_read_file: function({filename, accept="", isTextFile=false}) {
       this.json_check_type({type: "string", data: accept, shouldThrow: true});
-      this.json_check_type({type: "boolean", data: isTextFile, shouldThrow: true});
+      this.json_check_type({type: "boolean", data: isTextFile,
+        shouldThrow: true});
       if (this.runtime_is_browser()) {
         return new Promise((resolve) => {
           try {
@@ -3151,7 +3204,8 @@ globalThis["codemelted"] = (function() {
                   resolve(new CResult({value: data}));
                 }
               } else {
-                resolve(new CResult({error: "Failed to read the specified file"}));
+                resolve(new CResult({
+                  error: "Failed to read the specified file"}));
               }
             }
             input.click();
@@ -3191,7 +3245,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     disk_rm: function(filename) {
-      this.json_check_type({type: "string", data: filename, shouldThrow: true});
+      this.json_check_type({type: "string", data: filename,
+        shouldThrow: true});
       if (this.runtime_is_deno()) {
         try {
           // @ts-ignore Will exist in the Deno Runtime.
@@ -3205,16 +3260,17 @@ globalThis["codemelted"] = (function() {
     },
 
     /**
-     * Saves an entire file to the host operating system disk. For browser runtime
-     * this will get saved to the download folder of the given operating system.
+     * Saves an entire file to the host operating system disk. For browser
+     * runtime this will get saved to the download folder of the given
+     * operating system.
      * @memberof codemelted
      * @param {object} params The named parameters
      * @param {string} params.filename The path and filename on disk.
      * @param {string | Uint8Array} params.data The data to save to disk.
      * @param {boolean} [params.append=false] Whether to append data to an
      * existing file or not. Only valid for Deno / NodeJS runtimes.
-     * @returns {Promise<CResult>} Signaling success or capturing the reason for
-     * failure.
+     * @returns {Promise<CResult>} Signaling success or capturing the reason
+     * for failure. {@link codemelted.CResult}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -3225,7 +3281,8 @@ globalThis["codemelted"] = (function() {
      * // TBD
      */
     disk_write_file: function({filename, data, append=false}) {
-      this.json_check_type({type: "string", data: filename, shouldThrow: true});
+      this.json_check_type({type: "string", data: filename,
+        shouldThrow: true});
       if (filename.length === 0) {
         throw API_MISUSE;
       }
@@ -3390,8 +3447,9 @@ globalThis["codemelted"] = (function() {
      * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition#options
      * @param {object} [options] The options for tuning the protocol to
      * watch for geolocation position updates.
-     * @return {COrientationProtocol} The protocol that handles device
-     * orientation changes until terminated.
+     * @return {COrientationProtocol} The protocol that handles
+     * device orientation changes until terminated.
+     * {@link codemelted.COrientationProtocol}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -3412,8 +3470,9 @@ globalThis["codemelted"] = (function() {
      * Provides the mechanism to request permission to connect to an attached
      * serial port device.
      * @memberof codemelted
-     * @returns {Promise<CSerialPortProtocol?>} The requested connected serial
-     * port or null if request was canceled or could not be connected.
+     * @returns {Promise<CSerialPortProtocol?>} The requested
+     * connected serial port or null if request was canceled or could not be
+     * connected. {@link codemelted.CSerialPortProtocol}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -3531,7 +3590,7 @@ globalThis["codemelted"] = (function() {
     },
 
     /**
-     * Creates a Base64-encoded ASCII string from a binary string (i.e., a
+     * Creates a Base64-encoded ASCII string from a binary string (i.e. a
      * string in which each character in the string is treated as a byte of
      * binary data).
      * @memberof codemelted
@@ -3557,8 +3616,8 @@ globalThis["codemelted"] = (function() {
     },
 
     /**
-     * Creates a JavaScript compliant JSON array with ability to copy data from
-     * a previous array.
+     * Creates a JavaScript compliant JSON array with ability to copy data
+     * from a previous array.
      * @memberof codemelted
      * @param {any[]} [data] An optional array of data to copy
      * @returns {any[]} The newly created array with optional data.
@@ -3607,11 +3666,11 @@ globalThis["codemelted"] = (function() {
      * Utility to check parameters of a function to ensure they are of an
      * expected type.
      * @memberof codemelted
-     * @param {object} params
+     * @param {object} params The named parameters
      * @param {string | any} params.type
      * @param {any} params.data The parameter to be checked.
-     * @param {number} [params.count] Checks the v parameter function signature
-     * to ensure the appropriate number of parameters are specified.
+     * @param {number} [params.count] Checks the v parameter function
+     * signature to ensure the appropriate number of parameters are specified.
      * @param {boolean} [params.shouldThrow=false] Whether to throw instead of
      * returning a value upon failure.
      * @returns {boolean} true if it meets the expectations, false otherwise.
@@ -3652,8 +3711,8 @@ globalThis["codemelted"] = (function() {
      * @param {object} params
      * @param {object} params.data The object to check.
      * @param {string} params.key The property to find.
-     * @param {boolean} [params.shouldThrow=false] Whether to throw instead of
-     * returning a value upon failure.
+     * @param {boolean} [params.shouldThrow=false] Whether to throw instead
+     * of returning a value upon failure.
      * @returns {boolean} true if property was found, false otherwise.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
@@ -3723,9 +3782,10 @@ globalThis["codemelted"] = (function() {
      * Checks for a valid URL.
      * @memberof codemelted
      * @param {object} params
-     * @param {string} params.data String to parse to see if it is a valid URL.
-     * @param {boolean} [params.shouldThrow=false] Whether to throw instead of
-     * returning a value upon failure.
+     * @param {string} params.data String to parse to see if it is a valid
+     * URL.
+     * @param {boolean} [params.shouldThrow=false] Whether to throw instead
+     * of returning a value upon failure.
      * @returns {boolean} true if valid, false otherwise.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
@@ -3759,6 +3819,7 @@ globalThis["codemelted"] = (function() {
      * Sets the logger handler for post logging processing.
      * @memberof codemelted
      * @param {CLogHandler | null} handler The handler to utilize.
+     * {@link codemelted.CLogHandler}
      * @returns {void}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
@@ -3782,8 +3843,8 @@ globalThis["codemelted"] = (function() {
     /**
      * Sets / retrieves the current module log level.
      * @memberof codemelted
-     * @param {object | undefined} [level] The optional log level to set based on
-     * the [CLogLevel] object configuration.
+     * @param {object | undefined} [level] The optional log level to set
+     * based on the {@link codemelted LOGGER} object configuration.
      * @returns {string} The string representation of the log level.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
@@ -3796,7 +3857,8 @@ globalThis["codemelted"] = (function() {
      */
     logger_level: function(level) {
       if (level) {
-        this.json_check_type({type: "object", data: level, shouldThrow: true});
+        this.json_check_type({type: "object", data: level,
+          shouldThrow: true});
         this.json_has_key({data: level, key: "level", shouldThrow: true});
         this.json_has_key({data: level, key: "label", shouldThrow: true});
         _loggerLevel = level;
@@ -3928,12 +3990,14 @@ globalThis["codemelted"] = (function() {
      * data with other items within the network / Internet.
      * @memberof codemelted
      * @param {object} params The named parameters.
-     * @param {string} params.request The {@link CONNECT_REQUEST} protocol to
-     * connect.
+     * @param {string} params.request The {@link codemelted.CONNECT_REQUEST}
+     * protocol to connect.
      * @param {string} params.url The server hosting the protocol to connect.
-     * @returns {CBroadcastChannelProtocol | CEventSourceProtocol
-     *  | CWebSocketProtocol } The protocol to communicate with the connected
-     * server.
+     * @returns {CBroadcastChannelProtocol | CEventSourceProtocol |
+     * CWebSocketProtocol } The protocol to communicate with the connected
+     * server. {@link codemelted.CBroadcastChannelProtocol},
+     * {@link codemelted.CEventSourceProtocol},
+     * {@link codemelted.CWebSocketProtocol}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -3961,10 +4025,12 @@ globalThis["codemelted"] = (function() {
      * @memberof codemelted
      * @see https://developer.mozilla.org/en-US/docs/Web/API/RequestInit
      * @param {object} params The named parameters
-     * @param {string} params.url The URL to the server REST API to communicate.
-     * @param {object} params.options The data to configure / go along with the
-     * request. See the attached URL for detailed
+     * @param {string} params.url The URL to the server REST API to
+     * communicate.
+     * @param {object} params.options The data to configure / go along with
+     * the request. See the attached URL for detailed
      * @returns {Promise<CFetchResult>} The result of the request.
+     * {@link codemelted.CFetchResult}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -3999,15 +4065,17 @@ globalThis["codemelted"] = (function() {
      * @memberof codemelted
      * @see https://docs.deno.com/api/deno/~/Deno.TlsCertifiedKeyPem
      * @param {object} params The named parameters.
-     * @param {CNetworkServeCB} params.handler The callback to determine what to
-     * do with the request and communicate a response.
+     * @param {CNetworkServeCB} params.handler The callback to
+     * determine what to do with the request and communicate a response.
+     * {@link codemelted.CNetworkServeCB}
      * @param {string} [params.hostname="0.0.0.0"] The binding address of the
      * REST API.
      * @param {number} [params.port=8000] The binding port of the REST API.
-     * @param {string} [params.key] Private key in PEM format. RSA, EC, and PKCS8-format keys
-     * are supported.
+     * @param {string} [params.key] Private key in PEM format. RSA, EC, and
+     * PKCS8-format keys are supported.
      * @param {string} [params.cert] Certificate chain in PEM format.
      * @returns {CHttpServer} The constructed server.
+     * {@link codemelted.CHttpServer}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -4033,7 +4101,8 @@ globalThis["codemelted"] = (function() {
         count: 1,
         shouldThrow: true
       });
-      this.json_check_type({type: "string", data: hostname, shouldThrow: true});
+      this.json_check_type({type: "string", data: hostname,
+        shouldThrow: true});
       this.json_check_type({type: "number", data: port, shouldThrow: true});
       let serveOptions = {
         hostname: hostname,
@@ -4055,8 +4124,8 @@ globalThis["codemelted"] = (function() {
      * Upgrade an incoming HTTP request to a WebSocket.
      * @memberof codemelted
      * @param {Request} req The initial request asking to upgrade to a
-     * @returns {CResult} The result of the upgrade with a CWebSocketProtocol or
-     * the error if the upgrade failed.
+     * @returns {CResult} The result of the upgrade with a
+     * CWebSocketProtocol or the error if the upgrade failed.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -4072,7 +4141,8 @@ globalThis["codemelted"] = (function() {
           // @ts-ignore upgradeWebSocket will be available.
           globalThis.upgradeWebSocket(req);
         if (response.ok) {
-          return new CResult({value: new CWebSocketProtocol({socket: socket})});
+          return new CResult({
+            value: new CWebSocketProtocol({socket: socket})});
         } else {
           return new CResult({
             error: `Failed to upgrade to a web socket ${response.status}`
@@ -4261,16 +4331,18 @@ globalThis["codemelted"] = (function() {
     // TODO: EVENT_REQUEST enum
 
     /**
-     * Adds or removes an event listener to the JavaScript runtime or individual
-     * element.
+     * Adds or removes an event listener to the JavaScript runtime or
+     * individual element.
      * @memberof codemelted
      * @param {object} params The named parameters.
-     * @param {string} params.action Whether to "add" or "remove" the listener.
+     * @param {string} params.action Whether to "add" or "remove" the
+     * listener.
      * @param {string} params.type The event listener identifier.
-     * @param {CEventHandler} params.listener The listener called when the
-     * identified event is triggered or being removed.
-     * @param {EventSource} [params.obj] An optional element to attach an event
-     * handler to if it supports it.
+     * @param {CEventHandler} params.listener The listener called
+     * when the identified event is triggered or being removed.
+     * {@link codemelted.CEventHandler}
+     * @param {EventSource} [params.obj] An optional element to attach an
+     * event handler to if it supports it.
      * @returns {void}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
@@ -4536,7 +4608,7 @@ globalThis["codemelted"] = (function() {
      * Gets the path separator of directories on disk.
      * @memberof codemelted
      * @returns {string} representing the separation.
-      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
+     * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
      * {@link codemelted.API_UNSUPPORTED_RUNTIME} codemelted.js module API
@@ -4606,7 +4678,8 @@ globalThis["codemelted"] = (function() {
     /**
      * Clears the local storage of the module.
      * @memberof codemelted
-     * @param {string} [type=STORAGE_TYPE.Local] The STORAGE_TYPE to act upon.
+     * @param {string} [type=STORAGE_TYPE.Local] The
+     * {@link codemelted.STORAGE_TYPE} to act upon.
      * @returns {void}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
@@ -4640,8 +4713,8 @@ globalThis["codemelted"] = (function() {
      * Gets the value associated with the key from the module's local storage.
      * @memberof codemelted
      * @param {object} params The named parameters.
-     * @param {string} [params.type=STORAGE_TYPE.Local] The STORAGE_TYPE to act
-     * upon.
+     * @param {string} [params.type=STORAGE_TYPE.Local] The
+     * {@link codemelted.STORAGE_TYPE} to act upon.
      * @param {string} params.key The key to search.
      * @returns {string?} The value associated with the key if found.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
@@ -4674,8 +4747,8 @@ globalThis["codemelted"] = (function() {
      * Retrieves the key at the specified index.
      * @memberof codemelted
      * @param {object} params The named parameters
-     * @param {string} [params.type=STORAGE_TYPE.Local] The STORAGE_TYPE to act
-     * upon.
+     * @param {string} [params.type=STORAGE_TYPE.Local] The
+     * {@link codemelted.STORAGE_TYPE} to act upon.
      * @param {number} params.index The key entry to look up.
      * @returns {string?} The key at the specified index or null if beyond the
      * storage capacity.
@@ -4712,7 +4785,8 @@ globalThis["codemelted"] = (function() {
     /**
      * Retrieves the number of entries within the module's local storage.
      * @memberof codemelted
-     * @param {string} [type=STORAGE_TYPE.Local] The STORAGE_TYPE to act upon.
+     * @param {string} [type=STORAGE_TYPE.Local] The
+     * {@link codemelted.STORAGE_TYPE} to act upon.
      * @returns {number} The number of entries.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
@@ -4743,8 +4817,8 @@ globalThis["codemelted"] = (function() {
      * Removes a given entry from the module's local storage.
      * @memberof codemelted
      * @param {object} params The named parameters.
-     * @param {string} [params.type=STORAGE_TYPE.Local] The STORAGE_TYPE to act
-     * upon.
+     * @param {string} [params.type=STORAGE_TYPE.Local] The
+     * {@link codemelted.STORAGE_TYPE} to act upon.
      * @param {string} params.key The key to remove.
      * @returns {void}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
@@ -4780,8 +4854,8 @@ globalThis["codemelted"] = (function() {
      * Sets a key/value pair within the module's local storage.
      * @memberof codemelted
      * @param {object} params The named parameters
-     * @param {string} [params.type=STORAGE_TYPE.Local] The STORAGE_TYPE to act
-     * upon.
+     * @param {string} [params.type=STORAGE_TYPE.Local] The
+     * {@link codemelted.STORAGE_TYPE} to act upon.
      * @param {string} params.value The storage entry.
      * @param {string} params.key The key to store.
      * @returns {void}
@@ -4823,25 +4897,22 @@ globalThis["codemelted"] = (function() {
      * Provides the ability to carry out actions with the open browser window.
      * @memberof codemelted
      * @param {object} params The named parameters.
-     * @param {string} params.request The {@link ACTION_REQUEST} enumerated value
-     * to carry out with the open browser window.
+     * @param {string} params.request The {@link codemelted.ACTION_REQUEST}
+     * enumerated value to carry out with the open browser window.
      * @param {object} [params.options] The optional data associated with the
-     * Share / OpenFilePicker / SaveFilePicker requests. See <ul>
-     * <li> https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share#data </li>
-     * <li> https://developer.mozilla.org/en-US/docs/Web/API/Window/showOpenFilePicker#parameters </li>
-     * <li> https://developer.mozilla.org/en-US/docs/Web/API/Window/showSaveFilePicker#parameters </li>
-     * </ul>
-     * @param {number[]} [params.pattern] Provides a pattern of vibration and pause
-     * intervals. Each value indicates a number of milliseconds to vibrate or pause,
-     * in alternation.
-     * @param {number} [params.x] An X coordinate or delta coordinate for a given
-     * action that moves / sets position of the browser window or item on the
-     * browser window.
-     * @param {number} [params.y] An X coordinate or delta coordinate for a given
-     * action that moves / sets position of the browser window or item on the
-     * browser window.
+     * Share / OpenFilePicker / SaveFilePicker requests. See
+     * https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share#data
+     * @param {number[]} [params.pattern] Provides a pattern of vibration and
+     * pause intervals. Each value indicates a number of milliseconds to
+     * vibrate or pause, in alternation.
+     * @param {number} [params.x] An X coordinate or delta coordinate for a
+     * given action that moves / sets position of the browser window or item
+     * on the browser window.
+     * @param {number} [params.y] An X coordinate or delta coordinate for a
+     * given action that moves / sets position of the browser window or item
+     * on the browser window.
      * @returns {Promise<CResult>} Reflecting success or failure of the given
-     * request.
+     * request. {@link codemelted.CResult}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -4915,7 +4986,8 @@ globalThis["codemelted"] = (function() {
             return new CResult({error: err});
           }
         case ACTION_REQUEST.Vibrate:
-          this.json_check_type({type: Array, data: pattern, shouldThrow: true});
+          this.json_check_type({type: Array, data: pattern,
+            shouldThrow: true});
           try {
             // @ts-ignore Will exist in the browser context
             globalThis.navigator.vibrate(pattern);
@@ -4929,15 +5001,16 @@ globalThis["codemelted"] = (function() {
     },
 
     /**
-     * Constructs a [CAudioPlayer] to assist in either performing text to speech
-     * or playback of an audio file.
+     * Constructs a [CAudioPlayer] to assist in either performing text to
+     * speech or playback of an audio file.
      * @memberof codemelted
      * @param {object} params The named parameters.
-     * @param {string} params.request The {@link AUDIO_REQUEST} to carry out.
-     * @param {string} params.data The string url for audio file or string of text
-     * to perform text to speech.
+     * @param {string} params.request The {@link codemelted.AUDIO_REQUEST}
+     * to carry out.
+     * @param {string} params.data The string url for audio file or string of
+     * text to perform text to speech.
      * @returns {CAudioPlayer} Reflecting success or failure of the given
-     * request.
+     * request. {@link codemelted.CAudioPlayer}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -4959,10 +5032,11 @@ globalThis["codemelted"] = (function() {
      * occurring with their HTML document.
      * @memberof codemelted
      * @param {object} params The named parameters
-     * @param {string} params.request The {@link DIALOG_REQUEST} to carry out.
+     * @param {string} params.request The {@link codemelted.DIALOG_REQUEST}
+     * to carry out.
      * @param {string} params.title A unique way of identifying the dialog.
-     * @param {string | HTMLElement} [params.message] The message to use with all
-     * DIALOG_REQUEST options except .Browser / .Close / .Loading
+     * @param {string | HTMLElement} [params.message] The message to use with
+     * all DIALOG_REQUEST options except .Browser / .Close / .Loading
      * @param {string[]} [params.choices=[]] The choices to utilize with the
      * DIALOG_REQUEST.Choose option.
      * @param {any} [params.returnValue] The optional value to pass along with
@@ -4972,6 +5046,7 @@ globalThis["codemelted"] = (function() {
      * @param {string} [params.height] The optional height to set of the dialog
      * either by percentage or pixel.
      * @returns {Promise<CResult>} The returned value from the dialog.
+     * {@link codemelted.CResult}
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
      * {@link codemelted.API_NOT_IMPLEMENTED},
      * {@link codemelted.API_TYPE_VIOLATION}, or
@@ -4997,8 +5072,8 @@ globalThis["codemelted"] = (function() {
       this.json_check_type({type: "string", data: request, shouldThrow: true});
       this.json_check_type({type: "string", data: title, shouldThrow: true});
       if (!this.json_check_type({type: "string", data: message}) &&
-          // @ts-ignore This will exist in a browser context
-          !this.json_check_type({type: globalThis.HTMLElement, data: message})) {
+        // @ts-ignore This will exist in a browser context
+        !this.json_check_type({type: globalThis.HTMLElement, data: message})) {
         throw API_TYPE_VIOLATION;
       }
       const id = title.replace(/\s/g, '');
@@ -5114,7 +5189,8 @@ globalThis["codemelted"] = (function() {
               };
 
               // @ts-ignore Will exist in the browser context
-              const cmbSelect = globalThis.document.getElementById(`${id}Select`);
+              const cmbSelect = globalThis.document.getElementById(
+                `${id}Select`);
               // @ts-ignore Will exist in the browser context
               const ok = globalThis.document.getElementById(`${id}OK`);
               // @ts-ignore Will not be null
@@ -5312,8 +5388,8 @@ globalThis["codemelted"] = (function() {
      * Boolean queries of the given browser runtime to discovery different
      * features about the given browser window.
      * @memberof codemelted
-     * @param {string} request {@link IS_REQUEST} enumerated value of different
-     * browser properties.
+     * @param {string} request {@link codemelted.IS_REQUEST} enumerated value
+     * of different browser properties.
      * @returns {boolean} true if the given property is supported, false
      * otherwise.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},
@@ -5348,10 +5424,11 @@ globalThis["codemelted"] = (function() {
      * Wraps the browser provided messaging mechanisms.
      * @memberof codemelted
      * @param {object} params The named parameters
-     * @param {string} params.request  {@link MESSAGE_REQUEST} enumerated value
-     * identifying the type of messaging to perform.
-     * @param {string | any} params.data String for the Alert / Confirm / Prompt
-     * request. Serializable data for Post communication between browser windows.
+     * @param {string} params.request  {@link codemelted.MESSAGE_REQUEST}
+     * enumerated value identifying the type of messaging to perform.
+     * @param {string | any} params.data String for the Alert / Confirm /
+     * Prompt request. Serializable data for Post communication between
+     * browser windows.
      * @param {string} [params.targetOrigin="*"] Which window to send the data
      * when utilizing the Post request. Not setting it will send to all open
      * windows.
@@ -5443,7 +5520,8 @@ globalThis["codemelted"] = (function() {
       if (!this.runtime_is_browser()) {
         throw API_UNSUPPORTED_RUNTIME;
       }
-      this.json_check_type({type: "boolean", data: popupWindow, shouldThrow: true});
+      this.json_check_type({type: "boolean", data: popupWindow,
+        shouldThrow: true});
       this.json_check_type({type: "string", data: target, shouldThrow: true});
       this.json_check_type({type: "number", data: width, shouldThrow: true});
       this.json_check_type({type: "number", data: height, shouldThrow: true});
@@ -5526,11 +5604,11 @@ globalThis["codemelted"] = (function() {
     },
 
     /**
-     * Provides a mechanism for discovering information about the current browser
-     * screen the web app is running in.
+     * Provides a mechanism for discovering information about the current
+     * browser screen the web app is running in.
      * @memberof codemelted
-     * @param {string} request {@link SCREEN_REQUEST} enumerated value identifying the
-     * different aspects to request information about.
+     * @param {string} request {@link codemelted.SCREEN_REQUEST} enumerated
+     * value identifying the different aspects to request information about.
      * @returns {number | string} Number for all requests except
      * ScreenOrientationType request.
      * @throws {SyntaxError} Reflecting either {@link codemelted.API_MISUSE},

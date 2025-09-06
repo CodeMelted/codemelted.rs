@@ -5,6 +5,7 @@
     "copyhistory",
     "genhtml",
     "mdbook",
+    "nread",
     "ntime"
   ]
 }
