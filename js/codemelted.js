@@ -4475,9 +4475,9 @@ class CDialog {
     // @ts-ignore In browser context, will not be null
     dlg.close();
     // @ts-ignore In browser context, will not be null
-    dlg.style.display = "none";
+    const divDialog = globalThis.document.getElementById(`div_${id}`);
     // @ts-ignore In browser context, will not be null
-    globalThis.document.body.removeChild(dlg);
+    globalThis.document.body.removeChild(divDialog);
   }
 
   /**
@@ -4487,20 +4487,23 @@ class CDialog {
    * @param {string} id The HTML node id that is unique on the page
    * @param {string} title The title to display in the title bar.
    * @param {string} content The HTML content to display
-   * @param {string} [width] The width as px / % to size the dialog to.
+   * @param {string} [width="250px"] The width as px / % to size the dialog to.
    * @param {string} [height] The width as px / % to size the dialog to.
    * @returns {void}
    */
-  static show(icon, id, title, content, width, height) {
-    const style = `
+  static show(icon, id, title, content, width="250px", height) {
+    const html = `
       <style>
         .codemelted-dialog {
           flex-flow: column;
           border: 5px solid black;
           padding: 0;
+          width: ${width};
+          height: ${height};
+          overflow: hidden;
         }
-        .codemelted-dialog::backdrop {
-          background: rgba(0, 0, 0, 0.25);
+        dialog::backdrop {
+          background: rgba(0, 0, 0, 0.50);
         }
         .codemelted-dialog-title {
           flex: 0 1 auto;
@@ -4515,6 +4518,7 @@ class CDialog {
           border-bottom: 3px solid black;
         }
         .codemelted-dialog-title button {
+          margin-left: 5px;
           cursor: pointer;
         }
         .codemelted-dialog-content {
@@ -4532,6 +4536,7 @@ class CDialog {
         .codemelted-dialog-content input[type=text] {
           margin-left: 10px;
           margin-right: 10px;
+          width: 85%;
         }
         .codemelted-dialog-content select {
           margin-left: 10px;
@@ -4544,38 +4549,31 @@ class CDialog {
           height: 25px;
           width: 75px;
         }
+        .codemelted-align-center {
+          padding: 5px;
+          text-align: center;
+        }
       </style>
+      <dialog id="${id}" class="codemelted-dialog">
+        <div class="codemelted-dialog-title">
+          <label>${icon}</label>
+          <label style="margin-top: 2px;">${title}</label>
+          <button id="${id}CloseDialog">X</button>
+        </div>
+        ${content}
+      </dialog>
     `;
-    const html = `
-      <div class="codemelted-dialog-type">
-        <label>${icon}</label>
-        <label>${title}</label>
-        <button id="${id}CloseDialog">X</button>
-      </div>
-      ${content}
-    `;
+
     // @ts-ignore In browser context
-    const dialog = globalThis.document.createElement("dialog");
+    const divDialog = globalThis.document.createElement("div");
     // @ts-ignore In browser context
-    dialog.id = id;
+    divDialog.id = `div_${id}`;
     // @ts-ignore In browser context
-    dialog.innerHTML = html;
+    divDialog.innerHTML = html;
     // @ts-ignore In browser context
-    dialog.style = style;
+    globalThis.document.body.appendChild(divDialog);
     // @ts-ignore In browser context
-    dialog.classList.add("codemelted-dialog");
-    // @ts-ignore In browser context
-    globalThis.document.body.appendChild(dialog);
-    if (width) {
-      // @ts-ignore In browser context
-      dialog.style.width = width;
-    }
-    if (height) {
-      // @ts-ignore In browser context
-      dialog.style.height = height;
-    }
-    // @ts-ignore In browser context
-    dialog.style.display = "flex";
+    const dialog = globalThis.document.getElementById(id);
     // @ts-ignore In browser context
     dialog.showModal();
   }
@@ -4918,7 +4916,7 @@ export function ui_audio({request, data}) {
  * @param {string} params.request The {@link DIALOG_REQUEST}
  * to carry out.
  * @param {string} params.title A unique way of identifying the dialog.
- * @param {string | HTMLElement} [params.message] The message to use with
+ * @param {string | HTMLElement} [params.message=""] The message to use with
  * all DIALOG_REQUEST options except .Browser / .Close / .Loading
  * @param {string[]} [params.choices=[]] The choices to utilize with the
  * DIALOG_REQUEST.Choose option.
@@ -4941,7 +4939,7 @@ export function ui_audio({request, data}) {
 export function ui_dialog({
   request,
   title,
-  message,
+  message="",
   choices = [],
   returnValue,
   width,
@@ -4963,9 +4961,9 @@ export function ui_dialog({
     case DIALOG_REQUEST.Alert:
       return new Promise((resolve) => {
         const content = `
-          <div class="cm-dialog-content">
+          <div class="codemelted-dialog-content">
             <div>${message}</div>
-            <div class="cm-align-center">
+            <div class="codemelted-align-center">
               <button id="${id}OK">OK</button>
             </div>
           </div>
@@ -5001,8 +4999,15 @@ export function ui_dialog({
     case DIALOG_REQUEST.Browser:
       return new Promise((resolve) => {
         const content = `
-          <iframe class="codemelted-dialog-content" src="${message}">
-          </iframe>
+          <iframe
+            class="codemelted-dialog-content"
+            src="${message}"
+            width="100%"
+            height="100%"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; web-share"
+            allowfullscreen="true"
+            frameborder="0"
+          ></iframe>
         `;
         setTimeout(() => {
           // @ts-ignore Will exist in a browser context.
@@ -5032,12 +5037,12 @@ export function ui_dialog({
           selectOptions.push(`<option value="${e}">${e}</option>`);
         });
         const content = `
-          <div class="cm-dialog-content">
+          <div class="codemelted-dialog-content">
             <div>${message}:</div>
             <select id="${id}Select">
               ${selectOptions.toString()}
             </select>
-            <div class="cm-align-center">
+            <div class="codemelted-align-center">
               <button id="${id}OK">OK</button>
               <button id="${id}Cancel">Cancel</button>
             </div>
@@ -5059,7 +5064,7 @@ export function ui_dialog({
           // @ts-ignore Will not be null
           closeBtn.onclick = () => {
             CDialog.close(id, null);
-            resolve(new CResult(CDialog.returnValue));
+            resolve(new CResult());
           };
 
           // @ts-ignore Will exist in the browser context
@@ -5067,7 +5072,7 @@ export function ui_dialog({
           // @ts-ignore Will not be null
           cancel.onclick = () => {
             CDialog.close(id, null);
-            resolve(new CResult(CDialog.returnValue));
+            resolve(new CResult());
           };
 
           // @ts-ignore Will exist in the browser context
@@ -5095,9 +5100,9 @@ export function ui_dialog({
     case DIALOG_REQUEST.Confirm:
       return new Promise((resolve) => {
         const content = `
-          <div class="cm-dialog-content">
+          <div class="codemelted-dialog-content">
             <div>${message}</div>
-            <div class="cm-align-center">
+            <div class="codemelted-align-center">
               <button id="${id}OK">OK</button>
               <button id="${id}Cancel">Cancel</button>
             </div>
@@ -5152,7 +5157,7 @@ export function ui_dialog({
           const dlg = globalThis.document.getElementById(id);
           // @ts-ignore It will not be null.
           dlg.onclose = () => {
-            resolve(new CResult());
+            resolve(new CResult({value: CDialog.returnValue}));
           }
 
           // @ts-ignore Will exist in the browser context.
@@ -5210,10 +5215,10 @@ export function ui_dialog({
     case DIALOG_REQUEST.Prompt:
       return new Promise((resolve) => {
         const content = `
-          <div class="cm-dialog-content">
+          <div class="codemelted-dialog-content">
             <div>${message}:</div>
             <input id="${id}Text" type="text" />
-            <div class="cm-align-center">
+            <div class="codemelted-align-center">
               <button id="${id}OK">OK</button>
               <button id="${id}Cancel">Cancel</button>
             </div>
