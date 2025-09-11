@@ -5123,7 +5123,7 @@ export function ui_dialog({
             class="codemelted-dialog-content"
             src="${message}"
             width="100%"
-            height="95.2%"
+            height="96%"
             allow="accelerometer; autoplay; encrypted-media; gyroscope; web-share"
             allowfullscreen="true"
             frameborder="0"
