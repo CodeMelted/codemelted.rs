@@ -4598,6 +4598,7 @@ class CDialog {
     const html = `
       <style>
         .codemelted-dialog {
+          background-color: black;
           flex-flow: column;
           border: 5px solid black;
           padding: 0;

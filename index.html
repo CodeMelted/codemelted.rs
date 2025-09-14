@@ -35,7 +35,7 @@
       cursor: pointer;
     }
     .content-nav a:hover {
-      background-color: #1f1f1f;
+      background-color: darkblue;
     }
     .content-nav img {
       height: 45px;
@@ -64,25 +64,28 @@
       "codemelted.rs" : `codemelted.rs/codemelted/index.html?rand=${Math.random()}`,
       "js"            : `js/index.html?rand=${Math.random()}`,
     };
+    let activeSelection = "mdbook";
 
     // Setup our initial page state.
     const url = new URL(window.location.href);
     const params = new URLSearchParams(url.search);
-    if (params.has("src")) {
+    if (params.has("open")) {
       // Set our frame source
-      const src = params.get("src");
-      frmContent.src = src;
+      const open = params.get("open");
+      const value = anchors[open];
+      frmContent.src = value;
 
       // Go set the active page.
       for (const [key, value] of Object.entries(anchors)) {
-        if (src.includes(key)) {
-          document.getElementById(key).style.backgroundColor = "#1f1f1f";
+        if (open.includes(key)) {
+          document.getElementById(key).style.backgroundColor = "darkblue";
+          activeSelection = key;
         } else {
           document.getElementById(key).style.backgroundColor = "black";
         }
       }
     } else {
-      document.getElementById("mdbook").style.backgroundColor = "#1f1f1f";
+      document.getElementById("mdbook").style.backgroundColor = "darkblue";
     }
 
     // Setup our anchor click action.
@@ -91,7 +94,8 @@
         document.getElementById(key).style.backgroundColor = "black";
       }
       frmContent.src = anchors[id]
-      document.getElementById(id).style.backgroundColor = "#1f1f1f";
+      document.getElementById(id).style.backgroundColor = "darkblue";
+      activeSelection = id;
     }
 
     // Handle the override of codemelted_navigation.js click actions.
@@ -99,8 +103,34 @@
       // Hide the controls not applicable to this page.
       document.getElementById("btnPrintPage").style.visibility = "hidden";
       document.getElementById("btnTTS").style.visibility = "hidden";
-      document.getElementById("btnSharePage").style.visibility = "hidden";
       document.getElementById("anchorDisqus").style.visibility = "hidden";
+
+      // Override the on share page clicked function.
+      document.getElementById("btnSharePage").onclick = async function() {
+        try {
+          // It was granted, go perform the copy.
+          const isMobile = 'ontouchstart' in window ||
+            navigator.maxTouchPoints > 0 ||
+            navigator.msMaxTouchPoints > 0
+          const tooltip = globalThis.document.getElementById("divTooltip");
+          let origin = window.location.origin;
+          let pathname = window.location.pathname;
+          let href = `${origin}${pathname}?open=${activeSelection}`;
+          await globalThis.navigator.clipboard.writeText(href);
+          if (!isMobile) {
+            tooltip.style.display = "inline-block";
+            setTimeout(() => { tooltip.style.display = "none"; }, 750);
+          }
+        } catch (err) {
+          // Something failed, go report it.
+          let msg = Object.hasOwn(err, "message")
+            ? err.message
+            : "unable to perform share";
+          console.error("onSharePageClicked()", msg);
+          alert(msg);
+          return false;
+        }
+      }
     }, 250);
   </script>
 </body></html>
