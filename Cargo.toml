@@ -1,13 +1,13 @@
 [package]
 name = "codemelted"
-version = "25.1.2"
+version = "25.1.3"
 description = "The aim of this project is to deliver a swiss army knife module to aid software engineers for building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets."
 authors = ["Mark Shaffer <mark.shaffer@codemelted.com>"]
 keywords = ["console", "json", "logger", "process", "ui"]
 categories = ["concurrency", "database", "filesystem", "mathematics", "network-programming"]
 readme = "README.md"
 edition = "2024"
-homepage = "https://rs.codemelted.com/rs/crate"
+homepage = "https://codemelted.com/developer/index.html?open=codemelted.rs"
 repository = "https://github.com/codemelted/codemelted.rs"
 
 license = "MIT"
