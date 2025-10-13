@@ -19,7 +19,7 @@
  * <table style="width: 100%;">
  * <tr>
  * <td style="width: 275px;">
- * <img style= "width: 275px;" src="https://codemelted.com/developer/mdbook/models/all/use-case-model.drawio.png" />
+ * <img style= "width: 275px;" src="https://codemelted.com/developer/mdbook/models/use-case-model.drawio.png" />
  * </td>
  * <td>
  * <ul>
@@ -32,7 +32,7 @@
  * </tr>
  * <tr>
  * <td style="width: 275px;">
- * <img style= "width: 275px;" src="https://codemelted.com/developer/mdbook/models/all/wasm-build-process.drawio.png" />
+ * <img style= "width: 275px;" src="https://codemelted.com/developer/mdbook/models/wasm-build-process.drawio.png" />
  * </td>
  * <td>
  * <ul>

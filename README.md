@@ -24,7 +24,7 @@ The module serves as a consumable crate for software engineers to build their ow
 
 ## Features
 
-<center><img src="https://codemelted.com/developer/mdbook/models/all/use-case-model.drawio.png" /></center>
+<center><img src="https://codemelted.com/developer/mdbook/models/use-case-model.drawio.png" /></center>
 
 1. The `codemelted.rs` is a single file implementing the [Domain Use Cases](https://codemelted.com/developer/mdbook/index.html) domain specific use cases.
 2. These use cases straddle areas of knowledge software engineers should be familiar with regardless of a given programming language, SDK, or chosen framework.

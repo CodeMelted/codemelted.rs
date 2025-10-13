@@ -98,7 +98,7 @@ The `Invoke-CodeMeltedCLI` module is hosted at [PowerShell Gallery](https://www.
 
 # 2.0 FEATURES
 
-<center><img style="width: 100%"src="https://codemelted.com/developer/mdbook/models/all/use-case-model.drawio.png"></center>
+<center><img style="width: 100%"src="https://codemelted.com/developer/mdbook/models/use-case-model.drawio.png"></center>
 
 ## 2.1 codemelted-cli --version
 

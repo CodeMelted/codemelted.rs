@@ -4,7 +4,8 @@
 
 - [Functional Decomposition](./1.0_functional-decomposition.md)
 - [Domain Use Cases](./2.0_domain-use-cases.md)
-- [The Crate and CLI](./3.0_the-crate-and-cli.md)
-- [Making PWAs with WASM](./4.0_making-pwas-with-wasm.md)
-- [Raspberry Pi](./5.0_raspberry-pi.md)
-- [NPU Mathematics](./6.0_npu-mathematics.md)
+- [codemelted Crate](./3.0_codemelted-crate.md)
+- [codemelted CLI](./4.0_codemelted-cli.md)
+- [WASM Progressive Web Apps](./5.0_wasm-pwas.md)
+- [Raspberry Pi](./6.0_raspberry-pi.md)
+- [NPU Mathematics](./7.0_npu-mathematics.md)
