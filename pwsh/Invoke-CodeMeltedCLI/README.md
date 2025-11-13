@@ -1,6 +1,6 @@
 
 <center>
-  <img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-developer.png" />
+  <img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-rs.png" />
 </center>
 <h1><img style="height: 35px;" src="https://codemelted.com/assets/images/icon-pwsh.png" /> Invoke-CodeMeltedCLI Module</h1>
 

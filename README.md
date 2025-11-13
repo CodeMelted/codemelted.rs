@@ -3,11 +3,20 @@
 </center>
 <h1><img style="height: 35px;" src="https://codemelted.com/assets/images/icon-rust.png" /> codemelted.rs Crate</h1>
 
-*LAST UPDATED: 2025-Aug-06*
+*LAST UPDATED: 2025-Nov-12*
 
 The aim of this project is to deliver a swiss army knife module to aid software engineers in building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets.
 
 The module serves as a consumable crate for software engineers to build their own custom backend / desktop services applications. Secondly built into the module is a Command Line Interface (CLI) to target script based solutions with a powerful CLI that will work the same regardless of the operating system. Lastly parts of the module along with the `codemelted.js` implementing the `codemelted` namespace will build a WASM / JS consumable modules to build powerful Single / Progressive Web Applications.
+
+<center>
+  <br />
+  <a href="https://www.buymeacoffee.com/codemelted" target="_blank">
+    <img height="40px" src="https://codemelted.com/assets/images/icon-bmc-button.png" />
+  </a>
+  <br /><br />
+  <p>If you find this module useful, any support is greatly appreciated. Thank you! 🙇</p>
+</center>
 
 **Table of Contents**
 
@@ -19,6 +28,7 @@ The module serves as a consumable crate for software engineers to build their ow
   - [Crate Dependencies](#crate-dependencies)
   - [Crate Versioning](#crate-versioning)
   - [License](#license)
+  - [Change Log](#change-log)
 
 # GETTING STARTED
 
@@ -108,11 +118,6 @@ The above copyright notice and this permission notice shall be included in all c
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-<center>
-  <br />
-  <a href="https://www.buymeacoffee.com/codemelted" target="_blank">
-    <img height="40px" src="https://codemelted.com/assets/images/icon-bmc-button.png" />
-  </a>
-  <br /><br />
-  <p>If you find this module useful, any support is greatly appreciated. Thank you! 🙇</p>
-</center>
+## Change Log
+
+- **v25.2.0 (2025-Nov 12):** Upgrades all plugins to the latest versions. Implemented the Command Line Interface (CLI) for the `codemelted` command adding the `--help` and `--console-` actions. Fixed issues discovered during the development.

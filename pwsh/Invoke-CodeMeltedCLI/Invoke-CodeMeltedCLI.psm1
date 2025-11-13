@@ -917,14 +917,12 @@ function Invoke-CodeMeltedCLI {
 
     PARAMETERS:
       [Action]
-        --help: Execute `codemelted-cli --help to learn about produce this
-            help file. Execute
+        --help: Execute `codemelted-cli --help to produce this help. Execute
             'codemelted-cli --help @{ action = "--action-item" }' to learn
             about additional actions listed under the ACTION: section.
 
         --version: Get the current version of the Invoke-CodeMeltedCLI
             module.
-
 
       [Params]
         The optional set of named arguments to pass to action via a

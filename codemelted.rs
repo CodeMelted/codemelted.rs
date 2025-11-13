@@ -454,6 +454,10 @@ pub fn console_confirm(message: &str) -> bool {
 /// ```
 #[doc = simple_mermaid::mermaid!("models/codemelted_console.mmd")]
 pub fn console_choose(message: &str, choices: &[&str]) -> u32 {
+  if choices.len() == 0 {
+    panic!("SyntaxError: console_choose requires choices.");
+  }
+
   let msg = match message {
     "" => "CHOOSE",
     _ => &format!("{}", message),
@@ -1710,7 +1714,7 @@ impl CTruthyString for CObject {
     ];
     let data_check = String::from(data.to_lowercase());
     for el in true_strings {
-      if el.contains(&data_check) {
+      if el == data_check {
         return true;
       }
     }
@@ -2879,7 +2883,7 @@ impl CProcessMonitor {
 
   /// Returns the number of open files in the current process for
   /// the given pid.
-  pub fn open_files(&self, pid: u32) -> u32 {
+  pub fn open_files(&self, pid: u32) -> usize {
     match self.sys.process(sysinfo::Pid::from_u32(pid)) {
       Some(v) => {
         match v.open_files() {
@@ -4530,6 +4534,157 @@ pub fn storage_set(key: &str, value: &str) {
 // TBD
 
 // ============================================================================
+// [CLI DEFINITION] ===========================================================
+// ============================================================================
+
+/// Responsible for handling all error reporting to STDOUT and exiting the
+/// CLI with a code 1. All cli_xxx() functions will use this for error
+/// conditions.
+fn cli_error_handler(err: &str, action: &str) {
+  match err {
+    "invalid_call_signature" => {
+      println!("ERROR: Call signature is `codemelted [action] [params]");
+      println!("       Execute `codemelted --help` for details.");
+    }
+    "unknown_action" => {
+      println!("ERROR: Unknown [action] '{}' specified", action);
+      println!("       Execute `codemelted --help` for details.");
+    }
+    "unknown_console_action" => {
+      println!("ERROR: Unknown --console* [action] '{}'", action);
+      println!("       Execute `codemelted --help` for details.");
+    }
+    &_ => {
+      panic!("SyntaxError: codemelted cli unknown error '{}'", action);
+    }
+  }
+
+  // Always exit with a one as this handle any CLI errors.
+  std::process::exit(1);
+}
+
+/// Handles the --console-* commands.
+fn cli_console(params: &Vec<String>)
+{
+  // Extract the parameters we will need for carrying out the cli_console
+  // different actions.
+  let action = params[1].as_str();
+  let message = if params.len() >= 3 {
+    params[2].as_str()
+  } else {
+    ""
+  };
+  let choices = if params.len() == 4 {
+    params[3].as_str().split(",").collect()
+  } else {
+    vec![]
+  };
+
+  // Now determine what action we are carrying out.
+  match action {
+    "--console-alert" => { console_alert(message); }
+    "--console-confirm" => {
+      let confirmation = console_confirm(message);
+      println!("{}", confirmation);
+    }
+    "--console-choose" => {
+      let choice = console_choose(message, &choices);
+      println!("{}", choice);
+    }
+    "--console-password" => {
+      let password = console_password(message);
+      println!("{}", password);
+    }
+    "--console-prompt" => {
+      let answer = console_prompt(message);
+      println!("{}", answer);
+    }
+    "--console-write" => { console_write(message); }
+    "--console-writeln" => { console_writeln(message); }
+    &_ => { cli_error_handler("unknown_console_action", action); }
+  }
+}
+
+/// Handles the CLI Native Command help system documenting the commands
+/// handled by the CLI DEFINITION.
+fn cli_help() {
+  println!("                                                                ");
+  println!("================================================================");
+  println!("codemelted (CLI Native Command)                                 ");
+  println!("================================================================");
+  println!("                                                                ");
+  println!("ABOUT: Provides a rust compiled native executable that supports ");
+  println!("  Linux, Mac, and Windows terminals. Allows for utilizing the   ");
+  println!("  native scripting (BAT, shell) for the given operating system. ");
+  println!("  The power with this CLI is the actions implemented are the    ");
+  println!("  same regardless of the operating system. Consider installing  ");
+  println!("  the codemelted-cli PowerShell module to get a full fledged CLI");
+  println!("  experience. That module extends the codemelted CLI            ");
+  println!("  functionality to get a true scripting terminal experience.    ");
+  println!("                                                                ");
+  println!("SYNTAX: codemelted [action] [params]                            ");
+  println!("                                                                ");
+  println!("USAGE:                                                          ");
+  println!("  --console-alert [message]                                     ");
+  println!("      Pauses execution while reporting a message.               ");
+  println!("  --console-confirm [message]                                   ");
+  println!("      Provides a confirmation prompt via STDOUT with the answer ");
+  println!("      being written to STDOUT as true / false.                  ");
+  println!("  --console-choose [message] [choices]                          ");
+  println!("      Provides a selection menu of the CSV choices waiting for  ");
+  println!("      a valid selection from the user with the chosen index     ");
+  println!("      written to STDOUT.                                        ");
+  println!("  --console-password [message]                                  ");
+  println!("      Provides a password prompt writing out the password to    ");
+  println!("      STDOUT.                                                   ");
+  println!("  --console-prompt [message]                                    ");
+  println!("      Provides an input prompt writing out the answer to        ");
+  println!("      STDOUT.                                                   ");
+  println!("  --console-write [message]                                     ");
+  println!("      Writes [message] to STDOUT with no newline.               ");
+  println!("  --console-writeln [message]                                   ");
+  println!("      Writes [message] to STDOUT with a newline.                ");
+  println!("  --help Prints this help system.                               ");
+  println!("                                                                ");
+  println!("WEBSITE: https://codemelted.com/developer/                      ");
+  println!("                                                                ");
+}
+
+/// Main entry point for the native `codemelted` CLI command. To add this
+/// utility execute.
+#[doc(hidden)]
+pub fn main() {
+  // Access our parameters
+  let params: Vec<String> = std::env::args().collect();
+
+  // Ensure we have a enough to determine what cli action to carry out.
+  if params.len() > 1 {
+    // Match up the actions and carry them out
+    let action = params[1].as_str();
+    match action {
+      "--console-alert"    | "--console-confirm" | "--console-choose" |
+      "--console-password" | "--console-prompt"  | "--console-write"  |
+      "--console-writeln" => { cli_console(&params); }
+      "--help" => { cli_help(); }
+      &_ => { cli_error_handler("unknown_action", action); }
+    }
+
+    // If we get here, we assume success. Failure conditions will be handled
+    // by individual action functions.
+    std::process::exit(0);
+  }
+
+  // Invalid CLI signature if we get here.
+  cli_error_handler("invalid_call_signature", "");
+}
+
+// ============================================================================
+// [WASM IMPLEMENTATION] ======================================================
+// ============================================================================
+
+// TBD
+
+// ============================================================================
 // [UNIT TEST DEFINITIONS] ====================================================
 // ============================================================================
 
@@ -4542,10 +4697,3 @@ mod tests {
     assert_eq!(true, f64::is_nan((-1.0 as f64).sqrt()));
   }
 }
-
-// /// Used to vet logic in the `codemelted.rs` module, build complicated tests,
-// /// or aid in fleshing out documentation. This is only to support the module's
-// /// development and nothing more. Don't call this for anything.
-// pub fn main() {
-//   unimplemented!("TEST PURPOSES ONLY!");
-// }

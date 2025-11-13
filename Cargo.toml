@@ -1,6 +1,6 @@
 [package]
 name = "codemelted"
-version = "25.1.3"
+version = "25.2.0"
 description = "The aim of this project is to deliver a swiss army knife module to aid software engineers for building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets."
 authors = ["Mark Shaffer <mark.shaffer@codemelted.com>"]
 keywords = ["console", "json", "logger", "process", "ui"]
@@ -9,29 +9,29 @@ readme = "README.md"
 edition = "2024"
 homepage = "https://codemelted.com/developer/index.html?open=codemelted.rs"
 repository = "https://github.com/codemelted/codemelted.rs"
-
 license = "MIT"
 publish = true
 
 [lib]
 path = 'codemelted.rs'
 
-# Used for test purposes when developing items
-# [[bin]]
-# name = 'codemelted'
-# path = 'codemelted.rs'
+# Defines the CLI native tooling to support native bindings and usage of the
+# crate
+[[bin]]
+name = 'codemelted'
+path = 'codemelted.rs'
 
 [dependencies]
-btleplug = { version = "0.11", features = ["serde"] }
-chrono = "0.4.40"
+btleplug = { version = "0.11.8", features = ["serde"] }
+chrono = "0.4.42"
 json = "0.12.4"
 online = "4.0.2"
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12.24", features = ["json"] }
 rouille = "3.6.2"
-rpassword = "7.3.1"
-rusqlite = { version = "0.35.0", features = ["bundled"] }
-serialport = "4.7.1"
+rpassword = "7.4.0"
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+serialport = "4.8.1"
 simple-mermaid = "0.2.0"
-sysinfo = "0.34.2"
-tokio = { version = "1.45.0", features = ["full"] }
-url = "2.5.4"
+sysinfo = "0.37.2"
+tokio = { version = "1.48.0", features = ["full"] }
+url = "2.5.7"
