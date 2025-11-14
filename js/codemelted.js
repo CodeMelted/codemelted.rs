@@ -48,7 +48,12 @@
  * <table><br />
  * <h3>How To Use</h3>
  * <p>
- * <mark>TBD</mark>
+ * <mark>TBD (Working out how to do this)</mark> <br />
+ * URL to the latest updates JavaScript file. <br />
+ * https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs/js/codemelted.js
+ * <br />
+ * URL to specific version once we start versioning a stable version. <br />
+ * https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs@X.Y.Z/js/codemelted.js <br />
  * </p>
  * <h3>JS Runtime Support</h3>
  * <p>
@@ -247,6 +252,7 @@ export class CProtocolHandler {
    * queries from the protocol.
    * @returns {Promise<CResult>} The result of the request
    */
+  // @ts-ignore
   async get_message(request="") { throw API_NOT_IMPLEMENTED; }
 
   /**
@@ -266,6 +272,7 @@ export class CProtocolHandler {
    * @param {any} data
    * @returns {Promise<CResult>} The result of the request.
    */
+  // @ts-ignore
   async post_message(data) { throw API_NOT_IMPLEMENTED; }
 
   /**
@@ -630,6 +637,7 @@ export function console_password(message = "") {
     const prompt = message.trim().length > 0
       ? message
       : "PASSWORD";
+    // @ts-ignore Deno is part of the deno runtime.
     globalThis.Deno.stdin.setRaw(true);
     const buf = new Uint8Array(1);
     const decoder = new TextDecoder();
@@ -637,6 +645,7 @@ export function console_password(message = "") {
     let done = false;
     console.log(`${prompt}:`);
     do {
+      // @ts-ignore Deno is part of the deno runtime.
       const nread = globalThis.Deno.stdin.readSync(buf) ?? 0;
       if (nread === null) {
         done = true;
@@ -648,6 +657,7 @@ export function console_password(message = "") {
       const text = decoder.decode(buf.subarray(0, nread));
       answer += text;
     } while (!done);
+      // @ts-ignore Deno is part of the deno runtime.
     globalThis.Deno.stdin.setRaw(false);
     return answer;
   } else if (runtime_is_nodejs()) {
@@ -1439,6 +1449,7 @@ export class COrientationProtocol extends CProtocolHandler {
    * [CResult] object.
    * @override
    */
+  // @ts-ignore
   async get_message(request="") {
     if (this.#errorRx) {
       const result = new CResult({
@@ -1466,6 +1477,7 @@ export class COrientationProtocol extends CProtocolHandler {
    * @param {any} data
    * @returns {Promise<CResult>}
    */
+  // @ts-ignore
   post_message(data) { throw API_NOT_IMPLEMENTED; }
 
   /**
@@ -1586,6 +1598,7 @@ export class CSerialPortProtocol extends CProtocolHandler {
             });
           }
           const reader = this.#port.readable.getReader();
+          // @ts-ignore
           const { value, done } = await reader.read();
           data = value;
           reader.releaseLock();
@@ -2481,6 +2494,7 @@ export class CBroadcastChannelProtocol extends CProtocolHandler {
    * @returns {Promise<CResult>} The result containing the given
    * information. Errors are processed first if they have been received.
    */
+  // @ts-ignore
   async get_message(request="") {
     if (!this.is_running) {
       throw API_MISUSE;
@@ -2644,6 +2658,7 @@ export class CEventSourceProtocol extends CProtocolHandler {
    * @returns {Promise<CResult>} The result containing the given
    * information. Errors are processed first if they have been received.
    */
+  // @ts-ignore
   async get_message(request="") {
     if (!this.is_running()) {
       throw API_MISUSE;
@@ -2678,6 +2693,7 @@ export class CEventSourceProtocol extends CProtocolHandler {
    * @param {any} data
    * @returns {Promise<CResult>}
    */
+  // @ts-ignore
   async post_message(data) { throw API_NOT_IMPLEMENTED; }
 
   /**
@@ -2956,6 +2972,7 @@ export class CWebSocketProtocol extends CProtocolHandler {
    * @returns {Promise<CResult>} The result containing the given
    * information. Errors are processed first if they have been received.
    */
+  // @ts-ignore
   async get_message(request="") {
     if (!this.is_running) {
       throw API_MISUSE;
@@ -3580,6 +3597,7 @@ export function runtime_environment(name) {
     let params = new URLSearchParams(globalThis.location.search);
     return params.get(name);
   } else if (runtime_is_deno()) {
+    // @ts-ignore
     return globalThis.Deno.env.has(name)
       // @ts-ignore Property exists in a browser runtime.
       ? globalThis.Deno.env.get(name)
@@ -3679,6 +3697,7 @@ export function runtime_hostname() {
   if (runtime_is_browser()) {
     return globalThis.location.hostname;
   } else if (runtime_is_deno()) {
+    // @ts-ignore
     return globalThis.Deno.hostname();
   }
   throw API_UNSUPPORTED_RUNTIME;
@@ -3711,6 +3730,7 @@ export function runtime_is_browser() {
  * // TBD
  */
 export function runtime_is_deno() {
+  // @ts-ignore
   return if_def("Deno") && if_def("version", globalThis["Deno"]);
 }
 
@@ -3839,6 +3859,7 @@ export function runtime_online() {
  */
 export function runtime_os_name() {
   if (runtime_is_deno()) {
+    // @ts-ignore
     return globalThis.Deno.build.os;
   }
   throw API_UNSUPPORTED_RUNTIME;
