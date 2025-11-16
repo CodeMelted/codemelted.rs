@@ -4,7 +4,7 @@
 <br />
 <h1><img style="height: 35px;" src="https://codemelted.com/assets/favicon/apple-touch-icon.png" /> codemelted.rs: The Swiss Army Knife Full Stack Solution</h1>
 
-*BY: Mark Shaffer / LAST UPDATED: 2025-OCT-12*
+*BY: Mark Shaffer / LAST UPDATED: 2025-NOV-16*
 
 "Write once, run anywhere (WORA)" was the famous slogan made by Sun Microsystems in 1995. At the time, this technology allowed for easy full stack engineering allowing you to target dedicated workstations and on-premises servers. So long as a Java Runtime Environment existed, you could run your code. Java was unable to keep to their slogan as web browsers became more advanced, mobile devices became ubiquitous, and companies no longer required dedicated servers.
 
@@ -26,5 +26,6 @@ Enter the **codemelted.rs** project. The aim of this project is to deliver a swi
 
 <center><b>Revision History</b></center><br />
 
+- **<u>2025-NOV-16 (M. Shaffer)</u>L** Updated chapters to reflect the full structure of the Swiss Army Knife approach. Updated Section 3 Command Line Interface with the current working CLI implementation and where it will be evolving.
 - **<u>2025-OCT-12 (M. Shaffer)</u>:** Cleanup of the sections to reflect current work. Refactored current Raspberry Pi information into the section 6.0.
 - **<u>2025-AUG-06 (M. Shaffer)</u>:** Initial release of the document refactoring from the original codemelted-dev (discontinued) concept and now focusing on this more targeted solution.

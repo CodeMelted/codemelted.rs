@@ -7,16 +7,16 @@ classDiagram
     class CProtocolHandler {
       +id() String
       +is_running() bool
-      +get_message() Result
+      +get_message(request: String) Result
       +post_message(T) Result
       +terminate()
     }
     class CTaskCB {
-      +fn(Option) Option
+      +fn(T) Result
     }
     class CTaskResult {
       +has_completed() bool
-      +value() Option
+      +value() Result
     }
     class CTimerCB {
       +fn()

@@ -3,7 +3,7 @@
 </center>
 <h1><img style="height: 35px;" src="https://codemelted.com/assets/images/icon-rust.png" /> codemelted.rs Crate</h1>
 
-*LAST UPDATED: 2025-Nov-12*
+*LAST UPDATED: 2025-Nov-16*
 
 The aim of this project is to deliver a swiss army knife module to aid software engineers in building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets.
 
@@ -120,4 +120,5 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Change Log
 
-- **v25.2.0 (2025-Nov 12):** Upgrades all plugins to the latest versions. Implemented the Command Line Interface (CLI) for the `codemelted` command adding the `--help` and `--console-` actions. Fixed issues discovered during the development.
+- **v25.3.0 (2025-Nov-16):** Vetted the async_xxx() and console_xxx() functions. Simplified the `CProtocolHandler` and `CTaskResult` for simpler implementation of the templated data. Added the `--async-sleep` action to the `codemelted` CLI.
+- **v25.2.0 (2025-Nov-12):** Upgrades all plugins to the latest versions. Implemented the Command Line Interface (CLI) for the `codemelted` command adding the `--help` and `--console-` actions. Fixed issues discovered during the development.

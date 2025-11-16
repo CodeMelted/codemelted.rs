@@ -42,7 +42,7 @@ pub trait CProtocolHandler<T> {
   fn id(&mut self) -> String;
   /// Retrieves any currently processed messages. Also provide support for
   /// string commands to further support the given protocol you build.
-  fn get_message(&mut self, request: Option<&str>) -> Result<T, std::io::Error>;
+  fn get_message(&mut self, request: &str) -> Result<T, std::io::Error>;
   /// Signals if the protocol is running or not.
   fn is_running(&self) -> bool;
   /// Handles the sending of the message to the protocol for processing.
@@ -56,7 +56,7 @@ pub trait CProtocolHandler<T> {
 // ============================================================================
 
 /// The task that runs as part of the [CTaskResult] internal thread.
-pub type CTaskCB<T> = fn(Option<T>) -> Option<T>;
+pub type CTaskCB<T> = fn(T) -> Result<T, std::io::Error>;
 
 /// The result of a [async_task] call. This holds an internal thread that will
 /// call the [CTaskCB] to process specified data and return the result.
@@ -68,13 +68,13 @@ pub struct CTaskResult<T> {
   handle: std::thread::JoinHandle<()>,
 
   /// Holds the receiver to wait for the process result from the [CTaskCB].
-  recv: std::sync::mpsc::Receiver<Option<T>>,
+  recv: std::sync::mpsc::Receiver<Result<T, std::io::Error>>,
 }
 impl<T: std::marker::Send + 'static> CTaskResult<T> {
   /// Private constructor to support the [task] function.
-  fn new(task: CTaskCB<T>, data: Option<T>, delay: u64) -> CTaskResult<T> {
+  fn new(task: CTaskCB<T>, data: T, delay: u64) -> CTaskResult<T> {
     // Setup our message channel.
-    let (tx, rx) = std::sync::mpsc::channel::<Option<T>>();
+    let (tx, rx) = std::sync::mpsc::channel::<Result<T, std::io::Error>>();
 
     // Kick-off the thread to process the task.
     let handle = std::thread::spawn(move || {
@@ -94,14 +94,16 @@ impl<T: std::marker::Send + 'static> CTaskResult<T> {
 
   /// Retrieves the value processed by this task. Will block if the
   /// task thread has not completed.
-  pub fn value(&self) -> Option<T> {
+  pub fn result(&self) -> Result<T, std::io::Error> {
     let result = self.recv.recv();
     match result {
       Ok(v) => {
         crate::async_sleep(100);
         v
       },
-      Err(_) => None,
+      Err(why) => Err(std::io::Error::new(
+        std::io::ErrorKind::Other, why.to_string())
+      )
     }
   }
 }
@@ -215,7 +217,7 @@ impl<T> CProtocolHandler<Option<T>> for CWorkerProtocol<Option<T>> {
 
   fn get_message(
     &mut self,
-    _request: Option<&str>
+    _request: &str
   ) -> Result<Option<T>, std::io::Error> {
     match self.protocol_rx.try_recv() {
       Ok(v) => Ok(v),
@@ -284,31 +286,30 @@ pub fn async_sleep(delay: u64) {
 /// ```
 /// use codemelted::CObject;
 ///
-/// fn task_cb(data: Option<CObject>) -> Option<CObject> {
-///   codemelted::async_sleep(1000);
-///   let data_to_process = match data {
-///     Some(v) => v.as_i64().unwrap(),
-///     None => panic!("Why did this fail!"),
-///   };
-///
-///   let answer = data_to_process + 42;
-///   Some(CObject::from(answer))
+/// fn task_cb(data: i32) -> Result<i32, std::io::Error> {
+///   if data < 0 {
+///     return Err(std::io::Error::new(
+///       std::io::ErrorKind::BrokenPipe,
+///       "Less Than 0"
+///     ));
+///   }
+///   Ok(data + 40)
 /// }
 ///
 /// let async_task = codemelted::async_task(
 ///   task_cb,
-///   Some(CObject::from(24)),
+///   2,
 ///   500
 /// );
 /// assert!(!async_task.has_completed());
-/// let answer = async_task.value();
+/// let answer = async_task.result();
 /// assert!(async_task.has_completed());
-/// assert!(answer.is_some());
+/// assert!(answer.unwrap() == 42);
 /// ```
 #[doc = simple_mermaid::mermaid!("models/codemelted_async.mmd")]
 pub fn async_task<T: std::marker::Send + 'static>(
   task: CTaskCB<T>,
-  data: Option<T>,
+  data: T,
   delay: u64
 ) -> CTaskResult<T> {
   CTaskResult::new(task, data, delay)
@@ -324,7 +325,7 @@ pub fn async_task<T: std::marker::Send + 'static>(
 ///   println!("Hello");
 /// }
 ///
-/// let timer_task = codemelted::async_timer( timer_cb, 250);
+/// let timer_task = codemelted::async_timer(timer_cb, 250);
 /// codemelted::async_sleep(100);
 /// assert!(timer_task.is_running());
 /// codemelted::async_sleep(1000);
@@ -367,10 +368,10 @@ pub fn async_timer(task: CTimerCB, interval: u64) -> CTimerResult {
 /// worker.post_message(Some(CObject::new_object()));
 /// codemelted::async_sleep(100);
 ///
-/// let data = worker.get_message(None);
+/// let data = worker.get_message("");
 /// assert!(data.is_ok());
 ///
-/// let data = worker.get_message(None);
+/// let data = worker.get_message("");
 /// assert!(data.is_ok());
 ///
 /// worker.terminate();
@@ -395,15 +396,6 @@ fn console_read(prompt: &str) -> String {
   let _ = std::io::Write::flush(&mut std::io::stdout());
   let _ = std::io::stdin().read_line(&mut answer);
   String::from(answer.trim())
-}
-
-/// Utility function to write to stdout with or without a new line.
-fn console_write_stdout(message: &str, use_new_line: bool) {
-  if use_new_line {
-    println!("{}", message);
-  } else {
-    print!("{}", message);
-  }
 }
 
 /// Puts out an alert to STDOUT awaiting for the user to press the ENTER
@@ -533,17 +525,6 @@ pub fn console_prompt(message: &str) -> String {
   String::from(answer)
 }
 
-/// Will put a string to STDOUT without the new line character.
-///
-/// **Example:**
-/// ```no_run
-/// codemelted::console_write("Oh Know!");
-/// ```
-#[doc = simple_mermaid::mermaid!("models/codemelted_console.mmd")]
-pub fn console_write(message: &str) {
-  console_write_stdout(message, false);
-}
-
 /// Will put a string to STDOUT with a new line character.
 ///
 /// **Example:**
@@ -552,7 +533,7 @@ pub fn console_write(message: &str) {
 /// ```
 #[doc = simple_mermaid::mermaid!("models/codemelted_console.mmd")]
 pub fn console_writeln(message: &str) {
-  console_write_stdout(message, true);
+  println!("{}", message);
 }
 
 // ============================================================================
@@ -1275,20 +1256,20 @@ impl CSerialPortData {
   /// Provides the string representation to support the
   /// [CSerialPortProtocol::get_message] request string to get specific
   /// types of data from an open port.
-  pub fn get_message_request(&self) -> Option<&str> {
+  pub fn get_message_request(&self) -> &str {
     match self {
-      CSerialPortData::BaudRate(_) => Some("baud_rate"),
-      CSerialPortData::DataBits(_) => Some("data_bits"),
-      CSerialPortData::FlowControl(_) => Some("flow_control"),
-      CSerialPortData::Parity(_) => Some("parity"),
-      CSerialPortData::StopBits(_) => Some("stop_bits"),
-      CSerialPortData::Timeout(_) => Some("duration"),
-      CSerialPortData::CarrierDetect(_) => Some("carrier_detect"),
-      CSerialPortData::ClearToSend(_) => Some("clear_to_send"),
-      CSerialPortData::DataSetReady(_) => Some("data_set_ready"),
-      CSerialPortData::RingIndicator(_) => Some("ring_indicator"),
-      CSerialPortData::DataBytes(_) => Some("data_bytes"),
-      _ => None,
+      CSerialPortData::BaudRate(_) => "baud_rate",
+      CSerialPortData::DataBits(_) => "data_bits",
+      CSerialPortData::FlowControl(_) => "flow_control",
+      CSerialPortData::Parity(_) => "parity",
+      CSerialPortData::StopBits(_) => "stop_bits",
+      CSerialPortData::Timeout(_) => "duration",
+      CSerialPortData::CarrierDetect(_) => "carrier_detect",
+      CSerialPortData::ClearToSend(_) => "clear_to_send",
+      CSerialPortData::DataSetReady(_) => "data_set_ready",
+      CSerialPortData::RingIndicator(_) => "ring_indicator",
+      CSerialPortData::DataBytes(_) => "data_bytes",
+      _ => "",
     }
   }
 }
@@ -1338,103 +1319,114 @@ impl CProtocolHandler<CSerialPortData> for CSerialPortProtocol {
   /// Will panic if an invalid request is received.
   fn get_message(
     &mut self,
-    request: Option<&str>
+    request: &str
   ) -> Result<CSerialPortData, std::io::Error> {
-    if request.unwrap() == "baud_rate" {
-      match self.port_ref().baud_rate() {
-        Ok(v) => Ok(CSerialPortData::BaudRate(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+    match request {
+      "baud_rate" => {
+        match self.port_ref().baud_rate() {
+          Ok(v) => Ok(CSerialPortData::BaudRate(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else if request.unwrap() == "data_bits" {
-      match self.port_ref().baud_rate() {
-        Ok(v) => Ok(CSerialPortData::BaudRate(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "data_bits" => {
+        match self.port_ref().baud_rate() {
+          Ok(v) => Ok(CSerialPortData::BaudRate(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else if request.unwrap() == "flow_control" {
-      match self.port_ref().flow_control() {
-        Ok(v) => Ok(CSerialPortData::FlowControl(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "flow_control" => {
+        match self.port_ref().flow_control() {
+          Ok(v) => Ok(CSerialPortData::FlowControl(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else if request.unwrap() == "parity" {
-      match self.port_ref().parity() {
-        Ok(v) => Ok(CSerialPortData::Parity(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "parity" => {
+        match self.port_ref().parity() {
+          Ok(v) => Ok(CSerialPortData::Parity(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else if request.unwrap() == "stop_bits" {
-      match self.port_ref().stop_bits() {
-        Ok(v) => Ok(CSerialPortData::StopBits(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "stop_bits" => {
+        match self.port_ref().stop_bits() {
+          Ok(v) => Ok(CSerialPortData::StopBits(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else if request.unwrap() == "timeout" {
-      Ok(CSerialPortData::Timeout(Some(self.port_ref().timeout())))
-    } else if request.unwrap() == "carrier_detect" {
-      match self.port_ref().read_carrier_detect() {
-        Ok(v) => Ok(CSerialPortData::CarrierDetect(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "timeout" => {
+        Ok(CSerialPortData::Timeout(Some(self.port_ref().timeout())))
       }
-    } else if request.unwrap() == "clear_to_send" {
-      match self.port_ref().read_clear_to_send() {
-        Ok(v) => Ok(CSerialPortData::ClearToSend(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "carrier_detect" => {
+        match self.port_ref().read_carrier_detect() {
+          Ok(v) => Ok(CSerialPortData::CarrierDetect(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else if request.unwrap() == "data_set_ready" {
-      match self.port_ref().read_data_set_ready() {
-        Ok(v) => Ok(CSerialPortData::DataSetReady(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "clear_to_send" => {
+        match self.port_ref().read_clear_to_send() {
+          Ok(v) => Ok(CSerialPortData::ClearToSend(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else if request.unwrap() == "ring_indicator" {
-      match self.port_ref().read_ring_indicator() {
-        Ok(v) => Ok(CSerialPortData::RingIndicator(Some(v))),
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "data_set_ready" => {
+        match self.port_ref().read_data_set_ready() {
+          Ok(v) => Ok(CSerialPortData::DataSetReady(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else if request.unwrap() == "data_bytes" {
-      match self.port_ref().bytes_to_read() {
-        Ok(buffer_size) => {
-          let mut buffer = vec![0; buffer_size as usize];
-          match self.port_ref().read_exact(&mut buffer) {
-            Ok(_) => Ok(CSerialPortData::DataBytes(Some(buffer))),
-            Err(why) => Err(std::io::Error::new(
-              std::io::ErrorKind::BrokenPipe,
-              why.to_string()
-            )),
-          }
-        },
-        Err(why) => Err(std::io::Error::new(
-          std::io::ErrorKind::BrokenPipe,
-          why.to_string()
-        )),
+      "ring_indicator" => {
+        match self.port_ref().read_ring_indicator() {
+          Ok(v) => Ok(CSerialPortData::RingIndicator(Some(v))),
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
       }
-    } else {
-      panic!(
+      "data_bytes" => {
+        match self.port_ref().bytes_to_read() {
+          Ok(buffer_size) => {
+            let mut buffer = vec![0; buffer_size as usize];
+            match self.port_ref().read_exact(&mut buffer) {
+              Ok(_) => Ok(CSerialPortData::DataBytes(Some(buffer))),
+              Err(why) => Err(std::io::Error::new(
+                std::io::ErrorKind::BrokenPipe,
+                why.to_string()
+              )),
+            }
+          },
+          Err(why) => Err(std::io::Error::new(
+            std::io::ErrorKind::BrokenPipe,
+            why.to_string()
+          )),
+        }
+      }
+      &_ => panic!(
         "CSerialPortProtocol::get_message() received an invalid request!"
-      );
+      )
     }
   }
 
@@ -3427,7 +3419,7 @@ impl CProtocolHandler<CWebSocketData> for CWebSocketProtocol {
   /// if available.
   fn get_message(
     &mut self,
-    _request: Option<&str>
+    _request: &str
   ) -> Result<CWebSocketData, std::io::Error> {
     // If socket closed by terminate, return socket closed.
     if self.socket.is_none() {
@@ -3965,10 +3957,10 @@ impl CProtocolHandler<String> for CProcessProtocol {
 
   fn get_message(
     &mut self,
-    request: Option<&str>
+    request: &str
   ) -> Result<String, std::io::Error> {
     let mut rx_buf = Vec::<u8>::new();
-    if request == Some("error") {
+    if request == "error" {
       loop {
         match self.protocol_stderr_rx.try_recv() {
           Ok(v) => rx_buf.push(v),
@@ -4116,7 +4108,7 @@ pub fn process_run(command: &str, args: &str) -> String {
 /// };
 /// assert!(protocol.is_running());
 /// codemelted::async_sleep(250);
-/// let result = protocol.get_message(None);
+/// let result = protocol.get_message("");
 /// assert!(result.is_ok());
 /// protocol.post_message("\n".to_owned());
 /// protocol.post_message("\r".to_owned());
@@ -4528,12 +4520,6 @@ pub fn storage_set(key: &str, value: &str) {
 }
 
 // ============================================================================
-// [UI UC IMPLEMENTATION] =====================================================
-// ============================================================================
-
-// TBD
-
-// ============================================================================
 // [CLI DEFINITION] ===========================================================
 // ============================================================================
 
@@ -4550,10 +4536,6 @@ fn cli_error_handler(err: &str, action: &str) {
       println!("ERROR: Unknown [action] '{}' specified", action);
       println!("       Execute `codemelted --help` for details.");
     }
-    "unknown_console_action" => {
-      println!("ERROR: Unknown --console* [action] '{}'", action);
-      println!("       Execute `codemelted --help` for details.");
-    }
     &_ => {
       panic!("SyntaxError: codemelted cli unknown error '{}'", action);
     }
@@ -4563,9 +4545,33 @@ fn cli_error_handler(err: &str, action: &str) {
   std::process::exit(1);
 }
 
+/// Handles the --async-* commands.
+fn cli_async(params: &Vec<String>) {
+  let action = params[1].as_str();
+  match action {
+    "--async-sleep" => {
+      let delay_ms = if params.len() >= 3 {
+        let delay_str = params[2].as_str();
+        match json_parse(delay_str) {
+            Some(v) => {
+              match v.as_u64() {
+                Some(delay_ms) => delay_ms,
+                None => 0,
+              }
+            },
+            None => 0,
+        }
+      } else {
+        0
+      };
+      async_sleep(delay_ms);
+    }
+    &_ => { cli_error_handler("unknown_action", action); }
+  }
+}
+
 /// Handles the --console-* commands.
-fn cli_console(params: &Vec<String>)
-{
+fn cli_console(params: &Vec<String>) {
   // Extract the parameters we will need for carrying out the cli_console
   // different actions.
   let action = params[1].as_str();
@@ -4599,9 +4605,8 @@ fn cli_console(params: &Vec<String>)
       let answer = console_prompt(message);
       println!("{}", answer);
     }
-    "--console-write" => { console_write(message); }
     "--console-writeln" => { console_writeln(message); }
-    &_ => { cli_error_handler("unknown_console_action", action); }
+    &_ => { cli_error_handler("unknown_action", action); }
   }
 }
 
@@ -4613,18 +4618,12 @@ fn cli_help() {
   println!("codemelted (CLI Native Command)                                 ");
   println!("================================================================");
   println!("                                                                ");
-  println!("ABOUT: Provides a rust compiled native executable that supports ");
-  println!("  Linux, Mac, and Windows terminals. Allows for utilizing the   ");
-  println!("  native scripting (BAT, shell) for the given operating system. ");
-  println!("  The power with this CLI is the actions implemented are the    ");
-  println!("  same regardless of the operating system. Consider installing  ");
-  println!("  the codemelted-cli PowerShell module to get a full fledged CLI");
-  println!("  experience. That module extends the codemelted CLI            ");
-  println!("  functionality to get a true scripting terminal experience.    ");
-  println!("                                                                ");
   println!("SYNTAX: codemelted [action] [params]                            ");
   println!("                                                                ");
   println!("USAGE:                                                          ");
+  println!("  --async-sleep [delay_in_millis]                               ");
+  println!("      Will sleep for the specified milliseconds. Invalid entries");
+  println!("      will sleep for 0 ms.                                      ");
   println!("  --console-alert [message]                                     ");
   println!("      Pauses execution while reporting a message.               ");
   println!("  --console-confirm [message]                                   ");
@@ -4640,14 +4639,12 @@ fn cli_help() {
   println!("  --console-prompt [message]                                    ");
   println!("      Provides an input prompt writing out the answer to        ");
   println!("      STDOUT.                                                   ");
-  println!("  --console-write [message]                                     ");
-  println!("      Writes [message] to STDOUT with no newline.               ");
   println!("  --console-writeln [message]                                   ");
   println!("      Writes [message] to STDOUT with a newline.                ");
   println!("  --help Prints this help system.                               ");
   println!("                                                                ");
   println!("WEBSITE: https://codemelted.com/developer/                      ");
-  println!("                                                                ");
+  println!("  Select section '3. Command Line Interface' of the page.       ");
 }
 
 /// Main entry point for the native `codemelted` CLI command. To add this
@@ -4662,9 +4659,11 @@ pub fn main() {
     // Match up the actions and carry them out
     let action = params[1].as_str();
     match action {
+      "--async-sleep" => { cli_async(&params); }
       "--console-alert"    | "--console-confirm" | "--console-choose" |
-      "--console-password" | "--console-prompt"  | "--console-write"  |
-      "--console-writeln" => { cli_console(&params); }
+      "--console-password" | "--console-prompt"  | "--console-writeln" => {
+        cli_console(&params);
+      }
       "--help" => { cli_help(); }
       &_ => { cli_error_handler("unknown_action", action); }
     }

@@ -216,6 +216,8 @@ class CLogRecord {
   }
 }
 
+# TODO: Update this to match updated design.
+
 # Holds the results of a --async-task action. This happens in a background
 # thread.
 class CTaskResult {

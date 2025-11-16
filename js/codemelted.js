@@ -442,6 +442,8 @@ export function async_sleep(delay) {
   });
 }
 
+// TODO: Come up with a CTaskResult concept to match design.
+
 /**
  * Will execute an asynchronous task with the ability to delay it into the
  * future and return a result if necessary.
