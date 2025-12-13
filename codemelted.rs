@@ -3791,6 +3791,32 @@ impl CMathFormula {
       "SyntaxError: args did not match the formula selected."
     )
   }
+
+  /// Provides the ability to identify a [CMathFormula] from a specified
+  /// CamelCase string value. None is returned if not found.
+  fn from_string(formula: &str) -> Option<CMathFormula> {
+    match formula {
+      "TemperatureCelsiusToFahrenheit" => Some(
+        CMathFormula::TemperatureCelsiusToFahrenheit
+      ),
+      "TemperatureCelsiusToKelvin" => Some(
+        CMathFormula::TemperatureCelsiusToKelvin
+      ),
+      "TemperatureFahrenheitToCelsius" => Some(
+        CMathFormula::TemperatureFahrenheitToCelsius
+      ),
+      "TemperatureFahrenheitToKelvin" => Some(
+        CMathFormula::TemperatureFahrenheitToKelvin
+      ),
+      "TemperatureKelvinToCelsius" => Some(
+        CMathFormula::TemperatureKelvinToCelsius
+      ),
+      "TemperatureKelvinToFahrenheit" => Some(
+        CMathFormula::TemperatureKelvinToFahrenheit
+      ),
+      &_ => None
+    }
+  }
 }
 
 /// <center><b><mark>FUTURE IMPLEMENTATION. DON'T CALL.</mark></b></center>
@@ -4606,6 +4632,57 @@ fn cli_console(params: &Vec<String>) {
       println!("{}", answer);
     }
     "--console-writeln" => { console_writeln(message); }
+    &_ => { cli_error_handler("unknown_action", action); }
+  }
+}
+
+/// Carries out a NPU use case action requests.
+fn cli_npu(params: &Vec<String>) {
+  // Extract the items necessary to carry out the request.
+  let action = params[1].as_str();
+  match action {
+    "--npu-math" => {
+      // Grab the formula to execute.
+      let formula = if params.len() >= 3 {
+        CMathFormula::from_string(params[2].as_str())
+      } else {
+        None
+      };
+      if formula.is_none() {
+        cli_error_handler("unknown_formula", action);
+      }
+
+      // Grab the arguments for the formula.
+      if params.len() <= 3 {
+        cli_error_handler("no_formula_args", action);
+      }
+
+      let mut args: Vec<f64> = Vec::new();
+      let mut i = 3;
+      while i < params.len() {
+        let json_value = json_parse(params[3].as_str());
+        let arg = match json_value {
+          Some(v) => match v.as_f64() {
+            Some(v) => v,
+            None => f64::NAN
+          },
+          None => f64::NAN
+        };
+        args.push(arg);
+        i += 1;
+      }
+
+      // Error check to ensure we have valid numbers for the formula.
+      for arg in &args {
+        if arg.is_nan() {
+          cli_error_handler("not_a_number", action);
+        }
+      }
+
+      // Now run the calculation and print the answer.
+      let answer = npu_math(formula.unwrap(), &args);
+      println!("{}", answer);
+    }
     &_ => { cli_error_handler("unknown_action", action); }
   }
 }

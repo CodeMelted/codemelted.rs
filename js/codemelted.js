@@ -1,4 +1,8 @@
 // @ts-check
+// TODO 1: Implement snackbar ui_action.
+// TODO 2: Implement copy of text.
+// TODO 3: Spread logging throughout this module for API_VIOLATIONs to explain
+//         what is happening.
 // ============================================================================
 /**
  * @file <br />
@@ -8,13 +12,15 @@
  * /></center>
  * <h3>Introduction</h3>
  * <p>
- * The codemelted.js module is an ES6 module that mirrors the codemelted.rs
- * module. It's goal is to serve several purposes. The first is providing
- * the ability to target multiple JavaScript runtimes for both frontend /
- * backend development. Second is to take advantage of TypeScript typing to
- * assist with code completion / type checking. Lastly is to provide the
- * backbone bindings for the codemelted.rs crate to support pure rust web
- * app development.
+ * The <code>codemelted.js</code> module is an ES6 module that mirrors the
+ * <code>codemelted.rs</code> module. It's goal is to implement the domain
+ * use cases wrapping the Web APIs exposed in a browser runtime. This provides
+ * the client side single page app (SPA) / progressive web app (PWA)
+ * development support utilizing web technologies. By supporting the SPA / PWA
+ * client side development, the <code>codemelted.js</code> module will also
+ * provide WASM bindings to support client side application development in
+ * Rust whether a native desktop application or a web hosted client.
+ * </p>
  * </p>
  * <table style="width: 100%;">
  * <tr>
@@ -26,7 +32,8 @@
  * <li> Implements the identified domain use cases as a series of exported functions. </li>
  * <li> Function names match that of the <code>codemelted.rs</code> rust function names. </li>
  * <li> Function parameters / returns are abstracted from JS runtime specific objects. </li>
- * <li> This is what provides for the support of multiple JS runtimes. </li>
+ * <li> This provides for the support of multiple JS runtimes. </li>
+ * <li> This provides support for TypeScript development / checking. </li>
  * </ul>
  * </td>
  * </tr>
@@ -36,11 +43,11 @@
  * </td>
  * <td>
  * <ul>
- * <li> The codemelted.js module is ran through the targeted runtime tests. </li>
- * <li> When all tests PASS, the codemelted.rs WASM build occurs. </li>
+ * <li> The <code>codemelted.js</code> module is ran through the targeted runtime tests. </li>
+ * <li> When all tests PASS, the <code>codemelted.rs</code> WASM build occurs. </li>
  * <li> When the cargo doc, build, and tests all PASS you end up with two build targets. </li>
- * <li> The ability to write a pure rust web app via the codemelted.rs crate. </li>
- * <li> The ability to write a JS frontend / backend regardless of framework. </li>
+ * <li> The ability to write a pure rust desktop / web app via the <code>codemelted.rs</code> crate. </li>
+ * <li> The ability to write a JS / TS frontend / backend regardless frontend development framework. </li>
  * </ul>
  * </td>
  * </tr>
@@ -58,105 +65,79 @@
  * <h3>JS Runtime Support</h3>
  * <p>
  * The following table reflects the public facing functions implementing the
- * domain use cases and what runtimes they are supported in.
+ * domain use cases for client side browser runtime development. It signals
+ * what other server JS runtimes this module can be utilized within even though
+ * its primary purpose is client side browser development.
  * </p>
  * <thead>
- * <tr><th>Function</th><th>B</th><th>D</th><th>N</th><th>W</th></tr>
+ * <tr><th>Function</th><th>D</th><th>N</th><th>W</th></tr>
  * </thead>
  * <tbody>
- * <tr><td>async_sleep                </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>async_task                 </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>async_timer                </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>async_worker               </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>console_alert              </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>console_choose             </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>console_confirm            </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>console_password           </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>console_prompt             </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>console_writeln            </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>db_exists                  </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>db_manage                  </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>db_query                   </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>db_update                  </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>db_version                 </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>disk_cp                    </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>disk_exists                </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>disk_ls                    </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>disk_mkdir                 </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>disk_mv                    </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>disk_read_file             </td><td>X</td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>disk_rm                    </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>disk_write_file            </td><td>X</td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>hw_request_bluetooth       </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>hw_request_midi            </td><td>X</td><td> </td><td> </td><td>X</td></tr>
- * <tr><td>hw_request_orientation     </td><td>X</td><td> </td><td> </td><td>X</td></tr>
- * <tr><td>hw_request_serial_port     </td><td>X</td><td> </td><td> </td><td>X</td></tr>
- * <tr><td>hw_request_usb             </td><td>X</td><td> </td><td> </td><td>X</td></tr>
- * <tr><td>hw_support_bluetooth       </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>hw_support_midi            </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>hw_support_orientation     </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>hw_support_serial_port     </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>hw_support_usb             </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>if_def                     </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_atob                  </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_btoa                  </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_check_type            </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_create_array          </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_create_object         </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_has_key               </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_parse                 </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_stringify             </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>json_valid_url             </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>logger_handler             </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>logger_level               </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>logger_log                 </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>monitor_performance        </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>network_beacon             </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>network_connect            </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>network_fetch              </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>network_serve              </td><td> </td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>network_upgrade_web_socket </td><td> </td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>npu_compute                </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>npu_math                   </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>process_exists             </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>process_run                </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>process_spawn              </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>runtime_cpu_arch           </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>runtime_cpu_count          </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>runtime_environment        </td><td>X</td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>runtime_event              </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>runtime_home_path          </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>runtime_hostname           </td><td>X</td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>runtime_is_browser         </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>runtime_is_deno            </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>runtime_is_nodejs          </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>runtime_is_worker          </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>runtime_name               </td><td>X</td><td>X</td><td>X</td><td>X</td></tr>
- * <tr><td>runtime_newline            </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>runtime_online             </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>runtime_os_name            </td><td> </td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>runtime_path_separator     </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>runtime_temp_path          </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>runtime_user               </td><td> </td><td>X</td><td>X</td><td> </td></tr>
- * <tr><td>storage_clear              </td><td>X</td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>storage_get                </td><td>X</td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>storage_key                </td><td>X</td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>storage_length             </td><td>X</td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>storage_remove             </td><td>X</td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>storage_set                </td><td>X</td><td>X</td><td> </td><td> </td></tr>
- * <tr><td>ui_action                  </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>ui_audio                   </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>ui_dialog                  </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>ui_is                      </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>ui_message                 </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>ui_open                    </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>ui_screen                  </td><td>X</td><td> </td><td> </td><td> </td></tr>
- * <tr><td>ui_widget                  </td><td>X</td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>async_sleep                </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>async_task                 </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>async_timer                </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>async_worker               </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>db_exists                  </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>db_manage                  </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>db_query                   </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>db_update                  </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>db_version                 </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>hw_request_bluetooth       </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>hw_request_midi            </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>hw_request_orientation     </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>hw_request_serial_port     </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>hw_request_usb             </td><td> </td><td> </td><td>X</td></tr>
+ * <tr><td>hw_support_bluetooth       </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>hw_support_midi            </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>hw_support_orientation     </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>hw_support_serial_port     </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>hw_support_usb             </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>if_def                     </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_atob                  </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_btoa                  </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_check_type            </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_create_array          </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_create_object         </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_has_key               </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_parse                 </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_stringify             </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>json_valid_url             </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>logger_handler             </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>logger_level               </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>logger_log                 </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>network_beacon             </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>network_connect            </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>network_fetch              </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>npu_compute                </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>npu_math                   </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>runtime_cpu_count          </td><td> </td><td>X</td><td>X</td></tr>
+ * <tr><td>runtime_environment        </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>runtime_event              </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>runtime_hostname           </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>runtime_is_browser         </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>runtime_is_deno            </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>runtime_is_nodejs          </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>runtime_is_worker          </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>runtime_name               </td><td>X</td><td>X</td><td>X</td></tr>
+ * <tr><td>runtime_online             </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>storage_clear              </td><td>X</td><td> </td><td> </td></tr>
+ * <tr><td>storage_get                </td><td>X</td><td> </td><td> </td></tr>
+ * <tr><td>storage_key                </td><td>X</td><td> </td><td> </td></tr>
+ * <tr><td>storage_length             </td><td>X</td><td> </td><td> </td></tr>
+ * <tr><td>storage_remove             </td><td>X</td><td> </td><td> </td></tr>
+ * <tr><td>storage_set                </td><td>X</td><td> </td><td> </td></tr>
+ * <tr><td>ui_action                  </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>ui_audio                   </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>ui_dialog                  </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>ui_is                      </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>ui_message                 </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>ui_open                    </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>ui_screen                  </td><td> </td><td> </td><td> </td></tr>
+ * <tr><td>ui_widget                  </td><td> </td><td> </td><td> </td></tr>
  * </tbody>
  * </table><br />
  * <b>Legend:</b>
  * <ul>
- * <li>B - Browser Runtime</li>
  * <li>D - Deno Runtime</li>
  * <li>N - NodeJS Runtime</li>
  * <li>W - Worker Runtime</li>
@@ -341,9 +322,7 @@ export class CResult {
    * result.
    */
   constructor({value = null, error = null} = {}) {
-    if (value && error) {
-      // throw API_MISUSE;
-    }
+    if (value && error) { throw API_MISUSE; }
     this.#value = value;
     this.#error = error;
   }
@@ -434,7 +413,7 @@ export class CTimerResult {
  * await codemelted.async_sleep(2000);
  */
 export function async_sleep(delay) {
-  json_check_type({type: "number", data: delay, shouldThrow: true});
+  json_check_type({type: "number", data: delay, should_throw: true});
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve();
@@ -463,8 +442,8 @@ export function async_sleep(delay) {
  * // TBD
  */
 export function async_task({task, data, delay = 0}) {
-  json_check_type({type: "function", data: task, shouldThrow: true});
-  json_check_type({type: "number", data: delay, shouldThrow: true});
+  json_check_type({type: "function", data: task, should_throw: true});
+  json_check_type({type: "number", data: delay, should_throw: true});
   return new Promise((resolve) => {
     try {
       setTimeout(() => {
@@ -472,6 +451,10 @@ export function async_task({task, data, delay = 0}) {
         resolve(new CResult(answer));
       }, delay);
     } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `async_task() error occurred. ${err}`
+      });
       resolve(new CResult({error: err}));
     }
   });
@@ -499,9 +482,9 @@ export function async_timer({task, interval}) {
     type: "function",
     data: task,
     count: 0,
-    shouldThrow: true
+    should_throw: true
   });
-  json_check_type({type: "number", data: interval, shouldThrow: true});
+  json_check_type({type: "number", data: interval, should_throw: true});
   return new CTimerResult(task, interval);
 }
 
@@ -518,203 +501,6 @@ export function async_timer({task, interval}) {
 export function async_worker() {
   throw API_NOT_IMPLEMENTED;
 }
-
-// ============================================================================
-// [CONSOLE UC IMPLEMENTATION] ================================================
-// ============================================================================
-
-/**
- * Writes an alert message (via STDOUT) to the user awaiting an enter key
- * press via STDIN.
- * @param {string} [message=""] The message to prompt out or "ALERT".
- * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function console_alert(message = "") {
-  json_check_type({type: "string", data: message, shouldThrow: true});
-  if (runtime_is_deno()) {
-    globalThis.alert(message);
-  } else if (runtime_is_nodejs()) {
-    throw API_NOT_IMPLEMENTED;
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Prompts (via STDOUT) for a user to make a choice (via STDIN) between
- * an array of choices
- * @param {object} params The named parameters.
- * @param {string} [params.message=""] The message to write to STDOUT.
- * @param {string[]} params.choices The choices to choose from
- * written to STDOUT.
- * @returns {number} The index of the selection in [params.choices].
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function console_choose({message = "", choices}) {
-  json_check_type({type: "string", data: message, shouldThrow: true});
-  json_check_type({type: Array, data: choices, shouldThrow: true});
-  if (runtime_is_deno()) {
-    const prompt = message.trim().length > 0
-      ? message
-      : "CHOOSE";
-    let answer = -1;
-    do {
-      globalThis.console.log();
-      globalThis.console.log("-".repeat(prompt.length));
-      globalThis.console.log(prompt);
-      globalThis.console.log("-".repeat(prompt.length));
-      choices.forEach((v, index) => {
-          console.log(`${index}. ${v}`);
-      });
-      const choice = globalThis.prompt(
-        `Make a Selection [0 = ${choices.length - 1}]:`
-      ) ?? "";
-      answer = parseInt(choice);
-      if (isNaN(answer) || answer >= choices.length) {
-        console.log(
-          "ERROR: Entered value was invalid. Please try again."
-        );
-        answer = -1;
-      }
-    } while (answer === -1);
-    return answer;
-  } else if (runtime_is_nodejs()) {
-    throw API_NOT_IMPLEMENTED;
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Prompts (via STDOUT) for a user confirmation (via STDIN).
- * @param {string} [message=""] The confirmation you are looking for.
- * @returns {boolean} The choice made.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function console_confirm(message = "") {
-  json_check_type({type: "string", data: message, shouldThrow: true});
-  if (runtime_is_deno()) {
-    const prompt = message.trim().length > 0
-      ? message
-      : "CONFIRM";
-    return globalThis.confirm(prompt);
-  } else if (runtime_is_nodejs()) {
-    throw API_NOT_IMPLEMENTED;
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Prompts (via STDOUT) for a user to enter their password via STDIN.
- * @param {string} [message=""] The custom prompt to write out to STDOUT.
- * @returns {string} the password entered via STDIN.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function console_password(message = "") {
-  json_check_type({type: "string", data: message, shouldThrow: true});
-  if (runtime_is_deno()) {
-    const prompt = message.trim().length > 0
-      ? message
-      : "PASSWORD";
-    // @ts-ignore Deno is part of the deno runtime.
-    globalThis.Deno.stdin.setRaw(true);
-    const buf = new Uint8Array(1);
-    const decoder = new TextDecoder();
-    let answer = "";
-    let done = false;
-    console.log(`${prompt}:`);
-    do {
-      // @ts-ignore Deno is part of the deno runtime.
-      const nread = globalThis.Deno.stdin.readSync(buf) ?? 0;
-      if (nread === null) {
-        done = true;
-      } else if (buf && buf[0] === 0x03) {
-        done = true;
-      } else if (buf && buf[0] === 13) {
-        done = true;
-      }
-      const text = decoder.decode(buf.subarray(0, nread));
-      answer += text;
-    } while (!done);
-      // @ts-ignore Deno is part of the deno runtime.
-    globalThis.Deno.stdin.setRaw(false);
-    return answer;
-  } else if (runtime_is_nodejs()) {
-    throw API_NOT_IMPLEMENTED;
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Write a prompt to STDOUT to receive an answer via STDIN.
- * @param {string} [message=""] The custom prompt message for STDOUT.
- * @returns {string} The typed in answer received via STDIN.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function console_prompt(message = "") {
-  json_check_type({type: "string", data: message, shouldThrow: true});
-  if (runtime_is_deno()) {
-    const prompt = message.trim().length > 0
-      ? message
-      : "PROMPT";
-    const answer = globalThis.prompt(`${prompt}:`);
-    return answer != null ? answer : "";
-  } else if (runtime_is_nodejs()) {
-    throw API_NOT_IMPLEMENTED;
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Writes the given message to STDOUT.
- * @param {string} [message=""] The message to write or a blank line.
- * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function console_writeln(message = "") {
-  json_check_type({type: "string", data: message, shouldThrow: true});
-  if (runtime_is_deno() || runtime_is_nodejs()) {
-    globalThis.console.log(message);
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-// TODO: NodeJS Console?
 
 // ============================================================================
 // [DB UC IMPLEMENTATION] =====================================================
@@ -803,481 +589,6 @@ export function db_version() {
   //       DenoKV for Deno
   //       Possibly Sqlite for NodeJS. If no third party items involved.
   throw API_NOT_IMPLEMENTED;
-}
-
-// ============================================================================
-// [DISK UC IMPLEMENTATION] ===================================================
-// ============================================================================
-
-/**
- * Provides information about a file returned. This serves as a higher
- * abstraction for Deno / NodeJS runtimes that retrieve this type of
- * information.
- * @see https://docs.deno.com/api/deno/~/Deno.FileInfo
- */
-export class CFileInfo {
-  /** @type {string} */
-  #filename;
-
-  /** @type {any} */
-  #metadata;
-
-  /**
-   * The name of the file / directory on disk.
-   * @readonly
-   * @returns {string}
-   */
-  filename() {
-    return this.#filename;
-  }
-
-  /**
-   * True if this is info for a regular file.
-   * @readonly
-   * @type {boolean}
-   */
-  get isFile() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.isFile;
-  }
-
-  /**
-   * True if this is info for a regular directory.
-   * @readonly
-   * @type {boolean}
-   */
-  get isDirectory() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.isDirectory;
-  }
-
-  /**
-   * True if this is info for a symlink.
-   * @readonly
-   * @type {boolean}
-   */
-  get isSymlink() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.isSymlink;
-  }
-
-  /**
-   * The size of the file, in bytes.
-   * @readonly
-   * @type {number}
-   */
-  get size() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.size;
-  }
-
-  /**
-   * The last modification time of the file. This corresponds to the mtime
-   * field from stat on Linux/Mac OS and ftLastWriteTime on Windows. This
-   * may not be available on all platforms.
-   * @readonly
-   * @type {number?}
-   */
-  get ntime() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.ntime;
-  }
-
-  /**
-   * The last access time of the file. This corresponds to the atime field
-   * from stat on Unix and ftLastAccessTime on Windows. This may not be
-   * available on all platforms.
-   * @readonly
-   * @type {Date?}
-   */
-  get atime() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.atime;
-  }
-
-  /**
-  * The creation time of the file. This corresponds to the birthtime field
-  * from stat on Mac/BSD and ftCreationTime on Windows. This may not be
-  * available on all platforms.
-  * @readonly
-  * @type {Date?}
-  */
-  get birthtime() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.birthtime;
-  }
-
-  /**
-   * The last change time of the file. This corresponds to the ctime field
-   * from stat on Mac/BSD and ChangeTime on Windows. This may not be
-   * available on all platforms.
-   * @readonly
-   * @type {Date?}
-   */
-  get ctime() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.ctime;
-  }
-
-  /**
-   * ID of the device containing the file.
-   * @readonly
-   * @type {number?}
-   */
-  get dev() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.dev;
-  }
-
-  /**
-   * Inode number.
-   * @readonly
-   * @type {number?}
-   */
-  get ino() {
-    // @ts-ignore Will exist in Deno runtime
-    return this.#metadata.ino;
-  }
-
-  /**
-   * Constructor for the object.
-   * @param {string} filename The item on disk that was looked up.
-   * @param {any} metadata The Deno / NodeJS representation of a file /
-   * directory on disk.
-   */
-  constructor(filename, metadata) {
-    this.#filename = filename;
-    this.#metadata = metadata;
-  }
-}
-
-/**
- * Copies a file / directory from its currently source location to the
- * specified destination.
- * @param {string} src The source item to copy.
- * @param {string} dest The destination of where to copy the item.
- * @returns {CResult} Identifying success or a reason why copy failed.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function disk_cp(src, dest) {
-  json_check_type({type: "string", data: src, shouldThrow: true});
-  json_check_type({type: "string", data: dest, shouldThrow: true});
-  if (runtime_is_deno()) {
-    try {
-      // @ts-ignore Will exist in Deno runtime.
-      globalThis.copyFileSync(src, dest);
-      return new CResult();
-    } catch (err) {
-      return new CResult({error: err});
-    }
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Determines if the specified item (filename or directory) exists.
- * @param {string} filename The source item to copy.
- * @returns {CFileInfo?} Identifying success (exists) or null
- * if not found.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function disk_exists(filename) {
-  json_check_type({type: "string", data: filename, shouldThrow: true});
-  if (runtime_is_deno()) {
-    try {
-      // @ts-ignore Will exist in Deno runtime.
-      const metadata = globalThis.statSync(filename);
-      return new CFileInfo(filename, metadata);
-    } catch (err) {
-      return null;
-    }
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * List the files in the specified source location.
- * @param {string} path The directory to list.
- * @returns {CFileInfo[]?} Identifying success (exists) or null if not
- * found.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function disk_ls(path) {
-  json_check_type({type: "string", data: path, shouldThrow: true});
-  if (runtime_is_deno()) {
-    try {
-      // @ts-ignore Will exist in Deno Runtime.
-      const dirList = globalThis.readDirSync(path);
-      const fileInfoList = [];
-      for (const dirEntry of dirList) {
-        const filename = `${path}/${dirEntry.name}`;
-        // @ts-ignore Will exist in Deno Runtime.
-        const metadata = globalThis.lstatSync(filename);
-        fileInfoList.push(new CFileInfo(filename, metadata ));
-      }
-      return fileInfoList;
-    } catch (err) {
-      return null;
-    }
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Makes a directory at the specified location.
- * @param {string} path The directory to create.
- * @returns {CResult} Identifying success (created) or an error
- * specifying why the creation failed.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function disk_mkdir(path) {
-  json_check_type({type: "string", data: path, shouldThrow: true});
-  if (runtime_is_deno()) {
-    try {
-      // @ts-ignore Will exist in the Deno Runtime.
-      globalThis.mkdirSync(path);
-      return new CResult();
-    } catch (err) {
-      return new CResult({error: err});
-    }
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Moves a file / directory from its currently source location to the
- * specified destination.
- * @param {string} src The source item to move.
- * @param {string} dest The destination of where to move the item.
- * @returns {CResult} Identifying success or a reason why move failed.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function disk_mv(src, dest) {
-  json_check_type({type: "string", data: src, shouldThrow: true});
-  json_check_type({type: "string", data: dest, shouldThrow: true});
-  if (runtime_is_deno()) {
-    try {
-      // @ts-ignore Will exist in Deno runtime.
-      globalThis.renameSync(src, dest);
-      return new CResult();
-    } catch (err) {
-      return new CResult({error: err});
-    }
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Provides the mechanism to read a file from the host operating system disk
- * and return it as binary or string data.
- * @param {object} params The named parameters
- * @param {string} [params.filename] Filename to provide when using deno or
- * nodejs runtimes to open a file.
- * @param {string} [params.accept=""] The accept string to apply on the file
- * open dialog when the runtime is browser.
- * @param {boolean} [params.isTextFile=false] Identifies whether to retrieve
- * the data as Uint8Array or as a string.
- * @returns {Promise<CResult>} The result containing the requested data or
- * reason for failure.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function disk_read_file({filename, accept="", isTextFile=false}) {
-  json_check_type({type: "string", data: accept, shouldThrow: true});
-  json_check_type({type: "boolean", data: isTextFile, shouldThrow: true});
-  if (runtime_is_browser()) {
-    return new Promise((resolve) => {
-      try {
-        // @ts-ignore document will exist in browser context.
-        const input = globalThis.document.createElement("input");
-        input.type = "file";
-        input.accept = accept;
-        input.oncancel = () => {
-          resolve(new CResult({error: "File open was cancelled"}));
-        }
-        input.onchange = async () => {
-          if (input.files != null && input.files.length > 0) {
-            let file = input.files[0];
-            if (isTextFile) {
-              const buffer = await file.arrayBuffer();
-              const decoder = new TextDecoder();
-              const data = decoder.decode(buffer);
-              resolve(new CResult({value: data}));
-            } else {
-              const buffer = await file.arrayBuffer();
-              const array = new Uint8Array(buffer);
-              const data = Array.from(array);
-              resolve(new CResult({value: data}));
-            }
-          } else {
-            resolve(new CResult({
-              error: "Failed to read the specified file"}));
-          }
-        }
-        input.click();
-      } catch (err) {
-        resolve(new CResult({error: err}));
-      }
-    });
-  } else if (runtime_is_deno()) {
-    return new Promise((resolve) => {
-      try {
-        const data = isTextFile
-          // @ts-ignore Will exist in the Deno runtime.
-          ? globalThis.readTextFileSync(filename)
-          // @ts-ignore Will exist in the Deno runtime.
-          : globalThis.readFileSync(filename);
-        resolve(new CResult({value: data}));
-      } catch (err) {
-        resolve(new CResult({error: err}));
-      }
-    });
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Removes a file or directory at the specified location.
- * @param {string} filename The item to remove
- * @returns {CResult} Identifying success or a reason why removal failed.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function disk_rm(filename) {
-  json_check_type({type: "string", data: filename, shouldThrow: true});
-  if (runtime_is_deno()) {
-    try {
-      // @ts-ignore Will exist in the Deno Runtime.
-      globalThis.removeSync(filename);
-      return new CResult();
-    } catch (err) {
-      return new CResult({error: err});
-    }
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Saves an entire file to the host operating system disk. For browser
- * runtime this will get saved to the download folder of the given
- * operating system.
- * @param {object} params The named parameters
- * @param {string} params.filename The path and filename on disk.
- * @param {string | Uint8Array} params.data The data to save to disk.
- * @param {boolean} [params.append=false] Whether to append data to an
- * existing file or not. Only valid for Deno / NodeJS runtimes.
- * @returns {Promise<CResult>} Signaling success or capturing the reason
- * for failure.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function disk_write_file({filename, data, append=false}) {
-  json_check_type({type: "string", data: filename, shouldThrow: true});
-  if (filename.length === 0) {
-    throw API_MISUSE;
-  }
-  const isValidData = json_check_type({type: "string", data: data})
-    || json_check_type({type: Uint8Array, data: data});
-  if (!isValidData) {
-    throw API_TYPE_VIOLATION;
-  }
-  if (runtime_is_browser()) {
-    return new Promise((resolve) => {
-      try {
-        // Fallback if the File System Access API is not supported…
-        // Create the blob URL.
-        let blob = json_check_type({type: "string", data: data})
-          // @ts-ignore Data is fine.
-          ? new Blob([data], { type: "text/plain" })
-          : json_check_type({type: Uint8Array, data: data})
-            // @ts-ignore Data is fine.
-            ? new Blob([data], { type: 'application/octet-stream' })
-            : data;
-
-        // @ts-ignore This will be fully converted to a blob.
-        const blobURL = URL.createObjectURL(blob);
-
-        // @ts-ignore Will exist in browser context
-        const a = globalThis.document.createElement('a');
-        a.href = blobURL;
-        a.download = filename;
-        a.style.display = 'none';
-
-        // @ts-ignore Will exist in browser context
-        globalThis.document.body.append(a);
-        a.click();
-        // Revoke the blob URL and remove the element.
-        setTimeout(() => {
-          URL.revokeObjectURL(blobURL);
-          a.remove();
-          resolve(new CResult());
-        }, 1000);
-      } catch (err) {
-        resolve(new CResult({error: err}));
-      }
-    });
-  } else if (runtime_is_deno()) {
-    return new Promise((resolve) => {
-      try {
-        if (json_check_type({type: "string", data: data})) {
-          // @ts-ignore Will exist in Deno runtime.
-          globalThis.writeTextFileSync(filename, data, append);
-        } else {
-          // @ts-ignore Will exist in Deno runtime.
-          globalThis.writeFileSync(filename, data, append);
-        }
-        resolve(new CResult());
-      } catch (err) {
-        resolve(new CResult({error: err}));
-      }
-    });
-  }
-  throw API_UNSUPPORTED_RUNTIME;
 }
 
 // ============================================================================
@@ -1610,9 +921,10 @@ export class CSerialPortProtocol extends CProtocolHandler {
       }
       return new CResult({value: data});
     } catch (err) {
-      if (err instanceof SyntaxError) {
-        throw err;
-      }
+      logger_log({
+        level: LOGGER.error,
+        data: `CSerialPortProtocol::get_message() error occurred. ${err}`
+      });
       return new CResult({error: err});
     }
   }
@@ -1637,14 +949,14 @@ export class CSerialPortProtocol extends CProtocolHandler {
    */
   async post_message(data) {
     try {
-      json_check_type({type: "object", data: data, shouldThrow: true});
+      json_check_type({type: "object", data: data, should_throw: true});
       let request = data.request;
       switch (request) {
         case SERIAL_PORT_DATA_REQUEST.DataTerminalReady:
           json_check_type({
             type: "boolean",
             data: data.data,
-            shouldThrow: true
+            should_throw: true
           });
           await this.#port.setSignals("dataTerminalReady", data.data);
           break;
@@ -1652,7 +964,7 @@ export class CSerialPortProtocol extends CProtocolHandler {
           json_check_type({
             type: "boolean",
             data: data.data,
-            shouldThrow: true
+            should_throw: true
           });
           await this.#port.setSignals("requestToSend", data.data);
           break;
@@ -1660,7 +972,7 @@ export class CSerialPortProtocol extends CProtocolHandler {
           json_check_type({
             type: "boolean",
             data: data.data,
-            shouldThrow: true
+            should_throw: true
           });
           await this.#port.setSignals("break", data.data);
           break;
@@ -1668,7 +980,7 @@ export class CSerialPortProtocol extends CProtocolHandler {
           json_check_type({
             type: Uint8Array,
             data: data.data,
-            shouldThrow: true
+            should_throw: true
           });
           const writer = this.#port.writable.getWriter();
           await writer.write(data.data);
@@ -1679,9 +991,10 @@ export class CSerialPortProtocol extends CProtocolHandler {
       }
       return new CResult();
     } catch (err) {
-      if (err instanceof SyntaxError) {
-        throw err;
-      }
+      logger_log({
+        level: LOGGER.error,
+        data: `CSerialPortProtocol::post_message() error occurred. ${err}`
+      });
       return new CResult({error: err});
     }
   }
@@ -2036,7 +1349,7 @@ export function hw_support_usb() {
  * // TBD
  */
 export function json_atob(data) {
-  json_check_type({type: "string", data: data, shouldThrow: true});
+  json_check_type({type: "string", data: data, should_throw: true});
   try {
     return globalThis.atob(data);
   } catch (err) {
@@ -2060,7 +1373,7 @@ export function json_atob(data) {
  * // TBD
  */
 export function json_btoa(data) {
-  json_check_type({type: "string", data: data, shouldThrow: true});
+  json_check_type({type: "string", data: data, should_throw: true});
   try {
     return globalThis.btoa(data);
   } catch (err) {
@@ -2119,7 +1432,7 @@ export function json_create_object(data) {
  * @param {any} params.data The parameter to be checked.
  * @param {number} [params.count] Checks the v parameter function
  * signature to ensure the appropriate number of parameters are specified.
- * @param {boolean} [params.shouldThrow=false] Whether to throw instead of
+ * @param {boolean} [params.should_throw=false] Whether to throw instead of
  * returning a value upon failure.
  * @returns {boolean} true if it meets the expectations, false otherwise.
  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
@@ -2134,7 +1447,7 @@ export function json_check_type({
   type,
   data,
   count = undefined,
-  shouldThrow = false
+  should_throw = false
 }) {
   try {
     const isExpectedType = typeof type !== "string"
@@ -2143,7 +1456,11 @@ export function json_check_type({
     let valid = typeof count === "number"
       ? isExpectedType && data.length === count
       : isExpectedType;
-    if (shouldThrow && !valid) {
+    if (should_throw && !valid) {
+      logger_log({
+        level: LOGGER.error,
+        data: "json_check_type() - type specified not of an expected type."
+      })
       throw API_TYPE_VIOLATION;
     }
     return valid;
@@ -2157,7 +1474,7 @@ export function json_check_type({
  * @param {object} params
  * @param {object} params.data The object to check.
  * @param {string} params.key The property to find.
- * @param {boolean} [params.shouldThrow=false] Whether to throw instead
+ * @param {boolean} [params.should_throw=false] Whether to throw instead
  * of returning a value upon failure.
  * @returns {boolean} true if property was found, false otherwise.
  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
@@ -2168,11 +1485,11 @@ export function json_check_type({
  * @example
  * // TBD
  */
-export function json_has_key({data, key, shouldThrow = false}) {
-  json_check_type({type: "object", data: data, shouldThrow: true});
-  json_check_type({type: "string", data: key, shouldThrow: true});
+export function json_has_key({data, key, should_throw = false}) {
+  json_check_type({type: "object", data: data, should_throw: true});
+  json_check_type({type: "string", data: key, should_throw: true});
   var hasKey = Object.hasOwn(data, key);
-  if (shouldThrow && !hasKey) {
+  if (should_throw && !hasKey) {
     throw API_TYPE_VIOLATION;
   }
   return hasKey;
@@ -2224,7 +1541,7 @@ export function json_stringify(data) {
  * @param {object} params
  * @param {string} params.data String to parse to see if it is a valid
  * URL.
- * @param {boolean} [params.shouldThrow=false] Whether to throw instead
+ * @param {boolean} [params.should_throw=false] Whether to throw instead
  * of returning a value upon failure.
  * @returns {boolean} true if valid, false otherwise.
  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
@@ -2235,8 +1552,8 @@ export function json_stringify(data) {
  * @example
  * // TBD
  */
-export function json_valid_url({data, shouldThrow = false}) {
-  json_check_type({type: "string", data: data, shouldThrow: true});
+export function json_valid_url({data, should_throw = false}) {
+  json_check_type({type: "string", data: data, should_throw: true});
   let url = undefined;
   try {
     url = new URL(data);
@@ -2244,7 +1561,7 @@ export function json_valid_url({data, shouldThrow = false}) {
     url = undefined;
   }
   let valid = json_check_type({type: URL, data: url});
-  if (shouldThrow && !valid) {
+  if (should_throw && !valid) {
     throw API_TYPE_VIOLATION;
   }
   return valid;
@@ -2327,14 +1644,14 @@ export const LOGGER = Object.freeze({
  * @private
  * @type {object} One of the {@link LOGGER} settings.
  */
-let _loggerLevel = LOGGER.error;
+let _logger_level = LOGGER.error;
 
 /**
  * Holds the logger handler for post logging events.
  * @private
  * @type {CLogHandler?}
  */
-let _loggerHandler = null;
+let _logger_handler = null;
 
 
 /**
@@ -2351,9 +1668,9 @@ let _loggerHandler = null;
  */
 export function logger_handler(handler) {
   if (json_check_type({type: "function", data: handler, count: 1})) {
-    _loggerHandler = handler;
+    _logger_handler = handler;
   } else if (handler === null) {
-    _loggerHandler = handler;
+    _logger_handler = handler;
   } else {
     throw API_TYPE_VIOLATION;
   }
@@ -2374,13 +1691,13 @@ export function logger_handler(handler) {
  */
 export function logger_level(level) {
   if (level) {
-    json_check_type({type: "object", data: level, shouldThrow: true});
-    json_has_key({data: level, key: "level", shouldThrow: true});
-    json_has_key({data: level, key: "label", shouldThrow: true});
-    _loggerLevel = level;
+    json_check_type({type: "object", data: level, should_throw: true});
+    json_has_key({data: level, key: "level", should_throw: true});
+    json_has_key({data: level, key: "label", should_throw: true});
+    _logger_level = level;
   }
   // @ts-ignore Property exists on the struct.
-  return _loggerLevel.label;
+  return _logger_level.label;
 }
 
 /**
@@ -2398,20 +1715,20 @@ export function logger_level(level) {
  * // TBD
  */
 export function logger_log({level, data}) {
-  json_check_type({type: "object", data: level, shouldThrow: true});
+  json_check_type({type: "object", data: level, should_throw: true});
   if (!data) {
     throw API_TYPE_VIOLATION;
   }
   // Check to see if our logging is on or off.
   // @ts-ignore Property exists on the struct.
-  if (_loggerLevel.label == "OFF") {
+  if (_logger_level.label == "OFF") {
     return;
   }
 
   // It's on, go create the log record and go log some stuff.
   const record = new CLogRecord(level, data);
   // @ts-ignore Property exists on the struct.
-  if (record.level.level >= _loggerLevel.level) {
+  if (record.level.level >= _logger_level.level) {
     // @ts-ignore Property exists on the struct.
     switch (record.level.label) {
       case "DEBUG":
@@ -2440,31 +1757,10 @@ export function logger_log({level, data}) {
         break;
     }
 
-    if (_loggerHandler) {
-      _loggerHandler(record);
+    if (_logger_handler) {
+      _logger_handler(record);
     }
   }
-}
-
-// ============================================================================
-// [MONITOR UC IMPLEMENTATION] ================================================
-// ============================================================================
-
-/**
- * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function monitor_performance() {
-  // TODO: Deno performance monitor for sure.
-  //       Will need to check if NodeJS exposes anything
-  //       Also need to see if any other monitors make sense. See Rust.
-  throw API_NOT_IMPLEMENTED;
 }
 
 // ============================================================================
@@ -2498,10 +1794,10 @@ export class CBroadcastChannelProtocol extends CProtocolHandler {
    */
   // @ts-ignore
   async get_message(request="") {
-    if (!this.is_running) {
-      throw API_MISUSE;
-    }
     return new Promise((resolve) => {
+      if (!this.is_running) {
+        resolve(new CResult({error: API_MISUSE}));
+      }
       setTimeout(() => {
         if (this.#rxError.length > 0) {
           resolve(new CResult({error: this.#rxError.shift()}));
@@ -2538,13 +1834,18 @@ export class CBroadcastChannelProtocol extends CProtocolHandler {
    * @returns {Promise<CResult>} The result of the transmission.
    */
   async post_message(data) {
-    if (!this.is_running()) {
-      throw API_MISUSE;
-    }
     try {
+      if (!this.is_running()) {
+        throw API_MISUSE;
+      }
       this.#channel.postMessage(data);
       return new CResult();
     } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CBroadcastChannelProtocol::post_message() error ` +
+          `occurred. ${err}`
+      })
       return new CResult({error: err});
     }
   }
@@ -2555,6 +1856,10 @@ export class CBroadcastChannelProtocol extends CProtocolHandler {
    */
   terminate() {
     if (!this.is_running()) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CBroadcastChannelProtocol::terminate() error. ${API_MISUSE}`
+      });
       throw API_MISUSE;
     }
     // Close the connection and clear the channel items.
@@ -2587,7 +1892,8 @@ export class CBroadcastChannelProtocol extends CProtocolHandler {
 }
 
 /**
- * Provides the ability to connect to different server protocols.
+ * Provides the ability to connect to different server protocols via the
+ * {@link network_connect} function.
  * @readonly
  * @enum {string}
  * @property {string} BroadcastChannel The Broadcast Channel API allows
@@ -2596,14 +1902,18 @@ export class CBroadcastChannelProtocol extends CProtocolHandler {
  * @property {string} EventSource An EventSource instance opens a
  * persistent connection to an HTTP server, which sends events in
  * text/event-stream format.
- * @property {string} WebSocket  provides the API for creating and managing
+ * @property {string} WebSocket Provides the API for creating and managing
  * a WebSocket connection to a server, as well as for sending and receiving
  * data on the connection.
+ * @property {string} WebRTC Provides the API for creating and connecting
+ * to a WebRTC server allowing for voice / video connection with another
+ * user.
  */
 export const CONNECT_REQUEST = Object.freeze({
   BroadcastChannel: "broadcast_channel",
   EventSource: "event_source",
   WebSocket: "web_socket",
+  WebRTC: "web_rtc",
 });
 
 /**
@@ -2662,10 +1972,10 @@ export class CEventSourceProtocol extends CProtocolHandler {
    */
   // @ts-ignore
   async get_message(request="") {
-    if (!this.is_running()) {
-      throw API_MISUSE;
-    }
     return new Promise((resolve) => {
+      if (!this.is_running()) {
+        resolve(new CResult({error: API_MISUSE}));
+      }
       setTimeout(() => {
         if (this.#rxError.length > 0) {
           resolve(new CResult({error: this.#rxError.shift()}));
@@ -2833,74 +2143,6 @@ export class CFetchResult extends CResult {
 }
 
 /**
- * Wrapper for the [Deno.HttpServer] object providing the return to the
- * [network_serve] call.
- * @see https://docs.deno.com/api/deno/~/Deno.HttpServer
- */
-export class CHttpServer {
-  /** @type {any} */
-  #server;
-
-  /**
-   * The binding information of the server.
-   * @readonly
-   * @type {object}
-   */
-  get addr() {
-    // @ts-ignore Will have an addr property.
-    return this.#server.addr;
-  }
-
-  /**
-   * Make the server block the event loop from finishing. Note: the server
-   * blocks the event loop from finishing by default. This method is only
-   * meaningful after .unblock() is called.
-   */
-  block() {
-    // @ts-ignore Will have a ref() method.
-    this.#server.ref();
-  }
-
-  /**
-   * Make the server not block the event loop from finishing.
-   */
-  unblock() {
-    // @ts-ignore Will have an unref() method.
-    this.#server.unref();
-  }
-
-  /**
-   * Gracefully close the server. No more new connections will be accepted,
-   * while pending requests will be allowed to finish.
-   * @returns {Promise<CResult>}  The result of the shutdown.
-   */
-  async shutdown() {
-    try {
-      // @ts-ignore Will have a shutdown() method.
-      await this.#server.shutdown();
-      return new CResult();
-    } catch (err) {
-      return new CResult({error: err});
-    }
-  }
-
-  /**
-   * Constructor for the object.
-   * @param {any} server The Deno.HttpServer created and wrapped.
-   */
-  constructor(server) {
-    this.#server = server;
-  }
-}
-
-/**
- * Handles REST API requests from the [network_serve] function call.
- * @callback CNetworkServeCB
- * @param {Request} req The request being received.
- * @returns {Response} The response to the request.
- */
-
-/**
  * Provides the API for creating and managing a WebSocket connection to a
  * server, as well as for sending and receiving data on the connection.
  * @see https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
@@ -2931,11 +2173,8 @@ export class CWebSocketProtocol extends CProtocolHandler {
    */
   static get CLOSED() { return  3; }
 
-  /** @type {boolean} */
-  #isServer;
-
-  /** @type {string | null} */
-  #url = null;
+  /** @type {string} */
+  #url;
 
   /** @type {any} */
   #socket
@@ -2945,15 +2184,6 @@ export class CWebSocketProtocol extends CProtocolHandler {
 
   /** @type {Event[]} */
   #rxError = [];
-
-  /**
-   * Identifies if this protocol represents a server or client Web Socket.
-   * Clients will automatically reconnect on fail [post_message] calls.
-   * Servers will not requiring a [terminate] call.
-   * @readonly
-   * @type {boolean}
-   */
-  get isServer() { return this.#isServer; }
 
   /**
    * Retrieves the current state of the [CWebSocketProtocol]. -1 returns
@@ -3025,12 +2255,8 @@ export class CWebSocketProtocol extends CProtocolHandler {
       this.#socket.send(data);
       return new CResult();
     } catch (err) {
-      // We had an issue with the connection, go re-establish the socket if
-      // we are a client.
-      if (!this.#isServer) {
-        this.#closeSocket();
-        this.#connectSocket();
-      }
+      this.#closeSocket();
+      this.#connectSocket();
       return new CResult({error: err});
     }
   }
@@ -3049,30 +2275,12 @@ export class CWebSocketProtocol extends CProtocolHandler {
   /**
    * Constructs the given protocol connecting it to the server at url.
    * @param {object} params The named parameters
-   * @param {string} [params.url] The url to connect to a server.
-   * @param {any} [params.socket] A socket as a result of the
-   * [network_upgrade_websocket] call.
+   * @param {string} params.url The url to connect to a server.
    */
-  constructor({url, socket}) {
+  constructor({url}) {
     super(`CWebSocketProtocol-${url ?? 'server'}`);
-    if (url) {
-      this.#isServer = false;
-      this.#url = url;
-      this.#connectSocket();
-    } else {
-      this.#isServer = true;
-      this.#socket = socket;
-      this.#socket.onmessage = (/** @type {MessageEvent<any>} */ evt) => {
-        setTimeout(() => {
-          this.#rxData.push(evt);
-        });
-      }
-      this.#socket.onerror = (/** @type {Event} */ evt) => {
-        setTimeout(() => {
-          this.#rxError.push(evt);
-        });
-      }
-    }
+    this.#url = url;
+    this.#connectSocket();
   }
 
   /**
@@ -3156,6 +2364,8 @@ export function network_connect({request, url}) {
       return new CEventSourceProtocol(url);
     case CONNECT_REQUEST.WebSocket:
       return new CWebSocketProtocol({url: url});
+    case CONNECT_REQUEST.WebRTC:
+      throw API_NOT_IMPLEMENTED;
     default:
       throw API_MISUSE;
   }
@@ -3195,92 +2405,6 @@ export async function network_fetch({url, options}) {
       return new CFetchResult({status: status, data: data});
   } catch (err) {
     return new CFetchResult({status: 418, error: err});
-  }
-}
-
-/**
- * Creates a HTTP Server REST API endpoint within a Deno Runtime.
- * @see https://docs.deno.com/api/deno/~/Deno.TlsCertifiedKeyPem
- * @param {object} params The named parameters.
- * @param {CNetworkServeCB} params.handler The callback to
- * determine what to do with the request and communicate a response.
- * @param {string} [params.hostname="0.0.0.0"] The binding address of the
- * REST API.
- * @param {number} [params.port=8000] The binding port of the REST API.
- * @param {string} [params.key] Private key in PEM format. RSA, EC, and
- * PKCS8-format keys are supported.
- * @param {string} [params.cert] Certificate chain in PEM format.
- * @returns {CHttpServer} The constructed server {@link CHttpServer}.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function network_serve({
-  handler,
-  hostname="0.0.0.0",
-  port=8000,
-  key,
-  cert,
-}) {
-  if (!runtime_is_deno()) {
-    throw API_UNSUPPORTED_RUNTIME;
-  }
-  json_check_type({
-    type: "function",
-    data: handler,
-    count: 1,
-    shouldThrow: true
-  });
-  json_check_type({type: "string", data: hostname, shouldThrow: true});
-  json_check_type({type: "number", data: port, shouldThrow: true});
-  let serveOptions = {
-    hostname: hostname,
-    port: port,
-    handler: handler,
-  };
-  if (key && cert) {
-    // @ts-ignore It is just an object.
-    serveOptions["key"] = key;
-    // @ts-ignore It is just an object.
-    serveOptions["cert"] = cert;
-  }
-  // @ts-ignore serve will be attached to globalThis.
-  const server = globalThis.serve(serveOptions);
-  return new CHttpServer(server);
-}
-
-/**
- * Upgrade an incoming HTTP request to a WebSocket.
- * @param {Request} req The initial request asking to upgrade to a
- * @returns {CResult} The result of the upgrade with a
- * CWebSocketProtocol or the error if the upgrade failed.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function network_upgrade_web_socket(req) {
-  try {
-    const { socket, response } =
-      // @ts-ignore upgradeWebSocket will be available.
-      globalThis.upgradeWebSocket(req);
-    if (response.ok) {
-      return new CResult({
-        value: new CWebSocketProtocol({socket: socket})});
-    } else {
-      return new CResult({
-        error: `Failed to upgrade to a web socket ${response.status}`
-      });
-    }
-  } catch (err) {
-    return new CResult({error: err});
   }
 }
 
@@ -3392,6 +2516,7 @@ function _geodetic_heading(start_latitude, start_longitude,
 
 /**
  * Calculates the geodetic speed.
+ * @private
  * @param {number} start_milliseconds
  * @param {number} start_latitude
  * @param {number} start_longitude
@@ -3442,10 +2567,10 @@ export function npu_compute() {
  * // TBD
  */
 export function npu_math({formula, args}) {
-  json_check_type({type: "string", data: formula, shouldThrow: true});
-  json_check_type({type: Array, data: args, shouldThrow: true});
+  json_check_type({type: "string", data: formula, should_throw: true});
+  json_check_type({type: Array, data: args, should_throw: true});
   args.forEach((v) => {
-    json_check_type({type: "number", data: v, shouldThrow: true});
+    json_check_type({type: "number", data: v, should_throw: true});
   });
   try {
     switch (formula) {
@@ -3476,52 +2601,6 @@ export function npu_math({formula, args}) {
 }
 
 // ============================================================================
-// [PROCESS UC IMPLEMENTATION] ================================================
-// ============================================================================
-
-/**
- * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function process_exists() {
-  throw API_NOT_IMPLEMENTED;
-}
-
-/**
- * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function process_run() {
-  throw API_NOT_IMPLEMENTED;
-}
-
-/**
- * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function process_spawn() {
-  throw API_NOT_IMPLEMENTED;
-}
-
-// ============================================================================
 // [RUNTIME UC IMPLEMENTATION] ================================================
 // ============================================================================
 
@@ -3539,27 +2618,6 @@ export const EVENT_REQUEST = Object.freeze({
 });
 
 /**
- * Determines the CPU architecture.
- * @returns {string} identifier of the architecture.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // Get the architecture of the deno / node js runtime
- * const arch = runtime_cpu_arch();
- * console.log("arch = ", arch);
- */
-export function runtime_cpu_arch() {
-  if (runtime_is_deno() || runtime_is_nodejs()) {
-    // @ts-ignore Property exists in a browser runtime.
-    return globalThis.process.arch;
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
  * Determines the available CPU processors for background workers.
  * @returns {number} The available hardware processors.
  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
@@ -3575,8 +2633,7 @@ export function runtime_cpu_count() {
       runtime_is_worker()) {
     return globalThis.navigator.hardwareConcurrency;
   }
-  // @ts-ignore Property exists in a browser runtime.
-  return globalThis.os.cpus().length;
+  throw API_UNSUPPORTED_RUNTIME;
 }
 
 /**
@@ -3598,18 +2655,6 @@ export function runtime_environment(name) {
   if (runtime_is_browser()) {
     let params = new URLSearchParams(globalThis.location.search);
     return params.get(name);
-  } else if (runtime_is_deno()) {
-    // @ts-ignore
-    return globalThis.Deno.env.has(name)
-      // @ts-ignore Property exists in a browser runtime.
-      ? globalThis.Deno.env.get(name)
-      : null;
-  } else if (runtime_is_nodejs()) {
-    // @ts-ignore Property exists in a browser runtime.
-    return globalThis.process.env[name] != undefined
-      // @ts-ignore Property exists in a browser runtime.
-      ? globalThis.process.env[name]
-      : null;
   }
   throw API_UNSUPPORTED_RUNTIME;
 }
@@ -3639,12 +2684,12 @@ export function runtime_event({
   listener,
   obj = undefined,
 }) {
-  json_check_type({type: "string", data: type, shouldThrow: true});
+  json_check_type({type: "string", data: type, should_throw: true});
   json_check_type({
     type: "function",
     data: listener,
     count: 1,
-    shouldThrow: true
+    should_throw: true
   });
   if (action === "add") {
     if (obj) {
@@ -3664,27 +2709,6 @@ export function runtime_event({
 }
 
 /**
- * Determines the home path of the logged in user.
- * @returns {string?} The identified home path on disk.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // Get the user's home path for deno or nodejs runtime
- * const homePath = runtime_home_path();
- * console.log("homePath = ", homePath);
- */
-export function runtime_home_path() {
-  if (runtime_is_deno() || runtime_is_nodejs()) {
-    return runtime_environment("USERPROFILE") ||
-      runtime_environment("USER");
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
  * Determines the hostname of the host operating system.
  * @returns {string} The hostname of the computer.
  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
@@ -3698,9 +2722,6 @@ export function runtime_home_path() {
 export function runtime_hostname() {
   if (runtime_is_browser()) {
     return globalThis.location.hostname;
-  } else if (runtime_is_deno()) {
-    // @ts-ignore
-    return globalThis.Deno.hostname();
   }
   throw API_UNSUPPORTED_RUNTIME;
 }
@@ -3808,28 +2829,6 @@ export function runtime_name() {
 }
 
 /**
- * Retrieves the host operating systems newline character.
- * @returns {string} of the newline character for strings.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // Get the newline for the string for deno or nodejs runtime.
- * const newline = runtime_newline();
- * console.log("newline = ", newline);
- */
-export function runtime_newline() {
-  if (runtime_is_deno() || runtime_is_nodejs()) {
-    return runtime_environment("USERPROFILE") != null
-      ? "\r\n"
-      : "\n"
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
  * Determines if the web app has access to the Internet.
  * @returns {boolean} true if path to Internet available, false otherwise.
  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
@@ -3844,86 +2843,6 @@ export function runtime_online() {
   if (runtime_is_browser()) {
     // @ts-ignore Property exists in a browser runtime.
     return globalThis.navigator.onLine;
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Determines the name of the host operating system.
- * @returns {string} The identification of the OS.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function runtime_os_name() {
-  if (runtime_is_deno()) {
-    // @ts-ignore
-    return globalThis.Deno.build.os;
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Gets the path separator of directories on disk.
- * @returns {string} representing the separation.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function runtime_path_separator() {
-  if (runtime_is_deno() || runtime_is_nodejs()) {
-    return runtime_environment("USERPROFILE") != null
-      ? "\\"
-      : "/"
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Gets the temporary directory location of the host operating system.
- * @returns {string} representing the directory on disk.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function runtime_temp_path() {
-  if (runtime_is_deno() || runtime_is_nodejs()) {
-    return runtime_environment("TMPDIR") ||
-      runtime_environment("TMP") ||
-      runtime_environment("TEMP") || "/tmp";
-  }
-  throw API_UNSUPPORTED_RUNTIME;
-}
-
-/**
- * Identifies the logged in user running the application on the host operating
- * system.
- * @returns {string} user name on disk or "UNDETERMINED".
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function runtime_user() {
-  if (runtime_is_deno() || runtime_is_nodejs()) {
-    return runtime_environment("USERNAME") ||
-      runtime_environment("USER") ||
-      "UNDETERMINED";
   }
   throw API_UNSUPPORTED_RUNTIME;
 }
@@ -4112,7 +3031,7 @@ export function storage_get({type = STORAGE_TYPE.Local, key}) {
   if (runtime_is_nodejs() || runtime_is_worker()) {
     throw API_UNSUPPORTED_RUNTIME;
   }
-  json_check_type({type: "string", data: key, shouldThrow: true});
+  json_check_type({type: "string", data: key, should_throw: true});
   switch (type) {
     case STORAGE_TYPE.Cookie:
       return CCookieStorage.getItem(key);
@@ -4145,7 +3064,7 @@ export function storage_key({type, index}) {
   if (runtime_is_nodejs() || runtime_is_worker()) {
     throw API_UNSUPPORTED_RUNTIME;
   }
-  json_check_type({type: "number", data: index, shouldThrow: true});
+  json_check_type({type: "number", data: index, should_throw: true});
   switch (type) {
     case STORAGE_TYPE.Cookie:
       return CCookieStorage.key(index);
@@ -4210,7 +3129,7 @@ export function storage_remove({type = STORAGE_TYPE.Local, key}) {
   if (runtime_is_nodejs() || runtime_is_worker()) {
     throw API_UNSUPPORTED_RUNTIME;
   }
-  json_check_type({type: "string", data: key, shouldThrow: true});
+  json_check_type({type: "string", data: key, should_throw: true});
   switch (type) {
     case STORAGE_TYPE.Cookie:
       CCookieStorage.removeItem(key);
@@ -4246,8 +3165,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
   if (runtime_is_nodejs() || runtime_is_worker()) {
     throw API_UNSUPPORTED_RUNTIME;
   }
-  json_check_type({type: "string", data: key, shouldThrow: true});
-  json_check_type({type: "string", data: value, shouldThrow: true});
+  json_check_type({type: "string", data: key, should_throw: true});
+  json_check_type({type: "string", data: value, should_throw: true});
   switch (type) {
     case STORAGE_TYPE.Cookie:
       CCookieStorage.setItem(key, value);
@@ -4281,6 +3200,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
  * amount.
  * @property {string} MoveTo moves the current window to the specified
  * coordinates.
+ * @property {string} PostMessage Posts a message to another window in
+ * the browser context.
  * @property {string} Print Opens the print dialog to print the current
  * document.
  * @property {string} ResizeBy resizes the current window by a specified
@@ -4303,18 +3224,19 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
  * device doesn't support it.
  */
 export const ACTION_REQUEST = Object.freeze({
-  Audio: "audio",
-  Focus: "focus",
-  MoveBy: "moveBy",
-  MoveTo: "moveTo",
-  Print: "print",
-  ResizeBy: "resizeBy",
-  ResizeTo: "resizeTo",
-  Scroll: "scroll",
-  ScrollBy: "scrollBy",
-  ScrollTo: "scrollTo",
-  Share: "share",
-  Vibrate: "vibrate",
+  Audio: "Audio",
+  Focus: "Focus",
+  MoveBy: "MoveBy",
+  MoveTo: "MoveTo",
+  Print: "Print",
+  PostMessage: "PostMessage",
+  ResizeBy: "ResizeBy",
+  ResizeTo: "ResizeTo",
+  Scroll: "Scroll",
+  ScrollBy: "ScrollBy",
+  ScrollTo: "ScrollTo",
+  Share: "Share",
+  Vibrate: "Vibrate",
 });
 
 /**
@@ -4325,31 +3247,104 @@ export const ACTION_REQUEST = Object.freeze({
  * to [ui_audio] to get a new audio player.
  */
 export class CAudioPlayer {
+  /** @type {string} */
+  #not_loaded_err = "No loaded src detected. You must call load() before " +
+    "using CAudioPlayer.";
   /** @type {HTMLAudioElement | null} */
-  #audioPlayer = null;
+  #audio_player = null;
   /** @type {SpeechSynthesisUtterance | null} */
-  #ttsUtterance = null;
+  #tts_utterance = null;
   /** @type {string} */
   #state;
+  /** @type {CEventHandler | null} */
+  #handler = null;
 
   /**
-   * Sets an error handler to listen for errors that may occur when
-   * utilizing the audio player.
-   * @param {CEventHandler} handler The handler to listen for
-   * errors with the audio player.
+   * Indicates the ability to loop 'audio' types. Not valid for 'tts' types.
+   * @type {boolean}
    */
-  set onerror(handler) {
-    json_check_type({
-      type: "function",
-      data: handler,
-      count: 1,
-      shouldThrow: true
-    });
-    if (this.#audioPlayer) {
-      this.#audioPlayer.onerror = handler;
-    } else {
-      // @ts-ignore This object won't be null
-      this.#ttsUtterance.onerror = handler;
+  get loop() {
+    try {
+      if (this.#audio_player) {
+        return this.#audio_player.loop;
+      } else if (this.#tts_utterance) {
+        throw "loop property not supported by 'tts' type"
+      } else {
+        logger_log({
+          level: LOGGER.error,
+          data: this.#not_loaded_err
+        })
+        throw API_MISUSE;
+      }
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::loop - ${err}`
+      })
+      throw API_MISUSE;
+    }
+   }
+  set loop(v) {
+    json_check_type({type: "boolean", data: v, should_throw: true});
+    try {
+      if (this.#audio_player) {
+        this.#audio_player.loop = v;
+      } else if (this.#tts_utterance) {
+        throw "loop property not supported by 'tts' type"
+      } else {
+        throw this.#not_loaded_err
+      }
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::loop - ${err}`
+      });
+      throw API_MISUSE;
+    }
+  }
+
+  /**
+   * Sets / gets the playback rate of the audio player.
+   * @type {number}
+   */
+  get rate() {
+    try {
+      if (this.#audio_player) {
+        return this.#audio_player.playbackRate;
+      } else if (this.#tts_utterance) {
+        return this.#tts_utterance.rate;
+      } else {
+        throw this.#not_loaded_err;
+      }
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::rate - ${err}`
+      });
+      throw API_MISUSE;
+    }
+  }
+  set rate(v) {
+    json_check_type({type: "number", data: v, should_throw: true});
+    let rate = v > 11
+      ? 11
+      : v < 0.1
+        ? 0.1
+        : v;
+    try {
+      if (this.#audio_player) {
+        this.#audio_player.playbackRate = rate;
+      } else if (this.#tts_utterance) {
+        this.#tts_utterance.rate = rate;
+      } else {
+        throw this.#not_loaded_err;
+      }
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::rate - ${err}`
+      });
+      throw API_MISUSE;
     }
   }
 
@@ -4359,45 +3354,16 @@ export class CAudioPlayer {
    * audio player has completed playing the data source.
     */
   set onended(handler) {
-    json_check_type({
-      type: "function",
-      data: handler,
-      shouldThrow: true
-    });
-    if (this.#audioPlayer) {
-      this.#audioPlayer.onended = handler;
+    if (handler) {
+      json_check_type({type: "function", data: handler, should_throw: true});
+      this.#handler = handler;
     } else {
-      // @ts-ignore This object won't be null
-      this.#ttsUtterance.onend = handler;
+      this.#handler = null;
     }
   }
 
   /**
-   * Sets / gets the playback rate of the audio player.
-   * @type {number}
-   */
-  get rate() {
-    return this.#audioPlayer != null
-      ? this.#audioPlayer.playbackRate
-      // @ts-ignore This object won't be null
-      : this.#ttsUtterance.rate;
-  }
-  set rate(v) {
-    let rate = v > 11
-      ? 11
-      : v < 0.1
-        ? 0.1
-        : v;
-    if (this.#audioPlayer) {
-      this.#audioPlayer.playbackRate = rate;
-    } else {
-      // @ts-ignore Object won't be null
-      this.#ttsUtterance.rate = rate;
-    }
-  }
-
-  /**
-   * Either "stopped" / "paused" / "playing".
+   * Either "stopped" / "paused" / "playing" / "looping".
    * @readonly
    * @type {string}
    */
@@ -4410,124 +3376,49 @@ export class CAudioPlayer {
    * @type {number}
    */
   get volume() {
-    return this.#audioPlayer != null
-      ? this.#audioPlayer.volume
-      // @ts-ignore This object won't be null
-      : this.#ttsUtterance.volume;
+    try {
+      if (this.#audio_player) {
+        return this.#audio_player.volume;
+      } else if (this.#tts_utterance) {
+        return this.#tts_utterance.volume;
+      } else {
+        throw this.#not_loaded_err;
+      }
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::volume - ${err}`
+      })
+      throw API_MISUSE;
+    }
   }
   set volume(v) {
+    json_check_type({type: "number", data: v, should_throw: true});
     let volume = v < 0
       ? 0
       : v > 1
         ? 1
         : v;
-    if (this.#audioPlayer) {
-      this.#audioPlayer.volume = volume;
-    } else {
-      // @ts-ignore This is in a browser context
-      this.#ttsUtterance.volume = volume;
-    }
-  }
-
-  /**
-   * Will resume the audio player from a paused state.
-   * @returns {Promise<CResult>} Identifying success / failure of
-   * transitioning to the new audio state.
-   * @throws {API_MISUSE} if you call when in an invalid state.
-   */
-  async resume() {
-    if (this.#state != "paused") {
-      throw API_MISUSE;
-    }
     try {
-      if (this.#audioPlayer) {
-        await this.#audioPlayer.play();
+      if (this.#audio_player) {
+        this.#audio_player.volume = volume;
+      } else if (this.#tts_utterance) {
+        this.#tts_utterance.volume = volume;
       } else {
-        // @ts-ignore This is in a browser context
-        globalThis.speechSynthesis.resume();
+        throw this.#not_loaded_err;
       }
-      this.#state = "playing";
-      return new CResult();
     } catch (err) {
-      return new CResult({error: err});
-    }
-  }
-
-  /**
-   * Will pause the audio player from a playing state.
-   * @returns {CResult} Identifying success / failure of
-   * transitioning to the new audio state.
-   * @throws {API_MISUSE} if you call when in an invalid state.
-   */
-  pause() {
-    if (this.#state != "playing") {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::volume - ${err}`
+      })
       throw API_MISUSE;
-    }
-    try {
-      if (this.#audioPlayer) {
-        this.#audioPlayer.pause();
-      } else {
-        // @ts-ignore This is in a browser context
-        globalThis.speechSynthesis.pause();
-      }
-      this.#state = "paused";
-      return new CResult();
-    } catch (err) {
-      return new CResult({error: err});
-    }
-  }
-
-  /**
-   * Will play the audio player from a stopped state.
-   * @returns {Promise<CResult>} Identifying success / failure of
-   * transitioning to the new audio state.
-   * @throws {API_MISUSE} if you call when in an invalid state.
-   */
-  async play() {
-    if (this.#state != "stopped") {
-      throw API_MISUSE;
-    }
-    try {
-      if (this.#audioPlayer) {
-        await this.#audioPlayer.play();
-      } else {
-        // @ts-ignore This is in a browser context
-        globalThis.speechSynthesis.speak(this.#ttsUtterance);
-      }
-      this.#state = "playing";
-      return new CResult();
-    } catch (err) {
-      return new CResult({error: err});
-    }
-  }
-
-  /**
-   * Will stop the audio player from a paused or playing state.
-   * @returns {CResult} Identifying success / failure of
-   * transitioning to the new audio state.
-   * @throws {API_MISUSE} if you call when in an invalid state.
-   */
-  stop() {
-    if (this.#state === "stopped") {
-      throw API_MISUSE;
-    }
-    try {
-      if (this.#audioPlayer) {
-        this.#audioPlayer.load();
-        this.#audioPlayer.currentTime = 0;
-      } else {
-        // @ts-ignore This is in a browser context
-        globalThis.speechSynthesis.cancel();
-      }
-      this.#state = "stopped";
-      return new CResult();
-    } catch (err) {
-      return new CResult({error: err});
     }
   }
 
   /**
    * Loads audio content for playback via the audio player.
+   * @param {string} type 'audio' / 'tts'
    * @param {string} data Either raw text for text-to-speech or a url to a
    * sound file for playback. Once constructed it can only work with that
    * type of data.
@@ -4538,27 +3429,157 @@ export class CAudioPlayer {
    * violations. You should not try-catch these as they serve as asserts
    * to the developer.
    */
-  load(data) {
-    if (json_valid_url({data: data})) {
-      if (this.#ttsUtterance) {
-        throw API_MISUSE;
-      } else if (!this.#audioPlayer) {
-        // @ts-ignore This is in a browser context.
-        this.#audioPlayer = new Audio(data);
-      } else {
-        // @ts-ignore This is in a browser context.
-        this.#audioPlayer.src = data;
+  load(type, data) {
+    json_check_type({type: "string", data: data, should_throw: true});
+    json_check_type({type: "string", data: data, should_throw: true});
+    this.#audio_player = null;
+    this.#tts_utterance = null;
+    if (type === "audio") {
+      // @ts-ignore This is in a browser context.
+      this.#audio_player = new Audio(data);
+      // @ts-ignore The audio player was created above.
+      this.#audio_player.onended = () => {
+        this.#state = "stopped";
+        if (this.#handler) {
+          this.#handler(new Event("stopped"));
+        }
       }
+    } else if (type === "tts") {
+      // @ts-ignore This is proper form. Fake definition for deno has issues.
+      this.#tts_utterance = new SpeechSynthesisUtterance(data);
+      // @ts-ignore The utterance is created above.
+      this.#tts_utterance.onend = () => {
+        this.#state = "stopped";
+        if (this.#handler) {
+          this.#handler(new Event("stopped"));
+        }
+      }
+      // @ts-ignore This is proper form. Fake definition for deno has issues.
+      globalThis.speechSynthesis.cancel();
     } else {
-      if (this.#audioPlayer) {
-        throw API_MISUSE;
-      } else if (!this.#ttsUtterance) {
-        // @ts-ignore This is in a browser context.
-        this.#ttsUtterance = new SpeechSynthesisUtterance(data);
+      logger_log({
+        level: LOGGER.error,
+        data: "CAudioPlayer::load() - valid types are 'audio' / 'tts'"
+      });
+      throw API_MISUSE;
+    }
+  }
+
+  /**
+   * Will pause the audio player from a playing state.
+   * @returns {Promise<CResult>} Identifying success / failure of
+   * transitioning to the new audio state.
+   */
+  async pause() {
+    try {
+      if (this.#state != "playing") {
+        throw "not in a 'playing' state";
+      } else if (this.#audio_player) {
+        this.#audio_player.pause();
+      } else if (this.#tts_utterance) {
+        // @ts-ignore This is in a browser context
+        globalThis.speechSynthesis.pause();
       } else {
-        // @ts-ignore This is in a browser context.
-        this.#ttsUtterance.text = data;
+        throw this.#not_loaded_err;
       }
+      this.#state = "paused";
+      return new CResult();
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::pause() - ${err}`
+      });
+      return new CResult({error: err});
+    }
+  }
+
+  /**
+   * Will play the audio player from a stopped state.
+   * @returns {Promise<CResult>} Identifying success / failure of
+   * transitioning to the new audio state.
+   */
+  async play() {
+    try {
+      if (this.#state != "stopped") {
+        throw "not in a 'stopped' state"
+      } else if (this.#audio_player) {
+        await this.#audio_player.play();
+      } else if (this.#tts_utterance) {
+        // @ts-ignore This is in a browser context
+        globalThis.speechSynthesis.speak(this.#tts_utterance);
+      } else {
+        throw this.#not_loaded_err;
+      }
+      this.#state = "playing";
+      return new CResult();
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::play() - ${err}`
+      });
+      return new CResult({error: err});
+    }
+  }
+
+  /**
+   * Will resume the audio player from a paused state.
+   * @returns {Promise<CResult>} Identifying success / failure of
+   * transitioning to the new audio state.
+   */
+  async resume() {
+    try {
+      if (this.#state != "paused") {
+        throw "not in a 'paused' state";
+      } else if (this.#audio_player) {
+        await this.#audio_player.play();
+      } else if (this.#tts_utterance) {
+        // @ts-ignore This is in a browser context
+        globalThis.speechSynthesis.resume();
+      } else {
+        throw this.#not_loaded_err;
+      }
+      this.#state = "playing";
+      return new CResult();
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::resume() - ${err}`
+      });
+      return new CResult({error: err});
+    }
+  }
+
+  /**
+   * Will stop the audio player from a paused or playing state.
+   * @returns {CResult} Identifying success / failure of
+   * transitioning to the new audio state.
+   */
+  stop() {
+    if (this.#state === "stopped") {
+      logger_log({
+        level: LOGGER.error,
+        data: "CAudioPlayer::stop() already in a stop stopped state"
+      });
+      throw API_MISUSE;
+    }
+    try {
+      if (this.#audio_player) {
+        this.#audio_player.load();
+        this.#audio_player.currentTime = 0;
+      } else if (this.#tts_utterance) {
+        // @ts-ignore This is in a browser context
+        globalThis.speechSynthesis.cancel();
+      } else {
+        throw this.#not_loaded_err;
+      }
+      this.#state = "stopped";
+      return new CResult();
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CAudioPlayer::stop() - ${err}`
+      });
+      return new CResult({error: err});
     }
   }
 
@@ -4712,27 +3733,20 @@ class CDialog {
  * user.
  * @readonly
  * @enum {string}
- * @property {string} Alert Displays a snack bar to alert the user of a
- * condition. Disappears after 4 seconds.
- * @property {string} Browser Opens a full page browser iFrame.
+ * @property {string} Alert Displays an alert to the user.
  * @property {string} Choose Provides a half page selection of options.
  * @property {string} Close Will asynchronously close an open page.
- * @property {string} Confirm Provides a half-page confirmation Yes / No
- * question to the user.
- * @property {string} Custom Provides a full page custom dialog to the
- * user.
- * @property {string} Loading Provides a loading half-page dialog closed
- * via the Close request.
+ * @property {string} Confirm Provides a Yes/No confirmation to the user.
+ * @property {string} Loading Provides a loading dialog closed via the Close
+ * request.
  * @property {string} Prompt Provides a half-page text field prompt input
  * box.
  */
 export const DIALOG_REQUEST = Object.freeze({
   Alert: "alert",
-  Browser: "browser",
   Choose: "choose",
   Close: "close",
   Confirm: "confirm",
-  Custom: "custom",
   Loading: "loading",
   Prompt: "prompt",
 });
@@ -4754,6 +3768,7 @@ export const DIALOG_REQUEST = Object.freeze({
  * indicates normal speed.
  * @property {number} volume sets the volume at which the media will be
  * played.
+ * @property {boolean} loop indicates if audio element will loop or not.
  * @property {function} load resets the media element to its initial state
  * and begins the process of selecting a media source and loading the media
  * in preparation for playback to begin at the beginning.
@@ -4792,29 +3807,6 @@ export const IS_REQUEST = Object.freeze({
   PWA: "PWA",
   SecureContext: "SecureContext",
   TouchEnabled: "TouchEnabled",
-});
-
-/**
- * Provides the request options of the {@link ui_message} function call.
- * @readonly
- * @enum {string}
- * @property {string} Alert instructs the browser to display a dialog with
- * an optional message, and to wait until the user dismisses the dialog.
- * @property {string} Confirm instructs the browser to display a dialog
- * with an optional message, and to wait until the user either confirms or
- * cancels the dialog.
- * @property {string} Prompt instructs the browser to display a dialog with
- * an optional message prompting the user to input some text, and to wait
- * until the user either submits the text or cancels the dialog.
- * @property {string} Post safely enables cross-origin communication
- * between Window objects; e.g., between a page and a pop-up that it
- * spawned, or between a page and an iframe embedded within it.
- */
-export const MESSAGE_REQUEST = Object.freeze({
-  Alert: "alert",
-  Confirm: "confirm",
-  Prompt: "prompt",
-  Post: "post",
 });
 
 /**
@@ -4949,13 +3941,35 @@ export const TARGET_TYPE = Object.freeze({
 });
 
 /**
+ * Identifies actionable requests via {@link ui_widget} to define HTML user
+ * interfaces for SPA / PWA.
+ * @readonly
+ * @enum {string}
+ * @property {string} CssVariable Retrieves a custom defined CSS variable
+ * in a :root definition.
+ * @property {string} Define Defines the custom HTMLElements for defining a
+ * codemelted SPA / PWA user interface.
+ * @property {string} ElementById Executes a window.getElementById call but
+ * will throw an {@link API_MISUSE} if the specified id is not found since it
+ * is assumed to be found.
+ */
+export const WIDGET_REQUEST = Object.freeze({
+  CssVariable: "CssVariable",
+  Define: "Define",
+  ElementById: "ElementById",
+});
+
+/**
  * Provides the ability to carry out actions with the open browser window.
  * @param {object} params The named parameters.
  * @param {ACTION_REQUEST} params.request The enumerated value to carry
  * out with the open browser window.
- * @param {object} [params.options] The optional data associated with the
- * Share. See
+ * @param {object} [params.data] The optional data associated with the
+ * {@link ACTION_REQUEST.Share} or {@link ACTION_REQUEST.PostMessage}
+ * requests.
  * https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share#data
+ * @param {string} [params.target_origin="*"] Specifies the target origin
+ * when posting a message to a window or frame.
  * @param {number[]} [params.pattern] Provides a pattern of vibration and
  * pause intervals. Each value indicates a number of milliseconds to
  * vibrate or pause, in alternation.
@@ -4975,78 +3989,97 @@ export const TARGET_TYPE = Object.freeze({
  * @example
  * // TBD
  */
-export async function ui_action({request, options, pattern=[], x, y}) {
+export async function ui_action({
+  request,
+  data,
+  target_origin="*",
+  pattern=[],
+  x,
+  y
+}) {
   if (!runtime_is_browser()) {
     throw API_UNSUPPORTED_RUNTIME;
   }
   let value = null;
   switch (request) {
     case ACTION_REQUEST.Audio:
-      value = new CResult({value: new CAudioPlayer()});
+      value = new CAudioPlayer();
       break;
     case ACTION_REQUEST.Focus:
       // @ts-ignore This is in a browser context
       globalThis.focus();
       break;
     case ACTION_REQUEST.MoveBy:
-      json_check_type({type: "number", data: x, shouldThrow: true});
-      json_check_type({type: "number", data: y, shouldThrow: true});
+      json_check_type({type: "number", data: x, should_throw: true});
+      json_check_type({type: "number", data: y, should_throw: true});
       // @ts-ignore check types above will validate number is not null.
       globalThis.moveBy(x, y);
       break;
     case ACTION_REQUEST.MoveTo:
-      json_check_type({type: "number", data: x, shouldThrow: true});
-      json_check_type({type: "number", data: y, shouldThrow: true});
+      json_check_type({type: "number", data: x, should_throw: true});
+      json_check_type({type: "number", data: y, should_throw: true});
       // @ts-ignore check types above will validate number is not null.
       globalThis.moveTo(x, y);
+      break;
+    case ACTION_REQUEST.PostMessage:
+      // @ts-ignore This is in a browser context
+      globalThis.postMessage(data, target_origin);
       break;
     case ACTION_REQUEST.Print:
       // @ts-ignore This is in a browser context
       globalThis.print();
       break;
     case ACTION_REQUEST.ResizeBy:
-      json_check_type({type: "number", data: x, shouldThrow: true});
-      json_check_type({type: "number", data: y, shouldThrow: true});
+      json_check_type({type: "number", data: x, should_throw: true});
+      json_check_type({type: "number", data: y, should_throw: true});
       // @ts-ignore check types above will validate number is not null.
       globalThis.resizeBy(x, y);
       break;
     case ACTION_REQUEST.ResizeTo:
-      json_check_type({type: "number", data: x, shouldThrow: true});
-      json_check_type({type: "number", data: y, shouldThrow: true});
+      json_check_type({type: "number", data: x, should_throw: true});
+      json_check_type({type: "number", data: y, should_throw: true});
       // @ts-ignore check types above will validate number is not null.
       globalThis.resizeTo(x, y);
       break;
     case ACTION_REQUEST.Scroll:
-      json_check_type({type: "number", data: x, shouldThrow: true});
-      json_check_type({type: "number", data: y, shouldThrow: true});
+      json_check_type({type: "number", data: x, should_throw: true});
+      json_check_type({type: "number", data: y, should_throw: true});
       // @ts-ignore check types above will validate number is not null.
       globalThis.scroll(x, y);
       break;
     case ACTION_REQUEST.ScrollBy:
-      json_check_type({type: "number", data: x, shouldThrow: true});
-      json_check_type({type: "number", data: y, shouldThrow: true});
+      json_check_type({type: "number", data: x, should_throw: true});
+      json_check_type({type: "number", data: y, should_throw: true});
       // @ts-ignore check types above will validate number is not null.
       globalThis.scrollBy(x, y);
       break;
     case ACTION_REQUEST.ScrollTo:
-      json_check_type({type: "number", data: x, shouldThrow: true});
-      json_check_type({type: "number", data: y, shouldThrow: true});
+      json_check_type({type: "number", data: x, should_throw: true});
+      json_check_type({type: "number", data: y, should_throw: true});
       // @ts-ignore check types above will validate number is not null.
       globalThis.scrollTo(x, y);
       break;
     case ACTION_REQUEST.Share:
       try {
         // @ts-ignore This is in a browser context
-        await globalThis.navigator.share(options);
+        await globalThis.navigator.share(data);
       } catch (err) {
+        logger_log({
+          level: LOGGER.error,
+          data: `ui_action() share failed. ${err}`
+        });
         return new CResult({error: err});
       }
     case ACTION_REQUEST.Vibrate:
-      json_check_type({type: Array, data: pattern, shouldThrow: true});
+      json_check_type({type: Array, data: pattern, should_throw: true});
       try {
         // @ts-ignore Will exist in the browser context
         globalThis.navigator.vibrate(pattern);
       } catch (err) {
+        logger_log({
+          level: LOGGER.error,
+          data: `ui_action() vibrate failed. ${err}`
+        });
         return new CResult({error: err});
       }
     default:
@@ -5067,6 +4100,8 @@ export async function ui_action({request, options, pattern=[], x, y}) {
  * DIALOG_REQUEST.Choose option.
  * @param {any} [params.returnValue] The optional value to pass along with
  * the DIALOG_REQUEST.Close option.
+ * @param {boolean} [params.use_native=false] Signals to use the browser
+ * native of the given dialog request if available.
  * @param {string} [params.width] The optional width to set of the dialog
  * either by percentage or pixel.
  * @param {string} [params.height] The optional height to set of the dialog
@@ -5086,15 +4121,16 @@ export function ui_dialog({
   message="",
   choices = [],
   returnValue,
+  use_native=false,
   width,
   height
 }) {
   if (!runtime_is_browser()) {
     throw API_UNSUPPORTED_RUNTIME;
   }
-  json_check_type({type: Array, data: choices, shouldThrow: true});
-  json_check_type({type: "string", data: request, shouldThrow: true});
-  json_check_type({type: "string", data: title, shouldThrow: true});
+  json_check_type({type: Array, data: choices, should_throw: true});
+  json_check_type({type: "string", data: request, should_throw: true});
+  json_check_type({type: "string", data: title, should_throw: true});
   if (!json_check_type({type: "string", data: message}) &&
     // @ts-ignore This will exist in a browser context
     !json_check_type({type: globalThis.HTMLElement, data: message})) {
@@ -5104,74 +4140,47 @@ export function ui_dialog({
   switch (request) {
     case DIALOG_REQUEST.Alert:
       return new Promise((resolve) => {
-        const content = `
-          <div class="codemelted-dialog-content">
-            <div>${message}</div>
-            <div class="codemelted-align-center">
-              <button id="${id}OK">OK</button>
+        if (use_native) {
+          // @ts-ignore This is in a browser context
+          globalThis.alert(data);
+          resolve(new CResult());
+        } else {
+          const content = `
+            <div class="codemelted-dialog-content">
+              <div>${message}</div>
+              <div class="codemelted-align-center">
+                <button id="${id}OK">OK</button>
+              </div>
             </div>
-          </div>
-        `;
-        setTimeout(() => {
-          // @ts-ignore Will exist in the browser context.
-          const dlg = globalThis.document.getElementById(id);
-          // @ts-ignore Will not be null
-          dlg.onclose = () => {
-            resolve(new CResult());
-          }
+          `;
+          setTimeout(() => {
+            // @ts-ignore Will exist in the browser context.
+            const dlg = globalThis.document.getElementById(id);
+            // @ts-ignore Will not be null
+            dlg.onclose = () => {
+              resolve(new CResult());
+            }
 
-          // @ts-ignore Will exist in the browser context
-          const closeBtn = globalThis.document.getElementById(
-            `${id}CloseDialog`
-          );
-          // @ts-ignore Will not be null
-          closeBtn.onclick = () => {
-            CDialog.close(id);
-            resolve(new CResult());
-          };
+            // @ts-ignore Will exist in the browser context
+            const closeBtn = globalThis.document.getElementById(
+              `${id}CloseDialog`
+            );
+            // @ts-ignore Will not be null
+            closeBtn.onclick = () => {
+              CDialog.close(id);
+              resolve(new CResult());
+            };
 
-          // @ts-ignore Will exist in the browser context.
-          const ok = globalThis.document.getElementById(`${id}OK`);
-          // @ts-ignore Will not be null
-          ok.onclick = () => {
-            CDialog.close(id);
-            resolve(new CResult());
-          };
-        });
-        CDialog.show("💬", id, title, content, width, height);
-      });
-    case DIALOG_REQUEST.Browser:
-      return new Promise((resolve) => {
-        const content = `
-          <iframe
-            class="codemelted-dialog-content"
-            src="${message}"
-            width="100%"
-            height="96%"
-            allow="accelerometer; autoplay; encrypted-media; gyroscope; web-share"
-            allowfullscreen="true"
-            frameborder="0"
-          ></iframe>
-        `;
-        setTimeout(() => {
-          // @ts-ignore Will exist in a browser context.
-          const dlg = globalThis.document.getElementById(id);
-          // @ts-ignore Will not be null
-          dlg.onclose = () => {
-            resolve(new CResult());
-          }
-
-          // @ts-ignore Will exist in a browser context.
-          const closeBtn = globalThis.document.getElementById(
-            `${id}CloseDialog`
-          );
-          // @ts-ignore Will not be null
-          closeBtn.onclick = () => {
-            CDialog.close(id);
-            resolve(new CResult());
-          };
-        });
-        CDialog.show("💻", id, title, content, width, height);
+            // @ts-ignore Will exist in the browser context.
+            const ok = globalThis.document.getElementById(`${id}OK`);
+            // @ts-ignore Will not be null
+            ok.onclick = () => {
+              CDialog.close(id);
+              resolve(new CResult());
+            };
+          });
+          CDialog.show("💬", id, title, content, width, height);
+        }
       });
     case DIALOG_REQUEST.Choose:
       return new Promise((resolve) => {
@@ -5243,79 +4252,56 @@ export function ui_dialog({
       });
     case DIALOG_REQUEST.Confirm:
       return new Promise((resolve) => {
-        const content = `
-          <div class="codemelted-dialog-content">
-            <div>${message}</div>
-            <div class="codemelted-align-center">
-              <button id="${id}OK">OK</button>
-              <button id="${id}Cancel">Cancel</button>
+        if (use_native) {
+          // @ts-ignore This is in a browser context
+          let answer = globalThis.confirm(data);
+          resolve(new CResult({value: answer}))
+        } else {
+          const content = `
+            <div class="codemelted-dialog-content">
+              <div>${message}</div>
+              <div class="codemelted-align-center">
+                <button id="${id}OK">OK</button>
+                <button id="${id}Cancel">Cancel</button>
+              </div>
             </div>
-          </div>
-        `;
-        setTimeout(() => {
-          // @ts-ignore Will exist in the browser context
-          const dlg = globalThis.document.getElementById(id);
-          // @ts-ignore Will not be null.
-          dlg.onclose = () => {
-            resolve(new CResult());
-          }
+          `;
+          setTimeout(() => {
+            // @ts-ignore Will exist in the browser context
+            const dlg = globalThis.document.getElementById(id);
+            // @ts-ignore Will not be null.
+            dlg.onclose = () => {
+              resolve(new CResult());
+            }
 
-          // @ts-ignore Will exist in a browser context
-          const closeBtn = globalThis.document.getElementById(
-            `${id}CloseDialog`
-          );
-          // @ts-ignore This will not be null
-          closeBtn.onclick = () => {
-            CDialog.close(id, false);
-            resolve(new CResult({value: CDialog.returnValue}));
-          };
+            // @ts-ignore Will exist in a browser context
+            const closeBtn = globalThis.document.getElementById(
+              `${id}CloseDialog`
+            );
+            // @ts-ignore This will not be null
+            closeBtn.onclick = () => {
+              CDialog.close(id, false);
+              resolve(new CResult({value: CDialog.returnValue}));
+            };
 
-          // @ts-ignore Will exist in the browser context
-          const ok = globalThis.document.getElementById(`${id}OK`);
-          // @ts-ignore Will not be null
-          ok.onclick = () => {
-            CDialog.close(id, true);
-            resolve(new CResult({value: CDialog.returnValue}));
-          };
+            // @ts-ignore Will exist in the browser context
+            const ok = globalThis.document.getElementById(`${id}OK`);
+            // @ts-ignore Will not be null
+            ok.onclick = () => {
+              CDialog.close(id, true);
+              resolve(new CResult({value: CDialog.returnValue}));
+            };
 
-          // @ts-ignore Will exist in browser context
-          const cancel = globalThis.document.getElementById(`${id}Cancel`);
-          // @ts-ignore It will not be null
-          cancel.onclick = () => {
-            CDialog.close(id, false);
-            resolve(new CResult({value: CDialog.returnValue}));
-          };
-        });
-        CDialog.show("🙋‍♂️", id, title, content, width, height);
-      });
-    case DIALOG_REQUEST.Custom:
-      return new Promise((resolve) => {
-        // @ts-ignore Will exist in the browser context.
-        const content = message instanceof globalThis.HTMLElement
-          // @ts-ignore innerHTML will exist
-          ? message.innerHTML
-          : message;
-
-        setTimeout(() => {
-          // @ts-ignore Will exist in the browser context
-          const dlg = globalThis.document.getElementById(id);
-          // @ts-ignore It will not be null.
-          dlg.onclose = () => {
-            resolve(new CResult({value: CDialog.returnValue}));
-          }
-
-          // @ts-ignore Will exist in the browser context.
-          const closeBtn = globalThis.document.getElementById(
-            `${id}CloseDialog`
-          );
-          // @ts-ignore Button will not be null.
-          closeBtn.onclick = () => {
-            CDialog.close(id);
-            resolve(new CResult());
-          };
-        });
-        // @ts-ignore It will not be null.
-        CDialog.show("🛃", id, title, content, width, height);
+            // @ts-ignore Will exist in browser context
+            const cancel = globalThis.document.getElementById(`${id}Cancel`);
+            // @ts-ignore It will not be null
+            cancel.onclick = () => {
+              CDialog.close(id, false);
+              resolve(new CResult({value: CDialog.returnValue}));
+            };
+          });
+          CDialog.show("🙋‍♂️", id, title, content, width, height);
+        }
       });
     case DIALOG_REQUEST.Loading:
       return new Promise((resolve) => {
@@ -5358,57 +4344,63 @@ export function ui_dialog({
       });
     case DIALOG_REQUEST.Prompt:
       return new Promise((resolve) => {
-        const content = `
-          <div class="codemelted-dialog-content">
-            <div>${message}:</div>
-            <input id="${id}Text" type="text" />
-            <div class="codemelted-align-center">
-              <button id="${id}OK">OK</button>
-              <button id="${id}Cancel">Cancel</button>
+        if (use_native) {
+          // @ts-ignore This is in a browser context
+          let answer = globalThis.prompt(data);
+          resolve(new CResult({value: answer}));
+        } else {
+          const content = `
+            <div class="codemelted-dialog-content">
+              <div>${message}:</div>
+              <input id="${id}Text" type="text" />
+              <div class="codemelted-align-center">
+                <button id="${id}OK">OK</button>
+                <button id="${id}Cancel">Cancel</button>
+              </div>
             </div>
-          </div>
-        `;
-        setTimeout(() => {
-          // @ts-ignore Will exist in a browser context
-          const dlg = globalThis.document.getElementById(id);
-          // @ts-ignore Will not be null
-          dlg.onclose = () => {
-            resolve(new CResult());
-          }
+          `;
+          setTimeout(() => {
+            // @ts-ignore Will exist in a browser context
+            const dlg = globalThis.document.getElementById(id);
+            // @ts-ignore Will not be null
+            dlg.onclose = () => {
+              resolve(new CResult());
+            }
 
-          // @ts-ignore Will exist in a browser context
-          const closeBtn = globalThis.document.getElementById(
-            `${id}CloseDialog`
-          );
-          // @ts-ignore Will not be null
-          closeBtn.onclick = () => {
-            CDialog.close(id, null);
-            resolve(new CResult({value: CDialog.returnValue}));
-          };
+            // @ts-ignore Will exist in a browser context
+            const closeBtn = globalThis.document.getElementById(
+              `${id}CloseDialog`
+            );
+            // @ts-ignore Will not be null
+            closeBtn.onclick = () => {
+              CDialog.close(id, null);
+              resolve(new CResult({value: CDialog.returnValue}));
+            };
 
-          // @ts-ignore Will exist in a browser context
-          const txtField = globalThis.document.getElementById(`${id}Text`);
-          // @ts-ignore Will exist in a browser context
-          const ok = globalThis.document.getElementById(`${id}OK`);
-          // @ts-ignore Won't be null
-          ok.onclick = () => {
+            // @ts-ignore Will exist in a browser context
+            const txtField = globalThis.document.getElementById(`${id}Text`);
+            // @ts-ignore Will exist in a browser context
+            const ok = globalThis.document.getElementById(`${id}OK`);
             // @ts-ignore Won't be null
-            CDialog.close(id, txtField.value);
-            const rtnval = CDialog.returnValue
-              ? CDialog.returnValue
-              : "";
-            resolve(new CResult({value: rtnval}));
-          };
+            ok.onclick = () => {
+              // @ts-ignore Won't be null
+              CDialog.close(id, txtField.value);
+              const rtnval = CDialog.returnValue
+                ? CDialog.returnValue
+                : "";
+              resolve(new CResult({value: rtnval}));
+            };
 
-          // @ts-ignore Exists in a browser context
-          const cancel = globalThis.document.getElementById(`${id}Cancel`);
-          // @ts-ignore Will not be null
-          cancel.onclick = () => {
-            CDialog.close(id, null);
-            resolve(new CResult({value: CDialog.returnValue}));
-          };
-        });
-        CDialog.show("🤨", id, title, content, width, height);
+            // @ts-ignore Exists in a browser context
+            const cancel = globalThis.document.getElementById(`${id}Cancel`);
+            // @ts-ignore Will not be null
+            cancel.onclick = () => {
+              CDialog.close(id, null);
+              resolve(new CResult({value: CDialog.returnValue}));
+            };
+          });
+          CDialog.show("🤨", id, title, content, width, height);
+        }
       });
     default:
       throw API_MISUSE;
@@ -5450,55 +4442,11 @@ export function ui_is(request) {
 }
 
 /**
- * Wraps the browser provided messaging mechanisms.
- * @param {object} params The named parameters
- * @param {MESSAGE_REQUEST} params.request The  enumerated value identifying
- * the type of messaging to perform.
- * @param {string | any} params.data String for the Alert / Confirm /
- * Prompt request. Serializable data for Post communication between
- * browser windows.
- * @param {string} [params.targetOrigin="*"] Which window to send the data
- * when utilizing the Post request. Not setting it will send to all open
- * windows.
- * @returns {boolean | string | null | void} Alert is void / Confirm
- * is boolean / Prompt is string, null / Post is void.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function ui_message({request, data, targetOrigin = "*"}) {
-  if (!runtime_is_browser()) {
-    throw API_UNSUPPORTED_RUNTIME;
-  }
-  switch (request) {
-    case MESSAGE_REQUEST.Alert:
-      // @ts-ignore This is in a browser context
-      globalThis.alert(data);
-      break;
-    case MESSAGE_REQUEST.Confirm:
-      // @ts-ignore This is in a browser context
-      return globalThis.confirm(data);
-    case MESSAGE_REQUEST.Prompt:
-      // @ts-ignore This is in a browser context
-      return globalThis.prompt(data);
-    case MESSAGE_REQUEST.Post:
-      // @ts-ignore This is in a browser context
-      globalThis.postMessage(data, targetOrigin);
-    default:
-      throw API_MISUSE;
-  }
-}
-
-/**
  * Opens the specified protocol to a browser window or native app
  * configured to handle the given specified schema.
  * @param {object} params The named parameters
  * @param {SCHEMA_TYPE} params.schema The schema to open.
- * @param {boolean} [params.popupWindow=false] Whether to open the protocol in
+ * @param {boolean} [params.popup_window=false] Whether to open the protocol in
  * a separate browser window.
  * @param {string} [params.url] The url of the protocol unless utilizing
  * "mailto:" schema with [params.mailtoParams] which will already be
@@ -5511,7 +4459,7 @@ export function ui_message({request, data, targetOrigin = "*"}) {
  * about on the email.
  * @param {string} [params.subject=""] The subject of the email.
  * @param {string} [params.body=""] The actual email message.
- * @param {TARGET_TYPE} [params.target=TARGET_TYPE.Blank] The type of a tab
+ * @param {TARGET_TYPE} [params.target=TARGET_TYPE.Self] The type of a tab
  * behavior.
  * @param {number} [params.width=900] The width of a popup window. Defaulted
  * to 900.0 when not set.
@@ -5528,14 +4476,14 @@ export function ui_message({request, data, targetOrigin = "*"}) {
  */
 export function ui_open({
   schema,
-  popupWindow = false,
+  popup_window = false,
   url,
   mailto = [],
   cc = [],
   bcc = [],
   subject = "",
   body = "",
-  target = "_blank",
+  target = TARGET_TYPE.Self,
   width=900,
   height=600
 }) {
@@ -5543,15 +4491,15 @@ export function ui_open({
   if (!runtime_is_browser()) {
     throw API_UNSUPPORTED_RUNTIME;
   }
-  json_check_type({type: "boolean", data: popupWindow, shouldThrow: true});
-  json_check_type({type: "string", data: target, shouldThrow: true});
-  json_check_type({type: "number", data: width, shouldThrow: true});
-  json_check_type({type: "number", data: height, shouldThrow: true});
-  json_check_type({type: Array, data: mailto, shouldThrow: true});
-  json_check_type({type: Array, data: cc, shouldThrow: true});
-  json_check_type({type: Array, data: bcc, shouldThrow: true});
-  json_check_type({type: "string", data: subject, shouldThrow: true});
-  json_check_type({type: "string", data: body, shouldThrow: true});
+  json_check_type({type: "boolean", data: popup_window, should_throw: true});
+  json_check_type({type: "string", data: target, should_throw: true});
+  json_check_type({type: "number", data: width, should_throw: true});
+  json_check_type({type: "number", data: height, should_throw: true});
+  json_check_type({type: Array, data: mailto, should_throw: true});
+  json_check_type({type: Array, data: cc, should_throw: true});
+  json_check_type({type: Array, data: bcc, should_throw: true});
+  json_check_type({type: "string", data: subject, should_throw: true});
+  json_check_type({type: "string", data: body, should_throw: true});
 
   // Now go build the URL to open.
   let urlToLaunch = schema;
@@ -5560,11 +4508,11 @@ export function ui_open({
       schema === "https://" ||
       schema === "sms:" ||
       schema === "tel:") {
-    json_check_type({type: "string", data: url, shouldThrow: true});
+    json_check_type({type: "string", data: url, should_throw: true});
     urlToLaunch += url;
   } else if (schema === "mailto:") {
     if (url) {
-      json_check_type({type: "string", data: url, shouldThrow: true});
+      json_check_type({type: "string", data: url, should_throw: true});
       urlToLaunch += url;
     } else {
       // Form the mailto parameters to better control the URL formatting.
@@ -5609,7 +4557,7 @@ export function ui_open({
   }
 
   // Determine how we are opening the item.
-  if (popupWindow) {
+  if (popup_window) {
     // @ts-ignore Will return a number.
     let top = (ui_screen(SCREEN_REQUEST.Height) - height) / 2;
     // @ts-ignore Will return a number.
@@ -5709,21 +4657,459 @@ export function ui_screen(request) {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @param {object} params The named parameters.
+ * @param {WIDGET_REQUEST} params.request The request to carry out.
+ * @param {string} [params.data] The optional data associated with the
+ * request.
+ * @returns {HTMLElement | string | undefined} One of the following depending
+ * on the request. {@link WIDGET_REQUEST.CssVariable} string value or empty
+ * string of the queried variable, {@link WIDGET_REQUEST.Define} undefined,
+ * and {@link WIDGET_REQUEST.ElementById} the HTMLElement of the queried ID.
  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
  * violations. You should not try-catch these as they serve as asserts
  * to the developer.
  */
-export function ui_widget() {
-  if (if_def("HTMLElement")) {
-    // TODO: This is how we will define our custom components.
-    // @ts-ignore Exists in a browser context.
-    // globalThis.customElements.define("codemelted-something",
-    //     class extends globalThis.HTMLElement {
-    //   // Define something cool.
-    // });
-  } else {
+export function ui_widget({request, data}) {
+  // Check if we are in a supported runtime or not.
+  if (!if_def("HTMLElement")) {
     throw API_UNSUPPORTED_RUNTIME;
+  }
+
+  // We are supported, go carry out the request.
+  if (request === WIDGET_REQUEST.CssVariable) {
+    json_check_type({type: "string", data: data, should_throw: true});
+    // @ts-ignore exists in a browser context
+    let cs = globalThis.window.getComputedStyle(
+      // @ts-ignore exists in a browser context
+      globalThis.document.documentElement
+    );
+    // @ts-ignore json_check_type will throw if not set properly
+    return cs.getPropertyValue(data);
+  } else if (request === WIDGET_REQUEST.Define) {
+    // @ts-ignore Helper function for all defined widgets.
+    const get_css_var = (v) => {
+      let css_var = ui_widget({
+        request: WIDGET_REQUEST.CssVariable,
+        data: v
+      }) ?? "";
+      // @ts-ignore Will be a string is this context.
+      return css_var.length > 0 ? css_var : v;
+    }
+
+    // ------------------------------------------------------------------------
+    // [APP WIDGETS] ----------------------------------------------------------
+    // ------------------------------------------------------------------------
+
+    // Sets up the "codemelted-ui-app-bar" to define a header / footer
+    // container for a UI.
+    // @ts-ignore Exists in a browser context.
+    globalThis.customElements.define("codemelted-ui-app-bar",
+      // @ts-ignore exists in a browser
+      class extends globalThis.HTMLElement {
+        // Build the component
+        connectedCallback() {
+          // Setup if we are a header / footer location.
+          let type = this.getAttribute("cm_type");
+          if (type === "header") {
+            this.style.top = "0";
+          } else if (type === "footer") {
+            this.style.bottom = "0";
+          } else {
+            console.error("codemelted-ui-app-bar requires cm_type attribute");
+            throw API_MISUSE;
+          }
+          this.style.left = "0";
+          this.style.right = "0";
+          this.style.position = "fixed";
+
+          // Now setup whether other required initial properties
+          let attributes = [
+            "cm_bg_color",
+            "cm_border",
+            "cm_fg_color",
+            "cm_height",
+            "cm_z_index",
+          ];
+          attributes.forEach((attr_val, index) => {
+            // Ensure style was specified.
+            let attr = this.getAttribute(attr_val)
+            if (!attr) {
+              console.error(`codemelted-ui-app-bar requires ${attr_val}`);
+              throw API_MISUSE;
+            }
+
+            let css_value = get_css_var(attr);
+            switch (index) {
+              case 0:
+                this.style.backgroundColor = css_value.length > 0
+                  ? css_value : attr;
+                break;
+              case 1:
+                this.style.border = css_value.length > 0
+                  ? css_value : attr;
+                break;
+              case 2:
+                this.style.color = css_value.length > 0
+                  ? css_value : attr;
+                break;
+              case 3:
+                this.style.height = css_value.length > 0
+                  ? css_value : attr;
+                let height_margin = parseInt(
+                  this.style.height.replaceAll("px", "")
+                ) + 10;
+                if (type === "header") {
+                  // @ts-ignore exists in a browser context
+                  globalThis.document.body.style.marginTop =
+                    `${height_margin}px`;
+                } else {
+                  // @ts-ignore exists in a browser context
+                  globalThis.document.body.style.marginBottom =
+                    `${height_margin}px`;
+                }
+                break;
+              case 4:
+                this.style.zIndex = css_value.length > 0
+                  ? css_value : attr;
+                break;
+              default:
+                console.error(`codemelted-ui-app-bar unknown ${attr_val}`);
+                throw API_NOT_IMPLEMENTED;
+            }
+          });
+        }
+        // Register the wrapped component
+        constructor() { super(); }
+      }
+    );
+
+    // Sets up a full-page sheet to display and be closed once action is done.
+    // Allows for adding multiple SPA views allowing for staying on a single
+    // web page.
+    // @ts-ignore Exists in a browser context.
+    globalThis.customElements.define("codemelted-ui-app-sheet",
+      // @ts-ignore exists in a browser
+      class extends globalThis.HTMLElement {
+        static observedAttributes = [
+          "cm_title",
+          "cm_img_src",
+          "cm_img_type"
+        ];
+
+        #header;
+
+        #render_header() {
+          // Setup our worker variables
+          let cm_title = this.getAttribute("cm_title");
+          let cm_img_type = this.getAttribute("cm_img_type");
+          let cm_img_src = this.getAttribute("cm_img_src");
+          let img_src = "";
+
+          // Do validity and setup of items
+          if (!cm_title) {
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-app-sheet cm_title attribute is required"
+            });
+            throw API_MISUSE;
+          } else if (!cm_img_src) {
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-app-sheet cm_img_src attribute is required"
+            });
+            throw API_MISUSE;
+          } else if (cm_img_type === "emoji") {
+            img_src = `<h2>${cm_img_src}</h2>`;
+          } else if (cm_img_type === "img") {
+            img_src = `<img style="height: 49px;" src="${cm_img_src} />"`;
+          } else {
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-app-sheet cm_img_type attribute valid " +
+                "values are 'emoji' / 'img'"
+            });
+            throw API_MISUSE;
+          }
+
+          // Now go render the header for the app-sheet
+          let btn_id = `id${globalThis.window.crypto.randomUUID()}`;
+          let btn_style = "border: none; cursor: pointer; " +
+            "background-color: transparent;"
+          this.#header.innerHTML=`
+            ${img_src}
+            <h2>${cm_title}</h2>
+            <button id=${btn_id} style="${btn_style}">❌</button>
+          `;
+          setTimeout(() => {
+            // @ts-ignore exists in a browser context
+            let btn = globalThis.document.getElementById(btn_id);
+            if (!btn) {
+              logger_log({
+                level: LOGGER.error,
+                data: "codemelted-ui-app-sheet close button could " +
+                  "not be setup."
+              })
+              throw API_NOT_IMPLEMENTED;
+            }
+            // @ts-ignore exists in a browser context
+            btn.onclick = (evt) => {
+              this.hide();
+            };
+          });
+        }
+
+        // Build the component
+        connectedCallback() {
+          // Setup our sheet wrapper styles
+          this.style.position = "fixed";
+          this.style.flexDirection = "column";
+          this.style.top = "0";
+          this.style.left = "0";
+          this.style.right = "0";
+          this.style.bottom = "0";
+          this.style.display = "none";
+
+          // Now setup our configurable attributes
+          let attributes = [
+            "cm_bg_color",
+            "cm_fg_color",
+            "cm_border",
+            "cm_z_index",
+          ];
+          attributes.forEach((attr, i) => {
+            let attr_val = this.getAttribute(attr);
+            if (!attr_val) {
+              console.error(`codemelted-ui-app-sheet ${attr} required`);
+              throw API_MISUSE;
+            }
+            let css_val = get_css_var(attr_val);
+            let css = css_val.length > 0 ? css_val : attr_val;
+            switch (i) {
+              case 0:
+                this.style.backgroundColor = css;
+                break;
+              case 1:
+                this.style.color = css;
+                break;
+              case 2:
+                this.#header.style.border = css;
+                break;
+              case 3:
+                this.style.zIndex = css;
+                break;
+              default:
+                console.error(
+                  `codemelted-ui-app-sheet ${attr} not implemented.`
+                );
+                throw API_NOT_IMPLEMENTED;
+            }
+          });
+          // @ts-ignore exists in a browser context
+          if (this.firstChild?.nextSibling instanceof globalThis.HTMLElement) {
+            this.firstChild.nextSibling.style.flexGrow = "1";
+          }
+          this.#render_header();
+          this.insertBefore(this.#header, this.firstChild);
+        }
+        // Register the wrapped component
+        constructor() {
+          super();
+          // @ts-ignore exists in a browser context
+          this.#header = globalThis.document.createElement("header");
+          this.#header.style.display = "grid";
+          this.#header.style.height = "50px";
+          this.#header.style.display = "grid";
+          this.#header.style.alignSelf = "center";
+          this.#header.style.alignContent = "center";
+          this.#header.style.alignItems = "center";
+          this.#header.style.textAlign = "center";
+          this.#header.style.width = "100%";
+          this.#header.style.gridTemplateColumns = "75px auto 75px";
+        }
+
+        show() {
+          this.#render_header();
+          this.style.display = "flex";
+        }
+        hide() { this.style.display = "none"; }
+      }
+    );
+
+    // ------------------------------------------------------------------------
+    // [LAYOUT WIDGETS] -------------------------------------------------------
+    // ------------------------------------------------------------------------
+
+    // Sets up the "codemelted-ui-grid-layout" to define row / column layout
+    // container.
+    // @ts-ignore Exists in a browser context.
+    globalThis.customElements.define("codemelted-ui-grid-layout",
+      // @ts-ignore exists in a browser
+      class extends globalThis.HTMLElement {
+        // Build the component
+        connectedCallback() {
+          // Setup our basic grid
+          this.style.display = "grid";
+
+          // Now get our required controls
+          let type = this.getAttribute("cm_type");
+          let grid_template = this.getAttribute("cm_grid_template");
+          if (!type) {
+            console.error(
+              "codemelted-ui-grid-layout expects cm_type attribute"
+            );
+            throw API_MISUSE;
+          } else if (!grid_template) {
+            console.error(
+              "codemelted-ui-grid-layout expects cm_grid_template attribute"
+            );
+            throw API_MISUSE;
+          }
+
+          if (type === "columns") {
+            let css_value = get_css_var(grid_template);
+            this.style.gridTemplateColumns = css_value.length > 0
+              ? css_value : grid_template;
+          } else if (type === "rows") {
+            let css_value = get_css_var(grid_template);
+            this.style.gridTemplateRows = css_value.length > 0
+              ? css_value : grid_template;
+          } else {
+            console.error(
+              "codemelted-ui-grid-layout cm_type must be 'rows' / 'columns'"
+            );
+            throw API_MISUSE;
+          }
+        }
+        // Register the wrapped component
+        constructor() {
+          super();
+        }
+      }
+    );
+
+    // ------------------------------------------------------------------------
+    // [COMPONENT WIDGETS] ----------------------------------------------------
+    // ------------------------------------------------------------------------
+
+    // Defines a basic button control ensuring the proper layout of controls
+    // and setting of tooltips.
+    // @ts-ignore exists in a browser
+    globalThis.customElements.define("codemelted-ui-button",
+      // @ts-ignore exists in a browser
+      class extends globalThis.HTMLElement {
+        // Build the component
+        connectedCallback() {
+          // @ts-ignore exists in a browser context
+          let btn = globalThis.document.createElement("button");
+          let id = this.getAttribute("id");
+          if (id) {
+            btn.id = id;
+            this.id = "";
+          }
+          btn.title = this.getAttribute("cm_tooltip") ?? "";
+          let label = this.getAttribute("cm_label");
+          let img_src = this.getAttribute("cm_img_src");
+          if (!label && !img_src) {
+            console.error(
+              "codemelted-ui-button expects at least one of the " +
+              "cm_label / cm_img attribute"
+            );
+            throw API_MISUSE;
+          } else if (label && !img_src) {
+            btn.innerHTML = label;
+          } else if (!label && img_src) {
+            btn.innerHTML = `<img src=${img_src} />`
+          } else {
+            btn.innerHTML = `<img src=${img_src} /><br />${label}`;
+          }
+          btn.style.display = "block";
+          btn.style.border = "none";
+          btn.style.lineHeight = "1.2em";
+          btn.style.cursor = "pointer";
+          btn.style.backgroundColor = "transparent";
+          this.appendChild(btn);
+        }
+        // Register the wrapped component
+        constructor() { super(); }
+      }
+    );
+
+    // Defines a combobox control setting up their values and what to do
+    // upon selecting a value.
+    // @ts-ignore exists in a browser
+    globalThis.customElements.define("codemelted-ui-combobox",
+      // @ts-ignore exists in a browser
+      class extends globalThis.HTMLElement {
+        // Build the component
+        connectedCallback() {
+          // Grab our necessary attributes
+          let options = this.getAttribute("cm_options");
+          let values = this.getAttribute("cm_values");
+          if (!options) {
+            console.error(
+              "codemelted-ui-combobox expects cm_options attribute"
+            );
+            throw API_MISUSE;
+          } else if (!values) {
+            console.error(
+              "codemelted-ui-combobox expects cm_options attribute"
+            );
+            throw API_MISUSE;
+          }
+
+          // Go build the component
+          let option_list = options.split(",");
+          let value_list = values.split(",");
+          if (option_list.length != value_list.length) {
+            console.error(
+              "codemelted-ui-combobox cm_options / cm_lists were not the" +
+              " same length"
+            );
+            throw API_MISUSE;
+          }
+          // @ts-ignore exists in a browser context
+          let select = globalThis.document.createElement("select");
+          let id = this.getAttribute("id");
+          if (id) {
+            select.id = id;
+            this.id = "";
+          }
+          select.style.cursor = "pointer";
+          // @ts-ignore exists in a browser context
+          option_list.forEach((v, i) => {
+            // @ts-ignore exists in a browser context
+            let option = globalThis.document.createElement("option");
+            option.text = v;
+            option.value = value_list[i];
+            select.appendChild(option);
+          });
+
+          // Append it to our component
+          this.appendChild(select);
+        }
+        // Register the wrapped component
+        constructor() { super(); }
+      }
+    );
+  } else if (request === WIDGET_REQUEST.ElementById) {
+    json_check_type({type: "string", data: data, should_throw: true});
+    // @ts-ignore type checked above
+    let widget = globalThis.document.getElementById(data);
+    if (!widget) {
+      logger_log({
+        level: LOGGER.error,
+        data: `codemelted::ui_widget() - did not find ${data} element by id`
+      });
+      throw API_MISUSE;
+    }
+    return widget;
+  } else {
+    logger_log({
+      level: LOGGER.error,
+      data: `codemelted::ui_widget() - unknown ${request}`
+    });
+    throw API_MISUSE;
   }
 }
