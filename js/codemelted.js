@@ -4760,7 +4760,7 @@ export function ui_widget({request, data}) {
                   ? css_value : attr;
                 let height_margin = parseInt(
                   this.style.height.replaceAll("px", "")
-                ) + 5;
+                ) + 1;
                 if (type === "header") {
                   // @ts-ignore exists in a browser context
                   globalThis.document.body.style.marginTop =
