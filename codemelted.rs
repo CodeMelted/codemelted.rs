@@ -61,7 +61,7 @@ pub type CTaskCB<T> = fn(T) -> Result<T, std::io::Error>;
 /// The result of a [async_task] call. This holds an internal thread that will
 /// call the [CTaskCB] to process specified data and return the result.
 /// The [CTaskResult::has_completed] will let you know when the thread
-/// has completed so you can then call [CTaskResult::value] for the
+/// has completed so you can then call [CTaskResult::result] for the
 /// processed value.
 pub struct CTaskResult<T> {
   /// Holds the the handle for the internal thread.

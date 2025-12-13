@@ -3,7 +3,6 @@ title = "codemelted.rs: The Swiss Army Knife Full Stack Solution"
 authors = ["Mark Shaffer"]
 description = "An implementation of 14 domain specific use cases to bring a full stack solution for CLI, services, and web development."
 language = "en"
-multilingual = false
 src = "src"
 
 [build]

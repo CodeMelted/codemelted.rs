@@ -18,47 +18,54 @@
   <link rel="icon" type="image/x-icon" href="https://codemelted.com/favicon.png">
   <link rel="stylesheet" href="https://codemelted.com/assets/css/services.css">
   <link rel="stylesheet" href="https://codemelted.com/assets/css/developer-theme.css">
-  <script src="https://codemelted.com/assets/js/codemelted_navigation.js" defer></script>
+  <script src="https://codemelted.com/assets/js/codemelted_web.js" defer></script>
   <style>
-    .content-nav {
+    .content_nav {
       overflow-y: auto;
       background-color: black;
       position: fixed;
       right: 0;
-      top: 0;
-      bottom: 78px;
+      top: 50px;
+      bottom: 50px;
       display: grid;
-      grid-template-rows: auto auto auto auto auto auto;
+      grid-template-rows: auto auto auto;
     }
-    .content-nav a {
+    .content_nav a {
       padding: 5px;
       cursor: pointer;
     }
-    .content-nav a:hover {
+    .content_nav a:hover {
       background-color: darkblue;
     }
-    .content-nav img {
+    .content_nav img {
       height: 45px;
     }
-    .content-container {
-      top: 0px;
+
+    .frm_content_wrapper {
+      position: fixed;
+      top: 52px;
       right: 55px;
-      bottom: 78px;
+      left: 0;
+      bottom: 68px;
+    }
+    .frm_content_wrapper iframe {
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head><body>
-  <div class="content-nav">
+  <div class="frm_content_wrapper">
+    <iframe id="frm_content" src="mdbook/index.html" frameborder="0" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+  </div>
+  <div class="content_nav">
     <a id="mdbook"        onclick="onAnchorClicked('mdbook'); return false;" title="codemelted.rs The Swiss Army Knife of Code"><img src="https://codemelted.com/assets/images/icon-design.png" /></a>
     <a id="codemelted.rs" onclick="onAnchorClicked('codemelted.rs'); return false;" title="codemelted.rs Module"><img src="https://codemelted.com/assets/images/icon-rust.png" /></a>
     <a id="js"            onclick="onAnchorClicked('js'); return false;" title="codemelted.js Namespace"><img src="https://codemelted.com/assets/images/icon-js.png" /></a>
   </div>
-  <div class="content-container">
-    <iframe id="frmContent" src="mdbook/index.html" frameborder="0" width="100%" height="100%" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
-  </div>
-  <codemelted-navigation></codemelted-navigation>
+  <codemelted-web></codemelted-web>
   <script>
     // setup our page controls
-    const frmContent = document.getElementById("frmContent");
+    const frm_content = document.getElementById("frm_content");
     const anchors = {
       "mdbook"        : `mdbook/index.html?rand=${Math.random()}`,
       "codemelted.rs" : `codemelted.rs/codemelted/index.html?rand=${Math.random()}`,
@@ -73,7 +80,7 @@
       // Set our frame source
       const open = params.get("open");
       const value = anchors[open];
-      frmContent.src = value;
+      frm_content.src = value;
 
       // Go set the active page.
       for (const [key, value] of Object.entries(anchors)) {
@@ -93,7 +100,7 @@
       for (const [key, value] of Object.entries(anchors)) {
         document.getElementById(key).style.backgroundColor = "black";
       }
-      frmContent.src = anchors[id]
+      frm_content.src = anchors[id]
       document.getElementById(id).style.backgroundColor = "darkblue";
       activeSelection = id;
     }

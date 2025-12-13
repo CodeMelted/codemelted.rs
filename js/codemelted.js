@@ -1641,8 +1641,9 @@ export const LOGGER = Object.freeze({
 
 /**
  * Holds the logger level object for module logging.
+ * One of the {@link LOGGER} settings.
  * @private
- * @type {object} One of the {@link LOGGER} settings.
+ * @type {object}
  */
 let _logger_level = LOGGER.error;
 
@@ -4759,7 +4760,7 @@ export function ui_widget({request, data}) {
                   ? css_value : attr;
                 let height_margin = parseInt(
                   this.style.height.replaceAll("px", "")
-                ) + 10;
+                ) + 5;
                 if (type === "header") {
                   // @ts-ignore exists in a browser context
                   globalThis.document.body.style.marginTop =
