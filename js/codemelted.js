@@ -4718,7 +4718,10 @@ export function ui_widget({request, data}) {
           } else if (type === "footer") {
             this.style.bottom = "0";
           } else {
-            console.error("codemelted-ui-app-bar requires cm_type attribute");
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-app-bar requires cm_type attribute"
+            });
             throw API_MISUSE;
           }
           this.style.left = "0";
@@ -4737,7 +4740,10 @@ export function ui_widget({request, data}) {
             // Ensure style was specified.
             let attr = this.getAttribute(attr_val)
             if (!attr) {
-              console.error(`codemelted-ui-app-bar requires ${attr_val}`);
+              logger_log({
+                level: LOGGER.error,
+                data: `codemelted-ui-app-bar requires ${attr_val}`
+              });
               throw API_MISUSE;
             }
 
@@ -4776,7 +4782,10 @@ export function ui_widget({request, data}) {
                   ? css_value : attr;
                 break;
               default:
-                console.error(`codemelted-ui-app-bar unknown ${attr_val}`);
+                logger_log({
+                  level: LOGGER.error,
+                  data: `codemelted-ui-app-bar unknown ${attr_val}`
+                });
                 throw API_NOT_IMPLEMENTED;
             }
           });
@@ -4882,7 +4891,10 @@ export function ui_widget({request, data}) {
           attributes.forEach((attr, i) => {
             let attr_val = this.getAttribute(attr);
             if (!attr_val) {
-              console.error(`codemelted-ui-app-sheet ${attr} required`);
+              logger_log({
+                level: LOGGER.error,
+                data: `codemelted-ui-app-sheet ${attr} required`
+              });
               throw API_MISUSE;
             }
             let css_val = get_css_var(attr_val);
@@ -4957,14 +4969,17 @@ export function ui_widget({request, data}) {
           let type = this.getAttribute("cm_type");
           let grid_template = this.getAttribute("cm_grid_template");
           if (!type) {
-            console.error(
-              "codemelted-ui-grid-layout expects cm_type attribute"
-            );
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-grid-layout expects cm_type attribute"
+            });
             throw API_MISUSE;
           } else if (!grid_template) {
-            console.error(
-              "codemelted-ui-grid-layout expects cm_grid_template attribute"
-            );
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-grid-layout expects cm_grid_template " +
+                "attribute"
+            });
             throw API_MISUSE;
           }
 
@@ -5009,27 +5024,26 @@ export function ui_widget({request, data}) {
             btn.id = id;
             this.id = "";
           }
+          btn.id = this.getAttribute("id") ?? "";
           btn.title = this.getAttribute("cm_tooltip") ?? "";
           let label = this.getAttribute("cm_label");
           let img_src = this.getAttribute("cm_img_src");
           if (!label && !img_src) {
-            console.error(
-              "codemelted-ui-button expects at least one of the " +
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-button expects at least one of the " +
               "cm_label / cm_img attribute"
-            );
+            });
             throw API_MISUSE;
           } else if (label && !img_src) {
             btn.innerHTML = label;
           } else if (!label && img_src) {
             btn.innerHTML = `<img src=${img_src} />`
           } else {
-            btn.innerHTML = `<img src=${img_src} /><br />${label}`;
+            btn.innerHTML = `<img src=${img_src} /> ${label}`;
           }
           btn.style.display = "block";
-          btn.style.border = "none";
-          btn.style.lineHeight = "1.2em";
           btn.style.cursor = "pointer";
-          btn.style.backgroundColor = "transparent";
           this.appendChild(btn);
         }
         // Register the wrapped component
@@ -5045,31 +5059,7 @@ export function ui_widget({request, data}) {
       class extends globalThis.HTMLElement {
         // Build the component
         connectedCallback() {
-          // Grab our necessary attributes
-          let options = this.getAttribute("cm_options");
-          let values = this.getAttribute("cm_values");
-          if (!options) {
-            console.error(
-              "codemelted-ui-combobox expects cm_options attribute"
-            );
-            throw API_MISUSE;
-          } else if (!values) {
-            console.error(
-              "codemelted-ui-combobox expects cm_options attribute"
-            );
-            throw API_MISUSE;
-          }
-
-          // Go build the component
-          let option_list = options.split(",");
-          let value_list = values.split(",");
-          if (option_list.length != value_list.length) {
-            console.error(
-              "codemelted-ui-combobox cm_options / cm_lists were not the" +
-              " same length"
-            );
-            throw API_MISUSE;
-          }
+          // Create our select control.
           // @ts-ignore exists in a browser context
           let select = globalThis.document.createElement("select");
           let id = this.getAttribute("id");
@@ -5078,17 +5068,98 @@ export function ui_widget({request, data}) {
             this.id = "";
           }
           select.style.cursor = "pointer";
-          // @ts-ignore exists in a browser context
-          option_list.forEach((v, i) => {
+
+          // Grab our necessary attributes
+          let cm_size = parseInt(this.getAttribute("cm_size") ?? "0");
+          if (cm_size === 0) {
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-combobox requires cm_size attribute"
+            });
+            throw API_MISUSE;
+          }
+          for (let i = 0; i < cm_size; i++) {
+            let cm_option = this.getAttribute(`cm_option${i+1}`) ?? "";
+            let options = cm_option.split(",");
+            if (!options || options.length != 2) {
+              logger_log({
+                level: LOGGER.error,
+                data: `codemelted-ui-combobox cm_option${i+1} not `  +
+                  "valid 'option,value' format"
+              });
+              throw API_MISUSE;
+            }
+
+            // Go build the option control for the combo box.
             // @ts-ignore exists in a browser context
             let option = globalThis.document.createElement("option");
-            option.text = v;
-            option.value = value_list[i];
+            option.text = options[0];
+            option.value = options[1];
             select.appendChild(option);
-          });
+          }
 
           // Append it to our component
           this.appendChild(select);
+        }
+        // Register the wrapped component
+        constructor() { super(); }
+      }
+    );
+
+    // Defines a collapsible expansion tile displaying additional children
+    // when expanded.
+    // @ts-ignore exists in a browser
+    globalThis.customElements.define("codemelted-ui-expansion-tile",
+      // @ts-ignore exists in a browser
+      class extends globalThis.HTMLElement {
+        // Build the component
+        connectedCallback() {
+          let cm_label = this.getAttribute("cm_label");
+          if (!cm_label) {
+            logger_log({
+              level: LOGGER.error,
+              data: "codemelted-ui-expansion-tile requires cm_label attribute"
+            });
+            throw API_MISUSE;
+          }
+
+          // For any custom tags that create elements underneath, remove
+          // the rendered data so they render properly when re-added.
+          let child_nodes = Array.from(this.children);
+          child_nodes.forEach((el) => {
+            if (el.tagName.toLowerCase() === "codemelted-ui-button") {
+              el.innerHTML = "";
+            } else if (el.tagName.toLowerCase() === "codemelted-ui-combobox") {
+              el.innerHTML = "";
+            }
+          });
+          this.innerHTML = `
+            <style>
+              .cm_exp_tile_summary {
+                user-select: none;
+                text-align: left;
+                font-weight: bold;
+                cursor: pointer;
+                padding: 5px;
+              }
+              .cm_exp_tile_summary::before {
+                content: '+';
+                margin-right: 10px;
+                display: inline-block;
+                transition: transform 0.3s;
+              }
+              .cm_exp_tile_details[open] summary::before {
+                content: '-';
+                transform: rotate(0deg);
+              }
+            </style>
+            <details class="cm_exp_tile_details">
+              <summary class="cm_exp_tile_summary">${cm_label}</summary>
+            </details>
+          `;
+          child_nodes.forEach((el) => {
+            this.children[1].appendChild(el);
+          });
         }
         // Register the wrapped component
         constructor() { super(); }
@@ -5101,7 +5172,7 @@ export function ui_widget({request, data}) {
     if (!widget) {
       logger_log({
         level: LOGGER.error,
-        data: `codemelted::ui_widget() - did not find ${data} element by id`
+        data: `codemelted::ui_widget() did not find ${data} element by id`
       });
       throw API_MISUSE;
     }
@@ -5109,7 +5180,7 @@ export function ui_widget({request, data}) {
   } else {
     logger_log({
       level: LOGGER.error,
-      data: `codemelted::ui_widget() - unknown ${request}`
+      data: `codemelted::ui_widget() unknown ${request}`
     });
     throw API_MISUSE;
   }
