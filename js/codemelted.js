@@ -5019,13 +5019,7 @@ export function ui_widget({request, data}) {
         connectedCallback() {
           // @ts-ignore exists in a browser context
           let btn = globalThis.document.createElement("button");
-          let id = this.getAttribute("id");
-          if (id) {
-            btn.id = id;
-            this.id = "";
-          }
-          btn.id = this.getAttribute("id") ?? "";
-          btn.title = this.getAttribute("cm_tooltip") ?? "";
+          this.title = this.getAttribute("cm_tooltip") ?? "";
           let label = this.getAttribute("cm_label");
           let img_src = this.getAttribute("cm_img_src");
           if (!label && !img_src) {
@@ -5062,11 +5056,6 @@ export function ui_widget({request, data}) {
           // Create our select control.
           // @ts-ignore exists in a browser context
           let select = globalThis.document.createElement("select");
-          let id = this.getAttribute("id");
-          if (id) {
-            select.id = id;
-            this.id = "";
-          }
           select.style.cursor = "pointer";
 
           // Grab our necessary attributes
