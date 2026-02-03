@@ -26,6 +26,7 @@
     "rusqlite",
     "serialport",
     "sysinfo",
+    "TAURI",
     "USERPROFILE",
     "Welp",
     "WORA",

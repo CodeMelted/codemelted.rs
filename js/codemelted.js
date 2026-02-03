@@ -130,7 +130,6 @@
  * <tr><td>ui_audio                   </td><td> </td><td> </td><td> </td></tr>
  * <tr><td>ui_dialog                  </td><td> </td><td> </td><td> </td></tr>
  * <tr><td>ui_is                      </td><td> </td><td> </td><td> </td></tr>
- * <tr><td>ui_message                 </td><td> </td><td> </td><td> </td></tr>
  * <tr><td>ui_open                    </td><td> </td><td> </td><td> </td></tr>
  * <tr><td>ui_screen                  </td><td> </td><td> </td><td> </td></tr>
  * <tr><td>ui_widget                  </td><td> </td><td> </td><td> </td></tr>
@@ -145,7 +144,7 @@
  * <h3>About Module</h3>
  * @author Mark Shaffer
  * @copyright © 2025 Mark Shaffer. All Rights Reserved.
- * @version 0.0.0 (Last Modified 2025-mm-dd)
+ * @version 26.0.0-alpha (Last Modified 2025-mm-dd)
  * @license MIT <br />
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),

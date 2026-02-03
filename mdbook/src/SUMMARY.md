@@ -4,7 +4,5 @@
 
 - [Functional Decomposition](./1.0_functional-decomposition.md)
 - [Domain Use Cases](./2.0_domain-use-cases.md)
-- [Command Line Interface (CLI)](./3.0_cli.md)
-- [Building Rust Applications](./4.0_building-rust-apps.md)
-- [Raspberry Pi](./5.0_raspberry-pi.md)
-- [Numeric Processing Unit (NPU)](./6.0_npu.md)
+- [Numeric Processing Unit (NPU)](./3.0_npu.md)
+- [Command Line Interface (CLI)](./4.0_cli.md)

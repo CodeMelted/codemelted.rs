@@ -4558,9 +4558,21 @@ fn cli_error_handler(err: &str, action: &str) {
       println!("ERROR: Call signature is `codemelted [action] [params]");
       println!("       Execute `codemelted --help` for details.");
     }
+    "no_formula_args" => {
+      println!("ERROR: No arguments specified for formula for '{}'", action);
+      println!("       Visit https://rs.codemelted.com/npu/math for details.");
+    }
+    "not_a_number" => {
+      println!("ERROR: Number expected for '{}' action.", action);
+      println!("       Execute `codemelted --help` for details.");
+    }
     "unknown_action" => {
       println!("ERROR: Unknown [action] '{}' specified", action);
       println!("       Execute `codemelted --help` for details.");
+    }
+    "unknown_formula" => {
+      println!("ERROR: Unknown formula specified for '{}'", action);
+      println!("       Visit https://rs.codemelted.com/npu/math for details.");
     }
     &_ => {
       panic!("SyntaxError: codemelted cli unknown error '{}'", action);
@@ -4690,12 +4702,14 @@ fn cli_npu(params: &Vec<String>) {
 /// Handles the CLI Native Command help system documenting the commands
 /// handled by the CLI DEFINITION.
 fn cli_help() {
+  let name = env!("CARGO_PKG_NAME");
+  let version = env!("CARGO_PKG_VERSION");
   println!("                                                                ");
   println!("================================================================");
-  println!("codemelted (CLI Native Command)                                 ");
+  println!("{} Native Command - v{}                          ", name, version);
   println!("================================================================");
   println!("                                                                ");
-  println!("SYNTAX: codemelted [action] [params]                            ");
+  println!("SYNTAX: {} [action] [params]                              ", name);
   println!("                                                                ");
   println!("USAGE:                                                          ");
   println!("  --async-sleep [delay_in_millis]                               ");
@@ -4718,10 +4732,12 @@ fn cli_help() {
   println!("      STDOUT.                                                   ");
   println!("  --console-writeln [message]                                   ");
   println!("      Writes [message] to STDOUT with a newline.                ");
+  println!("  --npu-math [formula] [arguments]                              ");
+  println!("      Writes the answer to the calculated formula w/ arguments. ");
   println!("  --help Prints this help system.                               ");
   println!("                                                                ");
-  println!("WEBSITE: https://codemelted.com/developer/                      ");
-  println!("  Select section '3. Command Line Interface' of the page.       ");
+  println!("WEBSITE: https://rs.codemelted.com/                             ");
+  println!("                                                                ");
 }
 
 /// Main entry point for the native `codemelted` CLI command. To add this
@@ -4740,7 +4756,8 @@ pub fn main() {
       "--console-alert"    | "--console-confirm" | "--console-choose" |
       "--console-password" | "--console-prompt"  | "--console-writeln" => {
         cli_console(&params);
-      }
+      },
+      "--npu-math" => { cli_npu(&params); },
       "--help" => { cli_help(); }
       &_ => { cli_error_handler("unknown_action", action); }
     }
@@ -4755,7 +4772,7 @@ pub fn main() {
 }
 
 // ============================================================================
-// [WASM IMPLEMENTATION] ======================================================
+// [codemelted.js BINDING] ====================================================
 // ============================================================================
 
 // TBD
