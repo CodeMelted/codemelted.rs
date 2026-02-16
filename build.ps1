@@ -35,13 +35,13 @@ function message([string]$msg) {
 switch ($args[0]) {
   "--deploy" {
     message "Now uploading codemelted.com/developer content."
-    Move-Item -Path docs -Destination developer -ErrorAction Stop
-    Compress-Archive -Path developer -DestinationPath developer.zip -Force
+    Move-Item -Path docs -Destination rs -ErrorAction Stop
+    Compress-Archive -Path rs -DestinationPath rs.zip -Force
     $hostService = $env:CODEMELTED_USER_AND_IP + $env:CODEMELTED_HOME
-    scp developer.zip $hostService
+    scp rs.zip $hostService
     ssh $env:CODEMELTED_USER_AND_IP
-    Remove-Item -Path developer.zip
-    Remove-Item -Path developer -Recurse -Force
+    Remove-Item -Path rs.zip
+    Remove-Item -Path rs -Recurse -Force
     Set-Location $PSScriptRoot
     message "Upload completed."
   }
@@ -69,10 +69,12 @@ switch ($args[0]) {
     New-Item -Path docs/codemelted.rs -ItemType Directory
     New-Item -Path docs/mdbook -ItemType Directory
     New-Item -Path docs/js -ItemType Directory
+    New-Item -Path docs/support -ItemType Directory
     Copy-Item -Path mdbook/book/* -Destination docs/mdbook -Force -Recurse
     Copy-Item -Path target/doc/* -Destination docs/codemelted.rs -Force -Recurse
     Copy-Item -Path js/docs/* -Destination docs/js -Force -Recurse
-    Copy-Item -Path index.html -Destination docs -Force
+    Copy-Item -Path support/* -Destination docs/support -Force -Recurse
+    Move-Item -Path docs/support/index.html -Destination docs -Force
     message "codemelted.rs docs website completed."
   }
   "--test" {

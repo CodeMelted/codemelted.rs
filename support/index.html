@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <title>codemelted.rs Project</title>
+  <meta charset="UTF-8">
+  <meta name="description" content="The aim of this project is to deliver a swiss army knife module to aid software engineers in building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets.">
+  <meta name="keywords" content="cli,cli-app,js,js-lib,js-library,js-module,pwsh,pwsh-scripts,pwsh-module,rust,rust-lang,rust-crate,rust-library,rust-wasm,rust-web">
+  <meta name="author" content="Mark Shaffer">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/x-icon" href="https://codemelted.com/favicon.png">
+  <!-- Open Graph Settings -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="codemelted.rs Project">
+  <meta property="og:description" content="The aim of this project is to deliver a swiss army knife module to aid software engineers in building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets.">
+  <meta property="og:site_name" content="CodeMelted PWA">
+  <meta property="og:image" content="https://codemelted.com/assets/images/logo-codemelted-rs.png">
+  <link rel="stylesheet" href="https://codemelted.com/assets/css/scrollbars.css">
+  <style>
+    /*
+    =========================================================================
+    [Root CSS Variables] ====================================================
+    =========================================================================
+    */
+    :root {
+      /* Common app-bar properties */
+      --app-bar-bg-color: #161E27;
+      --app-bar-fg-color: white;
+      --app-bar-border: 1px solid black;
+      --app-bar-z-index: 100000;
+      --app-sheet-z-index: 100001;
+      --button-hover-color: blue;
+
+      /* app-bar header specific properties */
+      --app-bar-header-height: 50px;
+
+      /* app-bar footer specific properties */
+      --app-bar-footer-height: 45px;
+    }
+
+    /*
+    ===========================================================================
+    [GIT Controls] ============================================================
+    ===========================================================================
+    */
+
+    #git_controls {
+      color: white;
+      overflow-y: auto;
+      text-align: center;
+      border-color: black;
+      background-color: var(--app-bar-bg-color);
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 46px;
+      width: 135px;
+    }
+
+    #btn_share_link button {
+      color: white;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      border: 1px solid black;
+      background-color: transparent;
+    }
+    #btn_share_link button:hover {
+      background-color: var(--button-hover-color);
+    }
+
+    /*
+    ===========================================================================
+    [App Footer Grid Styles] ==================================================
+    ===========================================================================
+    */
+
+    .frm_content_wrapper {
+      position: fixed;
+      top: 0;
+      left: 135px;
+      right: 0;
+      bottom: 46px;
+    }
+    .frm_content_wrapper iframe {
+      width: 100%;
+      height: 100%;
+    }
+
+    /*
+    ===========================================================================
+    [App Footer Grid Styles] ==================================================
+    ===========================================================================
+    */
+    .app-footer-nav-grid {
+      align-self: center;
+      align-items: center;
+      align-content: center;
+      text-align: center;
+    }
+    .app-footer-nav-grid img {
+      height: 30px;
+    }
+    .app-footer-nav-grid codemelted-ui-button {
+      border: 1px solid black;
+    }
+    .app-footer-nav-grid codemelted-ui-button button {
+      height: var(--app-bar-footer-height);
+      background-color: transparent;
+      border-style: inset;
+      border: none;
+      width: 100%;
+    }
+    .app-footer-nav-grid codemelted-ui-button button:hover {
+      background-color: var(--button-hover-color);
+    }
+  </style>
+</head><body>
+  <!-- LEFT CONTROLS-->
+  <codemelted-ui-grid-layout id="git_controls" cm_type="rows" cm_grid_template="157px 50px auto">
+    <img style="margin: 0; padding: 0; height: 157px;" src="https://codemelted.com/assets/images/icon-me-animated.png" />
+    <codemelted-ui-button id="btn_share_link" cm_tooltip="Get Shareable Link" cm_label="🔗 Share"></codemelted-ui-button>
+    <div style="border: 1px solid black;">
+      <br><label style="font-size: small; font-weight: bold;">GitHub Controls</label><br><br>
+      <a class="github-button" href="https://github.com/codemelted" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-size="small" data-show-count="true" aria-label="Follow @codemelted on GitHub">@codemelted</a><br>
+      <a class="github-button" href="https://github.com/codemelted/codemelted.rs/subscription" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-icon="octicon-eye" data-size="small" data-show-count="true" aria-label="Watch codemelted/codemelted.rs on GitHub">Watch</a><br>
+      <a class="github-button" href="https://github.com/sponsors/codemelted" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-icon="octicon-heart" data-size="small" aria-label="Sponsor @codemelted on GitHub">Sponsor</a><br><br>
+      <a class="github-button" href="https://github.com/codemelted/codemelted.rs/archive/HEAD.zip" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-size="small" aria-label="Download codemelted/codemelted.rs on GitHub">Download</a><br>
+      <a class="github-button" href="https://github.com/codemelted/codemelted.rs/fork" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-icon="octicon-repo-forked" data-size="small" aria-label="Fork codemelted/codemelted.rs on GitHub">Fork</a><br><br>
+      <a class="github-button" href="https://github.com/codemelted/codemelted.rs/discussions" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-icon="octicon-comment-discussion" data-size="small" aria-label="Discuss codemelted/codemelted.rs on GitHub">Discuss</a><br>
+      <a class="github-button" href="https://github.com/codemelted/codemelted.rs/issues" data-color-scheme="no-preference: dark_high_contrast; light: dark_high_contrast; dark: dark_high_contrast;" data-icon="octicon-issue-opened" data-size="small" aria-label="Issue codemelted/codemelted.rs on GitHub">Issue</a>
+    </div>
+  </codemelted-ui-grid-layout>
+
+  <div class="frm_content_wrapper">
+    <iframe id="frm_content" frameborder="0"></iframe>
+  </div>
+
+  <!-- APP FOOTER -->
+  <codemelted-ui-app-bar cm_type="footer" cm_border="--app-bar-border" cm_bg_color="--app-bar-bg-color" cm_fg_color="--app-bar-fg-color" cm_height="--app-bar-footer-height" cm_z_index="--app-bar-z-index">
+    <codemelted-ui-grid-layout cm_type="columns" cm_grid_template="auto auto auto auto auto" class="app-footer-nav-grid">
+      <codemelted-ui-button id="btn_mdbook"  cm_img_src="https://codemelted.com/assets/images/icon-design.png" cm_tooltip="codemelted.rs: The Swiss Army Knife Full Stack Solution"></codemelted-ui-button>
+      <codemelted-ui-button id="btn_rs"      cm_img_src="https://codemelted.com/assets/images/icon-rust.png" cm_tooltip="codemelted.rs Module SDK"></codemelted-ui-button>
+      <codemelted-ui-button id="btn_js"      cm_img_src="https://codemelted.com/assets/images/icon-js.png" cm_tooltip="codemelted.js Module SDK"></codemelted-ui-button>
+      <codemelted-ui-button id="btn_gists"    cm_img_src="https://codemelted.com/assets/images/icon-code.png" cm_tooltip="CodeMelted GitHub Gists"></codemelted-ui-button>
+      <codemelted-ui-button id="btn_uml"     cm_img_src="https://codemelted.com/assets/images/icon-uml.png" cm_tooltip="mermaid UML Modeler"></codemelted-ui-button>
+    </codemelted-ui-grid-layout>
+  </codemelted-ui-app-bar>
+
+  <script>
+    // Module needed for the logic
+    let codemelted = undefined;
+
+    /**
+     * Will reset and active the selected content.
+     * @param {number} active_index The active index to highlight
+     * @returns {void}
+     */
+    function reset_buttons(active_index) {
+      let buttons = [
+        "btn_mdbook",
+        "btn_rs",
+        "btn_js",
+        "btn_gists",
+        "btn_uml"
+      ];
+      buttons.forEach((id, index) => {
+        let btn = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data: id});
+        btn.style.backgroundColor = active_index == index ? "navy" : "#161E27";
+      });
+    }
+
+    /**
+     * Main entry point for the SPA.
+     * @returns {void}
+     */
+    async function main() {
+      try {
+        // Load our module
+        codemelted = await import(`https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs@main/js/codemelted.js`);
+        codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.Define });
+
+        // Setup our navigation button actions.
+        const frm_content = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"frm_content" });
+        let btn_mdbook = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_mdbook" });
+        let btn_rs = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_rs" });
+        let btn_js = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_js" });
+        let btn_gists = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_gists" });
+        let btn_uml = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_uml" });
+
+        btn_mdbook.onclick = (ev) => {
+          frm_content.src = `mdbook/index.html?t=${Date.now()}`;
+          reset_buttons(0);
+        };
+        btn_rs.onclick = (ev) => {
+          frm_content.src = `codemelted.rs/codemelted/index.html?t=${Date.now()}`;
+          reset_buttons(1);
+        };
+        btn_js.onclick = (ev) => {
+          frm_content.src = `js/index.html?t=${Date.now()}`;
+          reset_buttons(2);
+        };
+        btn_gists.onclick = (ev) => {
+          frm_content.src = `support/gists.html?t=${Date.now()}`;
+          reset_buttons(3);
+        };
+        btn_uml.onclick = (ev) => {
+          frm_content.src = `support/uml-modeler.html?t=${Date.now()}`;
+          reset_buttons(4);
+        };
+
+        // Setup our share button
+        let btn_share_link = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_share_link" });
+        btn_share_link.onclick = async (ev) => {
+          let href = frm_content.contentWindow.location.href;
+          let index = href.indexOf("t=");
+          href = index != -1
+            ? href.substring(0, index - 1)
+            : href;
+          await codemelted.ui_action({
+            request: codemelted.ACTION_REQUEST.Share,
+            data: {
+              title: globalThis.document.title,
+              url: String(`${globalThis.location.href}?open=${href}`),
+            }
+          });
+        };
+
+        // Now determine what content we are loading
+        let open_url = codemelted.runtime_environment("open");
+        if (open_url) {
+          frm_content.src = open_url
+          if (open_url.includes("mdbook")) {
+            reset_buttons(0);
+          } else if (open_url.includes("codemelted.rs")) {
+            reset_buttons(1);
+          } else if (open_url.includes("js/")) {
+            reset_buttons(2);
+          } else if (open_url.includes("gists.html")) {
+            reset_buttons(3);
+          } else {
+            reset_buttons(4);
+          }
+          // index = window.location.href.indexOf("/?open=");
+          // let new_display_href = window.location.href.substring(0, index - 1);
+          // alert(new_display_href);
+          window.history.pushState({}, "", "/");
+        } else {
+          // Load our main content, not a shared link
+          btn_mdbook.click();
+        }
+
+      } catch (err) {
+        console.error("Error setting up codemelted.com/rs/index.html", err);
+      }
+    }
+    main();
+  </script>
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+</body></html>
