@@ -163,6 +163,7 @@
     <codemelted-ui-button class="right-panel-button" id="btn_linkedin"        cm_tooltip="Career Networking" cm_label="&nbsp;&nbsp;&nbsp;👨🏻‍💼 LinkedIn"></codemelted-ui-button>
     <codemelted-ui-button class="right-panel-button" id="btn_share_link"      cm_tooltip="Get Portal Shareable Link" cm_label="&nbsp;&nbsp;&nbsp;🔗 Share"></codemelted-ui-button>
     <codemelted-ui-button class="right-panel-button" id="btn_threads"         cm_tooltip="Personal Social for codemelted.com" cm_label="&nbsp;&nbsp;&nbsp;🧵 Threads"></codemelted-ui-button>
+    <codemelted-ui-button class="right-panel-button" id="btn_x"               cm_tooltip="Latest Tech News / Trends" cm_label="&nbsp;&nbsp;&nbsp;✖️ x.com"></codemelted-ui-button>
   </codemelted-ui-grid-layout>
 
   <main class="frm_content_wrapper">
@@ -253,6 +254,7 @@
         let btn_linkedin = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_linkedin" });
         let btn_share_link = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_share_link" });
         let btn_threads = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_threads" });
+        let btn_x = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_x" });
 
         a_resume.onclick = (ev) => {
           frm_content.src = `support/resumeweb.html?t=${Date.now()}`;
@@ -298,6 +300,15 @@
           codemelted.ui_open({
             schema: codemelted.SCHEMA_TYPE.Https,
             url: `threads.com/@codemelted`,
+            popup_window: true,
+          });
+          ev.stopPropagation();
+        };
+
+        btn_x.onclick = (ev) => {
+          codemelted.ui_open({
+            schema: codemelted.SCHEMA_TYPE.Https,
+            url: `x.com/codemelted`,
             popup_window: true,
           });
           ev.stopPropagation();
