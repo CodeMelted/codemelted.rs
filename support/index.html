@@ -87,6 +87,12 @@
     #btn_share_link button:hover {
       background-color: var(--button-hover-color);
     }
+    #btn_threads button:hover {
+      background-color: var(--button-hover-color);
+    }
+    #btn_x button:hover {
+      background-color: var(--button-hover-color);
+    }
 
     /*
     ===========================================================================
@@ -127,7 +133,6 @@
     .app-footer-nav-grid codemelted-ui-button button {
       height: var(--app-bar-height);
       background-color: transparent;
-      border-style: inset;
       width: 100%;
     }
     .app-footer-nav-grid codemelted-ui-button button:hover {
@@ -146,8 +151,8 @@
   </codemelted-ui-app-bar>
 
   <!-- LEFT CONTROLS-->
-  <codemelted-ui-grid-layout class="right-panel" cm_type="rows" cm_grid_template="140px 100px 40px 40px 40px">
-    <img style="margin: 0; padding: 0; height: 100%;" src="https://codemelted.com/assets/images/icon-me-animated.png" />
+  <codemelted-ui-grid-layout class="right-panel" cm_type="rows" cm_grid_template="140px 100px 40px 40px 40px 40px 40px">
+    <a id="a_resume" style="cursor: pointer;" title="My Software Engineering Experience"><img style="margin: 0; padding: 0; height: 100%;" src="https://codemelted.com/assets/images/icon-me-animated.png" /></a>
     <div style="border: 1px solid #161E27; text-align: left; padding-left: 5px;">
       <br>
       <a class="github-button" href="https://github.com/codemelted" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-size="small" data-show-count="true" title="Follow @codemelted on GitHub" aria-label="Follow @codemelted on GitHub">codemelted</a><br>
@@ -155,8 +160,9 @@
       <a class="github-button" href="https://github.com/sponsors/codemelted" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-heart" data-size="small" title="Sponsor @codemelted and the codemelted.rs project on GitHub" aria-label="Sponsor @codemelted on GitHub">Sponsor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a><br><br>
     </div>
     <codemelted-ui-button class="right-panel-button" id="btn_buy_me_a_coffee" cm_tooltip="Professional Services / Support Offered by CodeMelted." cm_label= "&nbsp;&nbsp;&nbsp;☕ Coffee"></codemelted-ui-button>
-    <codemelted-ui-button class="right-panel-button" id="btn_linkedin" cm_tooltip="Professional Networking" cm_label="&nbsp;&nbsp;&nbsp;👨🏻‍💼 LinkedIn"></codemelted-ui-button>
-    <codemelted-ui-button class="right-panel-button" id="btn_share_link" cm_tooltip="Get Portal Shareable Link" cm_label="&nbsp;&nbsp;&nbsp;🔗 Share"></codemelted-ui-button>
+    <codemelted-ui-button class="right-panel-button" id="btn_linkedin"        cm_tooltip="Career Networking" cm_label="&nbsp;&nbsp;&nbsp;👨🏻‍💼 LinkedIn"></codemelted-ui-button>
+    <codemelted-ui-button class="right-panel-button" id="btn_share_link"      cm_tooltip="Get Portal Shareable Link" cm_label="&nbsp;&nbsp;&nbsp;🔗 Share"></codemelted-ui-button>
+    <codemelted-ui-button class="right-panel-button" id="btn_threads"         cm_tooltip="Personal Social for codemelted.com" cm_label="&nbsp;&nbsp;&nbsp;🧵 Threads"></codemelted-ui-button>
   </codemelted-ui-grid-layout>
 
   <main class="frm_content_wrapper">
@@ -169,7 +175,7 @@
       <codemelted-ui-button id="btn_mdbook"  cm_img_src="https://codemelted.com/assets/images/icon-design.png" cm_tooltip="codemelted.rs: The Swiss Army Knife Full Stack Solution Book"></codemelted-ui-button>
       <codemelted-ui-button id="btn_rs"      cm_img_src="https://codemelted.com/assets/images/icon-rust.png" cm_tooltip="codemelted.rs Module SDK"></codemelted-ui-button>
       <codemelted-ui-button id="btn_js"      cm_img_src="https://codemelted.com/assets/images/icon-js.png" cm_tooltip="codemelted.js Module SDK"></codemelted-ui-button>
-      <codemelted-ui-button id="btn_gists"    cm_img_src="https://codemelted.com/assets/images/icon-code.png" cm_tooltip="CodeMelted GitHub Gists"></codemelted-ui-button>
+      <codemelted-ui-button id="btn_gists"   cm_img_src="https://codemelted.com/assets/images/icon-code.png" cm_tooltip="CodeMelted GitHub Gists"></codemelted-ui-button>
       <codemelted-ui-button id="btn_uml"     cm_img_src="https://codemelted.com/assets/images/icon-uml.png" cm_tooltip="mermaid UML Modeler"></codemelted-ui-button>
     </codemelted-ui-grid-layout>
   </codemelted-ui-app-bar>
@@ -242,9 +248,17 @@
         };
 
         // Setup our other buttons
+        let a_resume = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"a_resume" });
         let btn_buy_me_a_coffee = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_buy_me_a_coffee" });
         let btn_linkedin = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_linkedin" });
         let btn_share_link = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_share_link" });
+        let btn_threads = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_threads" });
+
+        a_resume.onclick = (ev) => {
+          frm_content.src = `support/resumeweb.html?t=${Date.now()}`;
+          reset_buttons(-1);
+          ev.stopPropagation();
+        }
 
         btn_buy_me_a_coffee.onclick = (ev) => {
           codemelted.ui_open({
@@ -276,6 +290,15 @@
               title: globalThis.document.title,
               url: String(`${globalThis.location.href}?open=${href}`),
             }
+          });
+          ev.stopPropagation();
+        };
+
+        btn_threads.onclick = (ev) => {
+          codemelted.ui_open({
+            schema: codemelted.SCHEMA_TYPE.Https,
+            url: `threads.com/@codemelted`,
+            popup_window: true,
           });
           ev.stopPropagation();
         };

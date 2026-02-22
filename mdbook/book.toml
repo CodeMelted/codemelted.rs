@@ -11,7 +11,6 @@ create-missing = false
 [output.html]
 default-theme = "navy"
 site-url = "https://rs.codemelted.com/mdbook"
-git-repository-url = "https://github.com/codemelted/codemelted.rs"
 additional-js = ["mermaid.min.js", "mermaid-init.js"]
 
 [preprocessor]
