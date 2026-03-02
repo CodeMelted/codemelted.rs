@@ -16,53 +16,33 @@
   <link rel="stylesheet" href="https://codemelted.com/assets/css/scrollbars.css">
   <style>
     /*
-    =========================================================================
-    [Root CSS Variables] ====================================================
-    =========================================================================
-    */
-    :root {
-      /* Common app-bar properties */
-      --app-bar-bg-color: black;
-      --app-bar-fg-color: white;
-      --app-bar-height: 40px;
-      --app-bar-border: 1px solid #161E27;
-      --app-bar-z-index: 100000;
-      --app-sheet-z-index: 100001;
-      --button-hover-color: blue;
-    }
-
-    /*
-    ===========================================================================
-    [APP HEADER] ==============================================================
-    ===========================================================================
-    */
-
-    .app-header-nav-grid {
-      padding-top: 5px;
-      align-self: center;
-      align-items: center;
-      align-content: center;
-      text-align: center;
-      border: none;
-    }
-
-    /*
     ===========================================================================
     [GIT Controls] ============================================================
     ===========================================================================
     */
+
+    .top-panel {
+      text-align: center;
+      position: fixed;
+      top: 53px;
+      left: 0px;
+      right: 0px;
+      border: none;
+      padding-top: 3px;
+      padding-bottom: 1px;
+      border-bottom: 1px solid #585858;
+    }
 
     .right-panel {
       text-align: left;
       color: white;
       overflow-y: auto;
       text-align: center;
-      border-color: black;
-      background-color: var(--app-bar-bg-color);
+      background-color: black;
       position: fixed;
       left: 0;
-      top: 42px;
-      bottom: 42px;
+      top: 92px;
+      bottom: 39px;
       width: 130px;
       border: var(--app-bar-border);
     }
@@ -84,13 +64,7 @@
     #btn_linkedin button:hover {
       background-color: var(--button-hover-color);
     }
-    #btn_share_link button:hover {
-      background-color: var(--button-hover-color);
-    }
     #btn_threads button:hover {
-      background-color: var(--button-hover-color);
-    }
-    #btn_x button:hover {
       background-color: var(--button-hover-color);
     }
 
@@ -102,10 +76,10 @@
 
     .frm_content_wrapper {
       position: fixed;
-      top: 42px;
+      top: 92px;
       left: 132px;
       right: 0;
-      bottom: 42px;
+      bottom: 39px;
     }
     .frm_content_wrapper iframe {
       width: 100%;
@@ -134,6 +108,7 @@
       height: var(--app-bar-height);
       background-color: transparent;
       width: 100%;
+      border: 1px solid #585858;
     }
     .app-footer-nav-grid codemelted-ui-button button:hover {
       background-color: var(--button-hover-color);
@@ -141,18 +116,16 @@
   </style>
 </head><body>
   <!-- TOP FOOTER -->
-  <codemelted-ui-app-bar cm_type="header" cm_border="--app-bar-border" cm_bg_color="--app-bar-bg-color" cm_fg_color="--app-bar-fg-color" cm_height="--app-bar-height" cm_z_index="--app-bar-z-index">
-    <codemelted-ui-grid-layout class="app-header-nav-grid" cm_type="columns" cm_grid_template="auto auto auto auto">
-      <a tabindex="0" class="github-button" href="https://github.com/codemelted/codemelted.rs/discussions" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-comment-discussion" data-size="large" title="Discuss codemelted/codemelted.rs on GitHub" aria-label="Discuss codemelted/codemelted.rs on GitHub">Discuss&nbsp;&nbsp;&nbsp;&nbsp;</a>
-      <a tabindex="1" class="github-button" href="https://github.com/codemelted/codemelted.rs/archive/HEAD.zip" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-size="large" title="Download codemelted/codemelted.rs on GitHu" aria-label="Download codemelted/codemelted.rs on GitHub">Download</a>
-      <a tabindex="2" class="github-button" href="https://github.com/codemelted/codemelted.rs/fork" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-repo-forked" data-size="large" title="Fork codemelted/codemelted.rs on GitHub" aria-label="Fork codemelted/codemelted.rs on GitHub">Fork&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
-      <a tabindex="3" class="github-button" href="https://github.com/codemelted/codemelted.rs/issues" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-issue-opened" data-size="large" title="Issue codemelted/codemelted.rs on GitHub" aria-label="Issue codemelted/codemelted.rs on GitHub">Issue&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
-    </codemelted-ui-grid-layout>
-  </codemelted-ui-app-bar>
+  <codemelted-ui-grid-layout class="top-panel" cm_type="columns" cm_grid_template="auto auto auto auto">
+    <a tabindex="0" class="github-button" href="https://github.com/codemelted/codemelted.rs/discussions" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-comment-discussion" data-size="large" title="Discuss codemelted/codemelted.rs on GitHub" aria-label="Discuss codemelted/codemelted.rs on GitHub">Discuss&nbsp;&nbsp;&nbsp;&nbsp;</a>
+    <a tabindex="1" class="github-button" href="https://github.com/codemelted/codemelted.rs/archive/HEAD.zip" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-size="large" title="Download codemelted/codemelted.rs on GitHu" aria-label="Download codemelted/codemelted.rs on GitHub">Download</a>
+    <a tabindex="2" class="github-button" href="https://github.com/codemelted/codemelted.rs/fork" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-repo-forked" data-size="large" title="Fork codemelted/codemelted.rs on GitHub" aria-label="Fork codemelted/codemelted.rs on GitHub">Fork&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+    <a tabindex="3" class="github-button" href="https://github.com/codemelted/codemelted.rs/issues" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-icon="octicon-issue-opened" data-size="large" title="Issue codemelted/codemelted.rs on GitHub" aria-label="Issue codemelted/codemelted.rs on GitHub">Issue&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+  </codemelted-ui-grid-layout>
 
   <!-- LEFT CONTROLS-->
-  <codemelted-ui-grid-layout class="right-panel" cm_type="rows" cm_grid_template="140px 100px 40px 40px 40px 40px 40px">
-    <a id="a_resume" style="cursor: pointer;" title="My Software Engineering Experience"><img style="margin: 0; padding: 0; height: 100%;" src="https://codemelted.com/assets/images/icon-me-animated.png" /></a>
+  <codemelted-ui-grid-layout class="right-panel" cm_type="rows" cm_grid_template="140px 100px 40px 40px 40px 40px">
+    <a id="a_resume" style="width: 100%; cursor: pointer;" title="My Software Engineering Experience"><img style="margin: 0; padding: 0; width: 100%; height: 100%;" src="https://codemelted.com/assets/images/icon-me-animated.png" /></a>
     <div style="border: 1px solid #161E27; text-align: left; padding-left: 5px;">
       <br>
       <a class="github-button" href="https://github.com/codemelted" data-color-scheme="no-preference: dark; light: dark; dark: dark;" data-size="small" data-show-count="true" title="Follow @codemelted on GitHub" aria-label="Follow @codemelted on GitHub">codemelted</a><br>
@@ -161,9 +134,7 @@
     </div>
     <codemelted-ui-button class="right-panel-button" id="btn_buy_me_a_coffee" cm_tooltip="Professional Services / Support Offered by CodeMelted." cm_label= "&nbsp;&nbsp;&nbsp;☕ Coffee"></codemelted-ui-button>
     <codemelted-ui-button class="right-panel-button" id="btn_linkedin"        cm_tooltip="Career Networking" cm_label="&nbsp;&nbsp;&nbsp;👨🏻‍💼 LinkedIn"></codemelted-ui-button>
-    <codemelted-ui-button class="right-panel-button" id="btn_share_link"      cm_tooltip="Get Portal Shareable Link" cm_label="&nbsp;&nbsp;&nbsp;🔗 Share"></codemelted-ui-button>
-    <codemelted-ui-button class="right-panel-button" id="btn_threads"         cm_tooltip="Personal Social for codemelted.com" cm_label="&nbsp;&nbsp;&nbsp;🧵 Threads"></codemelted-ui-button>
-    <codemelted-ui-button class="right-panel-button" id="btn_x"               cm_tooltip="Latest Tech News / Trends" cm_label="&nbsp;&nbsp;&nbsp;✖️ x.com"></codemelted-ui-button>
+    <codemelted-ui-button class="right-panel-button" id="btn_threads"         cm_tooltip="The one social media 💍 to rule them all" cm_label="&nbsp;&nbsp;&nbsp;🧵 Threads"></codemelted-ui-button>
   </codemelted-ui-grid-layout>
 
   <main class="frm_content_wrapper">
@@ -171,7 +142,7 @@
   </main>
 
   <!-- APP FOOTER -->
-  <codemelted-ui-app-bar cm_type="footer" cm_border="--app-bar-border" cm_bg_color="--app-bar-bg-color" cm_fg_color="--app-bar-fg-color" cm_height="--app-bar-height" cm_z_index="--app-bar-z-index">
+  <codemelted-ui-app-bar cm_type="footer" cm_border="1px solid #585858" cm_bg_color="--app-bar-bg-color" cm_fg_color="--app-bar-fg-color" cm_height="--app-bar-height" cm_z_index="--app-bar-z-index">
     <codemelted-ui-grid-layout cm_type="columns" cm_grid_template="auto auto auto auto auto" class="app-footer-nav-grid">
       <codemelted-ui-button id="btn_mdbook"  cm_img_src="https://codemelted.com/assets/images/icon-design.png" cm_tooltip="codemelted.rs: The Swiss Army Knife Full Stack Solution Book"></codemelted-ui-button>
       <codemelted-ui-button id="btn_rs"      cm_img_src="https://codemelted.com/assets/images/icon-rust.png" cm_tooltip="codemelted.rs Module SDK"></codemelted-ui-button>
@@ -181,6 +152,8 @@
     </codemelted-ui-grid-layout>
   </codemelted-ui-app-bar>
 
+  <codemelted-web></codemelted-web>
+  <script src="https://codemelted.com/assets/js/codemelted_web.js"></script>
   <script>
     // Module needed for the logic
     let codemelted = undefined;
@@ -212,7 +185,6 @@
       try {
         // Load our module
         codemelted = await import(`https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs@main/js/codemelted.js`);
-        codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.Define });
 
         // Setup our navigation button actions.
         const frm_content = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"frm_content" });
@@ -252,9 +224,7 @@
         let a_resume = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"a_resume" });
         let btn_buy_me_a_coffee = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_buy_me_a_coffee" });
         let btn_linkedin = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_linkedin" });
-        let btn_share_link = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_share_link" });
         let btn_threads = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_threads" });
-        let btn_x = codemelted.ui_widget({ request: codemelted.WIDGET_REQUEST.ElementById, data:"btn_x" });
 
         a_resume.onclick = (ev) => {
           frm_content.src = `support/resumeweb.html?t=${Date.now()}`;
@@ -263,11 +233,7 @@
         }
 
         btn_buy_me_a_coffee.onclick = (ev) => {
-          codemelted.ui_open({
-            schema: codemelted.SCHEMA_TYPE.Https,
-            url: `buymeacoffee.com/codemelted`,
-            popup_window: true,
-          });
+          codemelted_web.open_buy_me_a_coffee();
           ev.stopPropagation();
         };
 
@@ -280,37 +246,8 @@
           ev.stopPropagation();
         };
 
-        btn_share_link.onclick = async (ev) => {
-          let href = frm_content.contentWindow.location.href;
-          let index = href.indexOf("t=");
-          href = index != -1
-            ? href.substring(0, index - 1)
-            : href;
-          await codemelted.ui_action({
-            request: codemelted.ACTION_REQUEST.Share,
-            data: {
-              title: globalThis.document.title,
-              url: String(`${globalThis.location.href}?open=${href}`),
-            }
-          });
-          ev.stopPropagation();
-        };
-
         btn_threads.onclick = (ev) => {
-          codemelted.ui_open({
-            schema: codemelted.SCHEMA_TYPE.Https,
-            url: `threads.com/@codemelted`,
-            popup_window: true,
-          });
-          ev.stopPropagation();
-        };
-
-        btn_x.onclick = (ev) => {
-          codemelted.ui_open({
-            schema: codemelted.SCHEMA_TYPE.Https,
-            url: `x.com/codemelted`,
-            popup_window: true,
-          });
+          codemelted_web.open_threads();
           ev.stopPropagation();
         };
 
