@@ -13,6 +13,7 @@
     "genhtml",
     "hashtable",
     "mdbook",
+    "millis",
     "nread",
     "ntime",
     "peekable",

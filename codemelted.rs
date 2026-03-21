@@ -2,7 +2,7 @@
 ===============================================================================
 MIT License
 
-© 2025 Mark Shaffer. All Rights Reserved.
+© 2025-2026 Mark Shaffer. All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),

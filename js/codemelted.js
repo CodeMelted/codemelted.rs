@@ -143,7 +143,7 @@
  * </ul>
  * <h3>About Module</h3>
  * @author Mark Shaffer
- * @copyright © 2025 Mark Shaffer. All Rights Reserved.
+ * @copyright © 2025-2026 Mark Shaffer. All Rights Reserved.
  * @version 26.0.0-alpha (Last Modified 2025-mm-dd)
  * @license MIT <br />
  * Permission is hereby granted, free of charge, to any person obtaining a
