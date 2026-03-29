@@ -1966,8 +1966,11 @@ static LOG_LEVEL: std::sync::Mutex<CLogLevel> = std::sync::Mutex::new(
 );
 
 /// Holds the log handler reference for post log processing.
-static LOG_HANDLER: std::sync::Mutex<Option<CLoggedEventHandler>> =
+static LOG_HANDLER: std::sync::Mutex<Option<CLogHandler>> =
   std::sync::Mutex::new(None);
+
+/// Function type definition for post processing logged events.
+pub type CLogHandler = fn(CLogRecord);
 
 /// Represents the log levels for the logging module.
 #[derive(Clone, PartialEq, Debug)]
@@ -2050,82 +2053,53 @@ impl CLogRecord {
   }
 }
 
-/// Function type definition for post processing logged events.
-pub type CLoggedEventHandler = fn(CLogRecord);
-
-/// Gets the [CLogLevel] for the logging module.
+/// Sets / Gets the [CLogLevel] for the module.
 ///
 /// **Example:**
 /// ```
 /// use codemelted::CLogLevel;
 ///
-/// codemelted::logger_set_log_level(CLogLevel::Debug);
-/// assert_eq!(codemelted::logger_get_log_level(), CLogLevel::Debug);
+/// codemelted::logger_level(Some(CLogLevel::Debug));
+/// assert_eq!(codemelted::logger_level(), CLogLevel::Debug);
 /// ```
 #[doc = simple_mermaid::mermaid!("models/codemelted_logger.mmd")]
-pub fn logger_get_log_level() -> CLogLevel {
-  let data = LOG_LEVEL.lock().unwrap();
-  data.clone()
+pub fn logger_level(v: Option<CLogLevel>) -> CLogLevel {
+  match v {
+    Some(level) => {
+      let mut data = LOG_LEVEL.lock().unwrap();
+      *data = level;
+      data.clone()
+    },
+    None => {
+      let data = LOG_LEVEL.lock().unwrap();
+      data.clone()
+    }
+  }
 }
 
-/// Sets the [CLogLevel] for the logging module.
-///
-/// **Example:**
-/// ```
-/// use codemelted::CLogLevel;
-///
-/// codemelted::logger_set_log_level(CLogLevel::Debug);
-/// assert_eq!(codemelted::logger_get_log_level(), CLogLevel::Debug);
-/// ```
-#[doc = simple_mermaid::mermaid!("models/codemelted_logger.mmd")]
-pub fn logger_set_log_level(log_level: CLogLevel) {
-  let mut data = LOG_LEVEL.lock().unwrap();
-  *data = log_level;
-}
-
-/// Gets the [CLoggedEventHandler] for the logging module.
+/// Sets the [CLogHandler] for the logging module. It will be passed
+/// CLogRecords once the module logs it to STDOUT.
 ///
 /// **Example:**
 /// ```
 /// use codemelted::CLogRecord;
-/// use codemelted::CLoggedEventHandler;
+/// use codemelted::CLogHandler;
 ///
 /// fn log_handler(data: CLogRecord) {
 ///   // Do something
 /// }
 ///
-/// codemelted::logger_set_log_handler(Some(log_handler));
-/// assert_eq!(codemelted::logger_get_log_handler().is_some(), true);
+/// codemelted::logger_handler(Some(log_handler));
 /// ```
 #[doc = simple_mermaid::mermaid!("models/codemelted_logger.mmd")]
-pub fn logger_get_log_handler() -> Option<CLoggedEventHandler> {
-  let data = LOG_HANDLER.lock().unwrap();
-  *data
-}
-
-/// Sets the [CLoggedEventHandler] for the logging module.
-///
-/// **Example:**
-/// ```
-/// use codemelted::CLogRecord;
-/// use codemelted::CLoggedEventHandler;
-///
-/// fn log_handler(data: CLogRecord) {
-///   // Do something
-/// }
-///
-/// codemelted::logger_set_log_handler(Some(log_handler));
-/// assert_eq!(codemelted::logger_get_log_handler().is_some(), true);
-/// ```
-#[doc = simple_mermaid::mermaid!("models/codemelted_logger.mmd")]
-pub fn logger_set_log_handler(handler: Option<CLoggedEventHandler>) {
+pub fn logger_handler(v: Option<CLogHandler>) {
   let mut data = LOG_HANDLER.lock().unwrap();
-  *data = handler;
+  *data = v;
 }
 
 /// Will log an event via the logger module so long as it meets the
 /// currently set [CLogLevel]. Once logged to STDOUT, if a
-/// [CLoggedEventHandler], will pass the [CLogRecord] along for further
+/// [CLogHandler], will pass the [CLogRecord] along for further
 /// processing.
 ///
 /// **Example:**
@@ -2137,7 +2111,7 @@ pub fn logger_set_log_handler(handler: Option<CLoggedEventHandler>) {
 #[doc = simple_mermaid::mermaid!("models/codemelted_logger.mmd")]
 pub fn logger_log(level: CLogLevel, data: &str) {
   // See if we are logging this somewhere
-  let logger_level = logger_get_log_level();
+  let logger_level = logger_level(None);
   if logger_level == CLogLevel::Off {
     return
   }
@@ -2150,8 +2124,8 @@ pub fn logger_log(level: CLogLevel, data: &str) {
   }
 
   // Now to send it to the log handler
-  let log_handler = logger_get_log_handler();
-  if let Some(v) = log_handler {
+  let handler = *LOG_HANDLER.lock().unwrap();
+  if let Some(v) = handler {
     v(record);
   }
 }
@@ -3206,11 +3180,6 @@ impl CFetchRequest {
       None => panic!("CFetchRequest::body(): data was not valid CObject!"),
     };
     let _ = self.client.body(serialized);
-  }
-
-  /// Sets the form body of the request.
-  pub fn form(self, params: std::collections::HashMap::<String, String>) {
-    let _ = self.client.form(&params);
   }
 
   /// Sets a header parameter for the request. Call this multiple times

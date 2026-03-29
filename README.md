@@ -3,7 +3,7 @@
 </center>
 <h1><img style="height: 35px;" src="https://codemelted.com/assets/images/icon-rust.png" /> codemelted.rs Crate</h1>
 
-*LAST UPDATED: 2026-FEB-01*
+*LAST UPDATED: 2026-MAR-29*
 
 The aim of this project is to deliver a swiss army knife module to aid software engineers in building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets.
 
@@ -54,10 +54,10 @@ use codemelted::{CLogLevel, CLogRecord, CLoggedEventHandler};
 fn log_handler(data: CLogRecord) {
   // Do something, say post to the cloud about the event
 }
-codemelted::logger_set_log_handler(Some(log_handler));
+codemelted::logger_handler(Some(log_handler));
 
 // Set the log level
-codemelted::logger_set_log_level(CLogLevel::Warning);
+codemelted::logger_level(CLogLevel::Warning);
 
 // Now later on in your code....
 // This will be reported to the console and then to the CLoggedEventHandler.

@@ -1,6 +1,6 @@
 [package]
 name = "codemelted"
-version = "26.0.0"
+version = "26.1.0"
 description = "The aim of this project is to deliver a swiss army knife module to aid software engineers for building full stack solutions for their applications. Utilizing the Rust programming language, the module serves as a backbone to engineer solutions for multiple build targets."
 authors = ["Mark Shaffer <mark.shaffer@codemelted.com>"]
 keywords = ["console", "json", "logger", "process", "ui"]
@@ -22,16 +22,16 @@ name = 'codemelted'
 path = 'codemelted.rs'
 
 [dependencies]
-btleplug = { version = "0.11.8", features = ["serde"] }
-chrono = "0.4.42"
-json = "0.12.4"
-online = "4.0.2"
-reqwest = { version = "0.12.24", features = ["json"] }
-rouille = "3.6.2"
+btleplug = { version = "0.12.0", features = ["serde"] }
+chrono = "0.4.44"
+json = "0.12.4"  # Not updated in 6 years
+online = "4.0.2" # Not updated in 2 years
+reqwest = { version = "0.13.2", features = ["json"] }
+rouille = "3.6.2" # Not updated in 3 years
 rpassword = "7.4.0"
-rusqlite = { version = "0.37.0", features = ["bundled"] }
-serialport = "4.8.1"
+rusqlite = { version = "0.39.0", features = ["bundled"] }
+serialport = "4.9.0"
 simple-mermaid = "0.2.0"
-sysinfo = "0.37.2"
-tokio = { version = "1.48.0", features = ["full"] }
-url = "2.5.7"
+sysinfo = "0.38.4"
+tokio = { version = "1.50.0", features = ["full"] }
+url = "2.5.8"
