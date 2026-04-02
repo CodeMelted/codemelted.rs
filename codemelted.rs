@@ -392,8 +392,8 @@ pub fn async_worker<T: std::marker::Send + 'static>(
 /// Utility function to read from stdin with a specified prompt.
 fn console_read(prompt: &str) -> String {
   let mut answer = String::new();
-  print!("{}", prompt);
-  let _ = std::io::Write::flush(&mut std::io::stdout());
+  eprint!("{}", prompt);
+  let _ = std::io::Write::flush(&mut std::io::stderr());
   let _ = std::io::stdin().read_line(&mut answer);
   String::from(answer.trim())
 }
@@ -457,15 +457,15 @@ pub fn console_choose(message: &str, choices: &[&str]) -> u32 {
   let options = choices;
   let answer: u32;
   loop {
-    println!("{}", "-".repeat(msg.chars().count()));
-    println!("{}", msg);
-    println!("{}", "-".repeat(msg.chars().count()));
+    eprintln!("{}", "-".repeat(msg.chars().count()));
+    eprintln!("{}", msg);
+    eprintln!("{}", "-".repeat(msg.chars().count()));
     let mut x = -1;
     for option in options {
       x += 1;
-      println!("{}. {}", x, option);
+      eprintln!("{}. {}", x, option);
     }
-    println!("");
+    eprintln!("");
     let selection = console_read("Make a Selection: ");
     match selection.trim().parse::<u32>() {
       Ok(n) => {
@@ -473,15 +473,15 @@ pub fn console_choose(message: &str, choices: &[&str]) -> u32 {
           answer = n;
           break;
         } else {
-          println!("");
-          println!("ERROR: Invalid selection, please try again.");
-          println!("");
+          eprintln!("");
+          eprintln!("ERROR: Invalid selection, please try again.");
+          eprintln!("");
         }
       },
       Err(_e) => {
-        println!("");
-        println!("ERROR: Invalid selection, please try again.");
-        println!("");
+        eprintln!("");
+        eprintln!("ERROR: Invalid selection, please try again.");
+        eprintln!("");
       }
     }
   }
@@ -533,7 +533,7 @@ pub fn console_prompt(message: &str) -> String {
 /// ```
 #[doc = simple_mermaid::mermaid!("models/codemelted_console.mmd")]
 pub fn console_writeln(message: &str) {
-  println!("{}", message);
+  eprintln!("{}", message);
 }
 
 // ============================================================================
@@ -4524,24 +4524,24 @@ pub fn storage_set(key: &str, value: &str) {
 fn cli_error_handler(err: &str, action: &str) {
   match err {
     "invalid_call_signature" => {
-      println!("ERROR: Call signature is `codemelted [action] [params]");
-      println!("       Execute `codemelted --help` for details.");
+      eprintln!("ERROR: Call signature is `codemelted [action] [params]");
+      eprintln!("       Execute `codemelted --help` for details.");
     }
     "no_formula_args" => {
-      println!("ERROR: No arguments specified for formula for '{}'", action);
-      println!("       Visit https://rs.codemelted.com/npu/math for details.");
+      eprintln!("ERROR: No arguments specified for formula for '{}'", action);
+      eprintln!("       Visit https://rs.codemelted.com for details.");
     }
     "not_a_number" => {
-      println!("ERROR: Number expected for '{}' action.", action);
-      println!("       Execute `codemelted --help` for details.");
+      eprintln!("ERROR: Number expected for '{}' action.", action);
+      eprintln!("       Execute `codemelted --help` for details.");
     }
     "unknown_action" => {
-      println!("ERROR: Unknown [action] '{}' specified", action);
-      println!("       Execute `codemelted --help` for details.");
+      eprintln!("ERROR: Unknown [action] '{}' specified", action);
+      eprintln!("       Execute `codemelted --help` for details.");
     }
     "unknown_formula" => {
-      println!("ERROR: Unknown formula specified for '{}'", action);
-      println!("       Visit https://rs.codemelted.com/npu/math for details.");
+      eprintln!("ERROR: Unknown formula specified for '{}'", action);
+      eprintln!("       Visit https://rs.codemelted.com for details.");
     }
     &_ => {
       panic!("SyntaxError: codemelted cli unknown error '{}'", action);
@@ -4673,40 +4673,40 @@ fn cli_npu(params: &Vec<String>) {
 fn cli_help() {
   let name = env!("CARGO_PKG_NAME");
   let version = env!("CARGO_PKG_VERSION");
-  println!("                                                                ");
-  println!("================================================================");
-  println!("{} Native Command - v{}                          ", name, version);
-  println!("================================================================");
-  println!("                                                                ");
-  println!("SYNTAX: {} [action] [params]                              ", name);
-  println!("                                                                ");
-  println!("USAGE:                                                          ");
-  println!("  --async-sleep [delay_in_millis]                               ");
-  println!("      Will sleep for the specified milliseconds. Invalid entries");
-  println!("      will sleep for 0 ms.                                      ");
-  println!("  --console-alert [message]                                     ");
-  println!("      Pauses execution while reporting a message.               ");
-  println!("  --console-confirm [message]                                   ");
-  println!("      Provides a confirmation prompt via STDOUT with the answer ");
-  println!("      being written to STDOUT as true / false.                  ");
-  println!("  --console-choose [message] [choices]                          ");
-  println!("      Provides a selection menu of the CSV choices waiting for  ");
-  println!("      a valid selection from the user with the chosen index     ");
-  println!("      written to STDOUT.                                        ");
-  println!("  --console-password [message]                                  ");
-  println!("      Provides a password prompt writing out the password to    ");
-  println!("      STDOUT.                                                   ");
-  println!("  --console-prompt [message]                                    ");
-  println!("      Provides an input prompt writing out the answer to        ");
-  println!("      STDOUT.                                                   ");
-  println!("  --console-writeln [message]                                   ");
-  println!("      Writes [message] to STDOUT with a newline.                ");
-  println!("  --npu-math [formula] [arguments]                              ");
-  println!("      Writes the answer to the calculated formula w/ arguments. ");
-  println!("  --help Prints this help system.                               ");
-  println!("                                                                ");
-  println!("WEBSITE: https://rs.codemelted.com/                             ");
-  println!("                                                                ");
+  eprintln!("                                                               ");
+  eprintln!("===============================================================");
+  eprintln!("{} Native Command - v{}                         ", name, version);
+  eprintln!("===============================================================");
+  eprintln!("                                                               ");
+  eprintln!("SYNTAX: {} [action] [params]                             ", name);
+  eprintln!("                                                               ");
+  eprintln!("USAGE:                                                         ");
+  eprintln!("  --async-sleep [delay_in_millis]                              ");
+  eprintln!("      Will sleep for the specified milliseconds. Invalid       ");
+  eprintln!("      entries will sleep for 0 ms.                             ");
+  eprintln!("  --console-alert [message]                                    ");
+  eprintln!("      Pauses execution while reporting a message.              ");
+  eprintln!("  --console-confirm [message]                                  ");
+  eprintln!("      Provides a confirmation prompt via STDOUT with the answer");
+  eprintln!("      being written to STDOUT as true / false.                 ");
+  eprintln!("  --console-choose [message] [choices]                         ");
+  eprintln!("      Provides a selection menu of the CSV choices waiting for ");
+  eprintln!("      a valid selection from the user with the chosen index    ");
+  eprintln!("      written to STDOUT.                                       ");
+  eprintln!("  --console-password [message]                                 ");
+  eprintln!("      Provides a password prompt writing out the password to   ");
+  eprintln!("      STDOUT.                                                  ");
+  eprintln!("  --console-prompt [message]                                   ");
+  eprintln!("      Provides an input prompt writing out the answer to       ");
+  eprintln!("      STDOUT.                                                  ");
+  eprintln!("  --console-writeln [message]                                  ");
+  eprintln!("      Writes [message] to STDOUT with a newline.               ");
+  eprintln!("  --npu-math [formula] [arguments]                             ");
+  eprintln!("      Writes the answer to the calculated formula w/ arguments.");
+  eprintln!("  --help Prints this help system.                              ");
+  eprintln!("                                                               ");
+  eprintln!("WEBSITE: https://rs.codemelted.com/                            ");
+  eprintln!("                                                               ");
 }
 
 /// Main entry point for the native `codemelted` CLI command. To add this
