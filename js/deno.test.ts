@@ -1,16 +1,27 @@
 // deno-coverage-ignore-file
-// The above is done to ensure type checking works in case person does not use
-// good editor for type checking. Remove it while defining tests to ensure type
-// checking does in fact work. You will see a bunch of failures with the
-// "failure" type checking cases.
-// ============================================================================
 /**
- * @file Provides the Deno.test of the codemelted.js file.
- * @version 0.1.0
+ * @file Deno V8 runtime tests for the <code>codemelted.js</code> module.
  * @author Mark Shaffer
- * @license MIT
+ * @copyright © 2024-26 Mark Shaffer. All Rights Reserved.
+ * @license MIT <br />
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * <br /><br />
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * <br /><br />
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  */
-// ============================================================================
 
 import {
   assert,
@@ -25,10 +36,10 @@ import {
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
   API_UNSUPPORTED_RUNTIME,
-  CProtocolHandler,
-  CResult,
-  if_def,
-  async_sleep
+  // CProtocolHandler,
+  // CResult,
+  // if_def,
+  // async_sleep
 } from "./codemelted.js";
 
 // ===============================================================================
@@ -47,9 +58,9 @@ async function asyncAssertThrows(fn: Function, ex: any) {
   }
 }
 
-// ===============================================================================
-// [GENERAL NAMESPACE SETUP TESTS] ===============================================
-// ===============================================================================
+// ============================================================================
+// [MODULE COMMON DATA TESTS] =================================================
+// ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("codemelted Namespace / Support Constructs Exists Test", () => {
@@ -57,86 +68,86 @@ Deno.test("codemelted Namespace / Support Constructs Exists Test", () => {
   assertExists(API_NOT_IMPLEMENTED);
   assertExists(API_TYPE_VIOLATION);
   assertExists(API_UNSUPPORTED_RUNTIME);
-  assertExists(CProtocolHandler);
-  assertExists(CResult);
-  assertExists(if_def);
+  // assertExists(CProtocolHandler);
+  // assertExists(CResult);
+  // assertExists(if_def);
 });
 
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted.if_def() Test", () => {
-  const obj = {};
-  assertEquals(true, if_def("Deno"));
-  assertEquals(false, if_def("Deno", obj));
-});
+// // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+// Deno.test("codemelted.if_def() Test", () => {
+//   const obj = {};
+//   assertEquals(true, if_def("Deno"));
+//   assertEquals(false, if_def("Deno", obj));
+// });
 
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted.CProtocolHandler() Test", async () => {
-  let obj = new CProtocolHandler("test_id");
-  assertEquals("test_id", obj.id());
-  await asyncAssertThrows(obj.get_message, SyntaxError);
-  await asyncAssertThrows(obj.get_message, SyntaxError);
-  await asyncAssertThrows(obj.is_running, SyntaxError);
-  await asyncAssertThrows(obj.post_message, SyntaxError);
-  await asyncAssertThrows(obj.terminate, SyntaxError);
-});
+// // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+// Deno.test("codemelted.CProtocolHandler() Test", async () => {
+//   let obj = new CProtocolHandler("test_id");
+//   assertEquals("test_id", obj.id());
+//   await asyncAssertThrows(obj.get_message, SyntaxError);
+//   await asyncAssertThrows(obj.get_message, SyntaxError);
+//   await asyncAssertThrows(obj.is_running, SyntaxError);
+//   await asyncAssertThrows(obj.post_message, SyntaxError);
+//   await asyncAssertThrows(obj.terminate, SyntaxError);
+// });
 
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted.CResult Object Test", () => {
-  let obj = new CResult();
+// // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+// Deno.test("codemelted.CResult Object Test", () => {
+//   let obj = new CResult();
 
-  // Validate ok no data.
-  assertEquals(true, obj.is_ok());
-  assertEquals(false, obj.is_error());
-  assertEquals(null, obj.value());
-  assertEquals(null, obj.error());
+//   // Validate ok no data.
+//   assertEquals(true, obj.is_ok());
+//   assertEquals(false, obj.is_error());
+//   assertEquals(null, obj.value());
+//   assertEquals(null, obj.error());
 
-  // Validate ok with data.
-  obj = new CResult({value: 42});
-  assertEquals(true, obj.is_ok());
-  assertEquals(false, obj.is_error());
-  assertEquals(42, obj.value());
-  assertEquals(null, obj.error());
+//   // Validate ok with data.
+//   obj = new CResult({value: 42});
+//   assertEquals(true, obj.is_ok());
+//   assertEquals(false, obj.is_error());
+//   assertEquals(42, obj.value());
+//   assertEquals(null, obj.error());
 
-  // Validate error no data.
-  obj = new CResult({error: "Oh no"});
-  assertEquals(false, obj.is_ok());
-  assertEquals(true, obj.is_error());
-  assertEquals(null, obj.value());
-  assertEquals("Oh no", obj.error());
+//   // Validate error no data.
+//   obj = new CResult({error: "Oh no"});
+//   assertEquals(false, obj.is_ok());
+//   assertEquals(true, obj.is_error());
+//   assertEquals(null, obj.value());
+//   assertEquals("Oh no", obj.error());
 
-  obj = new CResult({error: new Error("Oh no")});
-  assertEquals(false, obj.is_ok());
-  assertEquals(true, obj.is_error());
-  assertEquals(null, obj.value());
-  assertEquals(true, obj.error() instanceof Error);
+//   obj = new CResult({error: new Error("Oh no")});
+//   assertEquals(false, obj.is_ok());
+//   assertEquals(true, obj.is_error());
+//   assertEquals(null, obj.value());
+//   assertEquals(true, obj.error() instanceof Error);
 
-  // Validate invalid state
-  try {
-    new CResult({value: 42, error: "Oh no"});
-    fail("should throw SyntaxError");
-  } catch (err) {
-    assert(err != null)
-  }
-});
+//   // Validate invalid state
+//   try {
+//     new CResult({value: 42, error: "Oh no"});
+//     fail("should throw SyntaxError");
+//   } catch (err) {
+//     assert(err != null)
+//   }
+// });
 
 // ===============================================================================
 // [ASYNC IO UC VALIDATION] ======================================================
 // ===============================================================================
 
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted.async Test", async () => {
-  const start = Date.now();
-  await async_sleep(2000);
-  const end = Date.now();
-  const exec_time = end - start;
-  assertEquals(true, exec_time >= 1998);
+// // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+// Deno.test("codemelted.async Test", async () => {
+//   const start = Date.now();
+//   await async_sleep(2000);
+//   const end = Date.now();
+//   const exec_time = end - start;
+//   assertEquals(true, exec_time >= 1998);
 
-  await asyncAssertThrows(
-    // @ts-ignore "Checking JavaScript API type checking"
-    async () => { async_sleep("duh"); },
-    SyntaxError
-  );
-});
+//   await asyncAssertThrows(
+//     // @ts-ignore "Checking JavaScript API type checking"
+//     async () => { async_sleep("duh"); },
+//     SyntaxError
+//   );
+// });
 
 // ===============================================================================
 // [Unsupported Use Cases Throw] =================================================

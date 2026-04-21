@@ -1,8 +1,8 @@
-[string]$GEN_HTML_PERL_SCRIPT = "c:/ProgramData/chocolatey/lib/lcov/tools/bin/genhtml"#!/usr/bin/pwsh
+#!/usr/bin/pwsh
 # =============================================================================
 # MIT License
 #
-# © 2024 Mark Shaffer
+# © 2024-26 Mark Shaffer
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -24,6 +24,21 @@
 # =============================================================================
 
 [string]$GEN_HTML_PERL_SCRIPT = "c:/ProgramData/chocolatey/lib/lcov/tools/bin/genhtml"
+
+function lcov_to_html() {
+  if ($IsLinux -or $IsMacOS) {
+    genhtml -o coverage --ignore-errors unused,inconsistent --dark-mode coverage/lcov.info
+  } else {
+    $exists = Test-Path -Path $GEN_HTML_PERL_SCRIPT -PathType Leaf
+    if ($exists) {
+      perl $GEN_HTML_PERL_SCRIPT -o coverage coverage/lcov.info
+    }
+    else {
+      Write-Host "WARNING: genhtml not installed for windows. Run " +
+      "'choco install lcov' for pwsh terminal as Admin to install it."
+    }
+  }
+}
 
 # Helper function to format message output from the build script.
 function message([string]$msg) {
@@ -47,13 +62,13 @@ switch ($args[0]) {
   }
   "--make" {
     message "Now building the codemelted.rs documentation."
-    cargo clean
-    cargo doc --no-deps --lib
-    Set-Location $PSScriptRoot/mdbook
-    mdbook clean
-    mdbook build
-    Set-Location $PSScriptRoot
-    message "codemelted.rs documentation completed."
+    # cargo clean
+    # cargo doc --no-deps --lib
+    # Set-Location $PSScriptRoot/mdbook
+    # mdbook clean
+    # mdbook build
+    # Set-Location $PSScriptRoot
+    # message "codemelted.rs documentation completed."
 
     message "Now building codemelted.js module."
     Set-Location $PSScriptRoot/js
@@ -64,17 +79,17 @@ switch ($args[0]) {
     Set-Location $PSScriptRoot
     message "build completed."
 
-    message "codemelted.rs Now building docs website."
-    Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
-    New-Item -Path docs/codemelted.rs -ItemType Directory
-    New-Item -Path docs/mdbook -ItemType Directory
-    New-Item -Path docs/js -ItemType Directory
-    New-Item -Path docs/support -ItemType Directory
-    Copy-Item -Path mdbook/book/* -Destination docs/mdbook -Force -Recurse
-    Copy-Item -Path target/doc/* -Destination docs/codemelted.rs -Force -Recurse
-    Copy-Item -Path js/docs/* -Destination docs/js -Force -Recurse
-    Copy-Item -Path support/* -Destination docs/support -Force -Recurse
-    Move-Item -Path docs/support/index.html -Destination docs -Force
+    # message "codemelted.rs Now building docs website."
+    # Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
+    # New-Item -Path docs/codemelted.rs -ItemType Directory
+    # New-Item -Path docs/mdbook -ItemType Directory
+    # New-Item -Path docs/js -ItemType Directory
+    # New-Item -Path docs/support -ItemType Directory
+    # Copy-Item -Path mdbook/book/* -Destination docs/mdbook -Force -Recurse
+    # Copy-Item -Path target/doc/* -Destination docs/codemelted.rs -Force -Recurse
+    # Copy-Item -Path js/docs/* -Destination docs/js -Force -Recurse
+    # Copy-Item -Path support/* -Destination docs/support -Force -Recurse
+    # Move-Item -Path docs/support/index.html -Destination docs -Force
     message "codemelted.rs docs website completed."
   }
   "--test" {
@@ -82,21 +97,30 @@ switch ($args[0]) {
     if ($option -eq "js" -or [string]::IsNullOrWhiteSpace($option)) {
       message "Now testing codemelted.js."
       Set-Location $PSScriptRoot/js
-      deno test --allow-env --allow-net --allow-read --allow-sys --allow-write --coverage=coverage --no-config test_deno.ts
-      deno coverage coverage --lcov > coverage/lcov.info
-      if ($IsLinux -or $IsMacOS) {
-        genhtml -o coverage --ignore-errors unused,inconsistent --dark-mode coverage/lcov.info
-      } else {
-        $exists = Test-Path -Path $GEN_HTML_PERL_SCRIPT -PathType Leaf
-        if ($exists) {
-          perl $GEN_HTML_PERL_SCRIPT -o coverage coverage/lcov.info
-        }
-        else {
-          Write-Host "WARNING: genhtml not installed for windows. Run " +
-          "'choco install lcov' for pwsh terminal as Admin to install it."
-        }
-      }
-      Move-Item -Path coverage -Destination docs -Force
+
+      # Do the bun tests
+      bun test --coverage --coverage-reporter=lcov bun.test.ts
+      lcov_to_html
+      Move-Item -Path coverage -Destination docs/coverage-bun -Force
+
+      # Do the deno tests
+      New-Item -ItemType Directory docs -ErrorAction Ignore
+      deno test --allow-env --allow-net --allow-read --allow-sys --allow-write --coverage=coverage --no-config deno.test.ts
+      deno coverage --lcov > coverage/lcov.info
+      lcov_to_html
+      Move-Item -Path coverage -Destination docs/coverage-deno -Force
+
+      # Now do the nodejs tests
+      New-Item -ItemType Directory coverage
+      node --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info --test ./node.test.js
+      lcov_to_html
+      Move-Item -Path coverage -Destination docs/coverage-node -Force
+
+      # Setup to do Browser Runtime Testing
+      New-Item -ItemType Directory docs/coverage-browser -Force
+      Copy-Item coverage-browser.html docs/coverage-browser/index.html -Force
+      Copy-Item browser.test.js docs/coverage-browser -Force
+      Copy-Item codemelted.js docs/coverage-browser -Force
       Set-Location $PSScriptRoot
       message "codemelted.js testing completed."
     }
