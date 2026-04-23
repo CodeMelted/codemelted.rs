@@ -25,6 +25,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  // MODULE COMMON DATA
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
@@ -32,6 +33,8 @@ import {
   CProtocolHandler,
   CResult,
   if_def,
+  // ASYNC I/O UC FUNCTIONS
+  async_sleep,
 } from "./codemelted.js";
 
 // ============================================================================
@@ -124,5 +127,20 @@ describe("MODULE COMMON DATA VALIDATION", (t) => {
     assert.equal(false, if_def("process", {}));
     assert.throws(() => if_def());
     assert.throws(() => if_def("duh", null));
+  });
+});
+
+// ============================================================================
+// [ASYNC I/O UC VALIDATION] ==================================================
+// ============================================================================
+
+describe("ASYNC I/O UC VALIDATION", () => {
+  test("async_sleep() Test", async () => {
+    const start = Date.now();
+    await async_sleep(500);
+    const end = Date.now();
+    const exec_time = end - start;
+    assert.equal(true, exec_time >= 498);
+    assert.throws(() => async_sleep("duh"));
   });
 });

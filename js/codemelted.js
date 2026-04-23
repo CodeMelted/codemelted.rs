@@ -73,7 +73,21 @@
  * // Import elements to use statically via URL or local path  <br>
  * import { exported_element } from "path/to/codemelted.js";   <br><br>
  * // Dynamically import all module elements to named variable <br>
- * let codemelted = await import("path/to/codemelted.js");     <br>
+ * let codemelted = await import("path/to/codemelted.js");     <br><br>
+ * // What the import of an exported element looks like.       <br>
+ * // This represents all the exported module functions.       <br>
+ * import {                                                    <br>
+ * &nbsp;&nbsp;// MODULE COMMON DATA                           <br>
+ * &nbsp;&nbsp;API_MISUSE,                                     <br>
+ * &nbsp;&nbsp;API_NOT_IMPLEMENTED,                            <br>
+ * &nbsp;&nbsp;API_TYPE_VIOLATION,                             <br>
+ * &nbsp;&nbsp;API_UNSUPPORTED_RUNTIME,                        <br>
+ * &nbsp;&nbsp;CProtocolHandler,                               <br>
+ * &nbsp;&nbsp;CResult,                                        <br>
+ * &nbsp;&nbsp;if_def,                                         <br>
+ * &nbsp;&nbsp;// ASYNC I/O UC FUNCTIONS                       <br>
+ * &nbsp;&nbsp;async_sleep,                                    <br>
+ * } from "path/to/codemelted.js";                             <br>
  * </code>
  * </p>
  * <h3>Test Results</h3>
@@ -107,7 +121,7 @@
  * <tr><th>Function</th><th>Supported V8 Runtimes</tr>
  * </thead>
  * <tbody>
- * <tr><td>async_sleep             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
+ * <tr><td>async_sleep             </td><td>Bun / Deno / Node / Worker</td></tr>
  * <tr><td>async_task              </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>async_timer             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>async_worker            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
@@ -160,22 +174,15 @@
  * <tr><td>storage_length          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>storage_remove          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>storage_set             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>ui_action               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>ui_audio                </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>ui_dialog               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>ui_is                   </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>ui_open                 </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>ui_screen               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>ui_widget               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
+ * <tr><td>ui_action               </td><td>None</td></tr>
+ * <tr><td>ui_audio                </td><td>None</td></tr>
+ * <tr><td>ui_dialog               </td><td>None</td></tr>
+ * <tr><td>ui_is                   </td><td>None</td></tr>
+ * <tr><td>ui_open                 </td><td>None</td></tr>
+ * <tr><td>ui_screen               </td><td>None</td></tr>
+ * <tr><td>ui_widget               </td><td>None</td></tr>
  * </tbody>
  * </table><br />
- * <b>Legend:</b>
- * <ul>
- * <li>B - Bun Runtime</li>
- * <li>D - Deno Runtime</li>
- * <li>N - NodeJS Runtime</li>
- * <li>W - Worker Runtime</li>
- * </ul>
  * <h3>About Module</h3>
  * @author Mark Shaffer
  * @copyright © 2024-26 Mark Shaffer. All Rights Reserved.
@@ -638,28 +645,36 @@ export function if_def(property, obj = globalThis) {
 //   }
 // }
 
-// /**
-//  * Will put a currently running async task to sleep for a specified delay
-//  * in milliseconds.
-//  * @param {number} delay Time is milliseconds to delay the task.
-//  * @returns {Promise<void>} The promise to await on for the delay.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // From within an async function, sleep 2 seconds.
-//  * await codemelted.async_sleep(2000);
-//  */
-// export function async_sleep(delay) {
-//   json_check_type({type: "number", data: delay, should_throw: true});
-//   return new Promise((resolve) => {
-//     setTimeout(() => {
-//       resolve();
-//     }, delay);
-//   });
-// }
+/**
+ * Will put a currently running async task to sleep for a specified delay
+ * in milliseconds.
+ * @param {number} delay Time is milliseconds to delay the task.
+ * @returns {Promise<void>} The promise to await on for the delay.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // From within an async function, sleep 2 seconds.
+ * await codemelted.async_sleep(2000);
+ */
+export function async_sleep(delay) {
+  try {
+    json_check_type({type: "number", data: delay, should_throw: true});
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, delay);
+    });
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `async_sleep() error encountered: ${err}`
+    });
+    throw err;
+  }
+}
 
 // /**
 //  * Will execute an asynchronous task with the ability to delay it into the

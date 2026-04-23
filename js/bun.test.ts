@@ -25,6 +25,7 @@
 // @ts-ignore bun exists, but want to make sure codemelted recognized.
 import {describe, expect, test} from "bun:test";
 import {
+  // MODULE COMMON DATA
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
@@ -32,6 +33,8 @@ import {
   CProtocolHandler,
   CResult,
   if_def,
+  // ASYNC I/O UC FUNCTIONS
+  async_sleep,
 } from "./codemelted.js";
 
 // ============================================================================
@@ -115,5 +118,21 @@ describe("MODULE COMMON DATA VALIDATION", () => {
     expect(() => if_def()).toThrow();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => if_def("duh", null)).toThrow();
+  });
+});
+
+// ============================================================================
+// [ASYNC I/O UC VALIDATION] ==================================================
+// ============================================================================
+
+describe("MODULE COMMON DATA VALIDATION", () => {
+  test("async_sleep() Test", async () => {
+    const start = Date.now();
+    await async_sleep(500);
+    const end = Date.now();
+    const exec_time = end - start;
+    expect(exec_time >= 498).toBe(true);
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_sleep("duh")).toThrow();
   });
 });

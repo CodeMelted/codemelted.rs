@@ -26,12 +26,12 @@
 import {
   assert,
   assertEquals,
-  assertExists,
   assertThrows,
   fail,
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 } from "jsr:@std/assert";
 import {
+  // MODULE COMMON DATA
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
@@ -39,7 +39,8 @@ import {
   CProtocolHandler,
   CResult,
   if_def,
-  // async_sleep
+  // ASYNC I/O UC FUNCTIONS
+  async_sleep,
 } from "./codemelted.js";
 
 // ===============================================================================
@@ -147,159 +148,20 @@ Deno.test("CResult Object Test", () => {
 // [ASYNC IO UC VALIDATION] ======================================================
 // ===============================================================================
 
-// // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-// Deno.test("codemelted.async Test", async () => {
-//   const start = Date.now();
-//   await async_sleep(2000);
-//   const end = Date.now();
-//   const exec_time = end - start;
-//   assertEquals(true, exec_time >= 1998);
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("async_sleep() Test", async () => {
+  const start = Date.now();
+  await async_sleep(500);
+  const end = Date.now();
+  const exec_time = end - start;
+  assertEquals(true, exec_time >= 498);
 
-//   await asyncAssertThrows(
-//     // @ts-ignore "Checking JavaScript API type checking"
-//     async () => { async_sleep("duh"); },
-//     SyntaxError
-//   );
-// });
-
-// ===============================================================================
-// [Unsupported Use Cases Throw] =================================================
-// ===============================================================================
-
-// Deno.test("Unsupported Functions Throw Syntax Error", async () => {
-//   assertThrows(() => hw_request_orientation(), SyntaxError);
-//   assertThrows(() => runtime_online(), SyntaxError);
-// });
-
-// // ----------------------------------------------------------------------------
-// // [console use case] ---------------------------------------------------------
-// // ----------------------------------------------------------------------------
-
-// Deno.test("codemelted.console Tests", () => {
-//   assertExists(codemelted.console);
-//   try {
-//     codemelted.console.writeln();
-//   } catch (err) {
-//     fail("Should not throw.")
-//   }
-// });
-
-// // ----------------------------------------------------------------------------
-// // [disk use case] ------------------------------------------------------------
-// // ----------------------------------------------------------------------------
-
-// Deno.test("codemelted.disk Properties Test", () => {
-//   assertExists(codemelted.disk.homePath);
-//   assertExists(codemelted.disk.pathSeparator);
-//   assertExists(codemelted.disk.tempPath);
-// });
-
-// Deno.test("codemelted.disk Error Check Tests", async () => {
-//   assertThrows(() => codemelted.disk.cp({src: 1, dest: 2}), SyntaxError);
-//   assertThrows(() => codemelted.disk.cp("test.txt"), SyntaxError);
-//   assertThrows(() => codemelted.disk.exists(), SyntaxError);
-//   assertThrows(() => codemelted.disk.ls(), SyntaxError);
-//   assertThrows(() => codemelted.disk.mkdir(), SyntaxError);
-//   assertThrows(() => codemelted.disk.mv(), SyntaxError);
-//   assertThrows(() => codemelted.disk.mv("test.txt"), SyntaxError);
-
-//   try {
-//     await codemelted.disk.readEntireFile();
-//     fail("Should throw");
-//   } catch (err) {
-//     assert(err instanceof SyntaxError);
-//   }
-
-//   try {
-//     await codemelted.disk.readEntireFile({filename: "test", isTextFile: 42});
-//     fail("Should throw");
-//   } catch (err) {
-//     assert(err instanceof SyntaxError);
-//   }
-
-//   try {
-//     await codemelted.disk.writeEntireFile();
-//     fail("Should throw");
-//   } catch (err) {
-//     assert(err instanceof SyntaxError);
-//   }
-
-//   try {
-//     await codemelted.disk.writeEntireFile({filename: "temp.txt"});
-//     fail("Should throw");
-//   } catch (err) {
-//     assert(err instanceof SyntaxError);
-//   }
-
-//   try {
-//     await codemelted.disk.writeEntireFile({filename: "temp.txt", data: "data", append: 42});
-//     fail("Should throw");
-//   } catch (err) {
-//     assert(err instanceof SyntaxError);
-//   }
-
-//   assertThrows(() => codemelted.disk.rm(), SyntaxError);
-// });
-
-// Deno.test("codemelted.disk Manipulation Tests", async () => {
-//   // Get the temporary directory and do some cleanup if necessary
-//   const tempPath = codemelted.disk.tempPath;
-//   assert(tempPath != null);
-//   codemelted.disk.rm({filename: `${tempPath}/results`});
-
-//   // First fail to copy and move stuff
-//   let success = codemelted.disk.cp({
-//     src: "duh.txt",
-//     dest: tempPath}
-//   );
-//   assert(!success);
-//   success = codemelted.disk.mv({
-//     src: "duh.txt",
-//     dest: tempPath
-//   });
-//   assert(!success);
-
-//   // Now lets go create directories and files
-//   success = codemelted.disk.exists({
-//     filename: `${tempPath}/results/`
-//   });
-//   assert(!success);
-//   success = codemelted.disk.mkdir({filename: `${tempPath}/results`});
-//   assert(success);
-
-//   // Go write some files
-//   await codemelted.disk.writeEntireFile({
-//     filename: `${tempPath}/results/writeTextFile.txt`,
-//     data: "Hello There",
-//     append: true,
-//   });
-//   assert(codemelted.disk.exists({filename: `${tempPath}/results/writeTextFile.txt`}));
-
-//   await codemelted.disk.writeEntireFile({
-//     filename: `${tempPath}/results/writeFile.txt`,
-//     data: new Uint8Array([42]),
-//   });
-//   assert(codemelted.disk.exists({filename: `${tempPath}/results/writeFile.txt`}));
-
-//   // Prove the files got written
-//   let result = codemelted.disk.ls({filename: `${tempPath}/results/`});
-//   assert(result.length === 2);
-
-//   // Prove we can read the files
-//   result = await codemelted.disk.readEntireFile({
-//     filename: `${tempPath}/results/writeTextFile.txt`
-//   });
-//   assert(result.includes("Hello There"));
-//   result = await codemelted.disk.readEntireFile({
-//     filename: `${tempPath}/results/writeFile.txt`,
-//     isTextFile: false,
-//   });
-//   assert(result[0] === 42);
-
-//   // Now some cleanup to remove items.
-//   success = codemelted.disk.rm({filename: `${tempPath}/results`});
-//   assert(success);
-// });
+  await asyncAssertThrows(
+    // @ts-ignore "Checking JavaScript API type checking"
+    async () => { async_sleep("duh"); },
+    SyntaxError
+  );
+});
 
 // // ----------------------------------------------------------------------------
 // // [json use case] ------------------------------------------------------------

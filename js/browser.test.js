@@ -26,6 +26,7 @@
 import {assert} from "https://unpkg.com/chai@6.2.2/index.js";
 import "https://unpkg.com/mocha@11.7.5/mocha.js";
 import {
+  // MODULE COMMON DATA
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
@@ -33,6 +34,8 @@ import {
   CProtocolHandler,
   CResult,
   if_def,
+  // ASYNC I/O UC FUNCTIONS
+  async_sleep,
 } from "./codemelted.js";
 
 mocha.setup('bdd');
@@ -127,6 +130,21 @@ describe("MODULE COMMON DATA VALIDATION", () => {
     assert.isFalse(if_def("navigator", {}));
     assert.throws(() => if_def());
     assert.throws(() => if_def("duh", null));
+  });
+});
+
+// ============================================================================
+// [ASYNC I/O UC VALIDATION] ==================================================
+// ============================================================================
+
+describe("ASYNC I/O UC VALIDATION", () => {
+  it("async_sleep() Test", async () => {
+    const start = Date.now();
+    await async_sleep(500);
+    const end = Date.now();
+    const exec_time = end - start;
+    assert.isTrue(exec_time >= 498);
+    assert.throws(() => async_sleep("duh"));
   });
 });
 
