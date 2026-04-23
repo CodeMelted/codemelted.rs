@@ -27,7 +27,7 @@
 
 function lcov_to_html() {
   if ($IsLinux -or $IsMacOS) {
-    genhtml -o coverage --ignore-errors unused,inconsistent --dark-mode coverage/lcov.info
+    genhtml -o coverage --ignore-errors unused,inconsistent,inconsistent --dark-mode coverage/lcov.info
   } else {
     $exists = Test-Path -Path $GEN_HTML_PERL_SCRIPT -PathType Leaf
     if ($exists) {
@@ -74,9 +74,16 @@ switch ($args[0]) {
     Set-Location $PSScriptRoot/js
     Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
     jsdoc ./codemelted.js --destination docs
-    Copy-Item jsdoc-default.css -Destination docs/styles
-    Copy-Item codemelted.js -Destination docs
-    Set-Location $PSScriptRoot
+    if ($LASTEXITCODE -eq 0) {
+      Copy-Item jsdoc-default.css -Destination docs/styles
+      Copy-Item codemelted.js -Destination docs
+      Set-Location $PSScriptRoot
+    } else {
+      Write-Host "ERROR: jsdoc failed!"
+      Set-Location $PSScriptRoot
+      return
+    }
+
     message "build completed."
 
     # message "codemelted.rs Now building docs website."
@@ -112,7 +119,8 @@ switch ($args[0]) {
 
       # Now do the nodejs tests
       New-Item -ItemType Directory coverage
-      node --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info --test ./node.test.js
+      node --test ./node.test.js
+      node --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info ./node.test.js
       lcov_to_html
       Move-Item -Path coverage -Destination docs/coverage-node -Force
 

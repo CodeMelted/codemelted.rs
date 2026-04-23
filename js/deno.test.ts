@@ -36,9 +36,9 @@ import {
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
   API_UNSUPPORTED_RUNTIME,
-  // CProtocolHandler,
-  // CResult,
-  // if_def,
+  CProtocolHandler,
+  CResult,
+  if_def,
   // async_sleep
 } from "./codemelted.js";
 
@@ -63,72 +63,85 @@ async function asyncAssertThrows(fn: Function, ex: any) {
 // ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted Namespace / Support Constructs Exists Test", () => {
-  assertExists(API_MISUSE);
-  assertExists(API_NOT_IMPLEMENTED);
-  assertExists(API_TYPE_VIOLATION);
-  assertExists(API_UNSUPPORTED_RUNTIME);
-  // assertExists(CProtocolHandler);
-  // assertExists(CResult);
-  // assertExists(if_def);
+Deno.test("API_XXX (SyntaxError) Test", () => {
+  assertEquals(true, API_MISUSE instanceof SyntaxError);
+  assertEquals(true, API_NOT_IMPLEMENTED instanceof SyntaxError);
+  assertEquals(true, API_TYPE_VIOLATION instanceof SyntaxError);
+  assertEquals(true, API_UNSUPPORTED_RUNTIME instanceof SyntaxError);
 });
 
-// // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-// Deno.test("codemelted.if_def() Test", () => {
-//   const obj = {};
-//   assertEquals(true, if_def("Deno"));
-//   assertEquals(false, if_def("Deno", obj));
-// });
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("codemelted.if_def() Test", () => {
+  const obj = {};
+  assertEquals(true, if_def("Deno"));
+  assertEquals(false, if_def("Deno", obj));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => if_def());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => if_def("duh", null));
+});
 
-// // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-// Deno.test("codemelted.CProtocolHandler() Test", async () => {
-//   let obj = new CProtocolHandler("test_id");
-//   assertEquals("test_id", obj.id());
-//   await asyncAssertThrows(obj.get_message, SyntaxError);
-//   await asyncAssertThrows(obj.get_message, SyntaxError);
-//   await asyncAssertThrows(obj.is_running, SyntaxError);
-//   await asyncAssertThrows(obj.post_message, SyntaxError);
-//   await asyncAssertThrows(obj.terminate, SyntaxError);
-// });
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("CProtocolHandler Object Test", async () => {
+  let obj = new CProtocolHandler("test_id", (proto, data) => {});
+  assertEquals("test_id", obj.id());
+  await asyncAssertThrows(() => obj.is_running(), SyntaxError);
+  await asyncAssertThrows(() => obj.post_message(""), SyntaxError);
+  await asyncAssertThrows(() => obj.terminate(), SyntaxError);
 
-// // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-// Deno.test("codemelted.CResult Object Test", () => {
-//   let obj = new CResult();
+  try {
+    // @ts-ignore JavaScript can fail this. TypeScript type checks :)
+    obj = new CProtocolHandler(null, null);
+  } catch (err) {
+    assert(err != null);
+  }
 
-//   // Validate ok no data.
-//   assertEquals(true, obj.is_ok());
-//   assertEquals(false, obj.is_error());
-//   assertEquals(null, obj.value());
-//   assertEquals(null, obj.error());
+  try {
+    // @ts-ignore JavaScript can fail this. TypeScript type checks :)
+    obj = new CProtocolHandler("id", null);
+  } catch (err) {
+    assert(err != null);
+  }
+});
 
-//   // Validate ok with data.
-//   obj = new CResult({value: 42});
-//   assertEquals(true, obj.is_ok());
-//   assertEquals(false, obj.is_error());
-//   assertEquals(42, obj.value());
-//   assertEquals(null, obj.error());
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("CResult Object Test", () => {
+  let obj = new CResult();
 
-//   // Validate error no data.
-//   obj = new CResult({error: "Oh no"});
-//   assertEquals(false, obj.is_ok());
-//   assertEquals(true, obj.is_error());
-//   assertEquals(null, obj.value());
-//   assertEquals("Oh no", obj.error());
+  // Validate ok no data.
+  assertEquals(true, obj.is_ok());
+  assertEquals(false, obj.is_error());
+  assertEquals(null, obj.value());
+  assertEquals(null, obj.error());
 
-//   obj = new CResult({error: new Error("Oh no")});
-//   assertEquals(false, obj.is_ok());
-//   assertEquals(true, obj.is_error());
-//   assertEquals(null, obj.value());
-//   assertEquals(true, obj.error() instanceof Error);
+  // Validate ok with data.
+  obj = new CResult({value: 42});
+  assertEquals(true, obj.is_ok());
+  assertEquals(false, obj.is_error());
+  assertEquals(42, obj.value());
+  assertEquals(null, obj.error());
 
-//   // Validate invalid state
-//   try {
-//     new CResult({value: 42, error: "Oh no"});
-//     fail("should throw SyntaxError");
-//   } catch (err) {
-//     assert(err != null)
-//   }
-// });
+  // Validate error no data.
+  obj = new CResult({error: "Oh no"});
+  assertEquals(false, obj.is_ok());
+  assertEquals(true, obj.is_error());
+  assertEquals(null, obj.value());
+  assertEquals("Oh no", obj.error());
+
+  obj = new CResult({error: new Error("Oh no")});
+  assertEquals(false, obj.is_ok());
+  assertEquals(true, obj.is_error());
+  assertEquals(null, obj.value());
+  assertEquals(true, obj.error() instanceof Error);
+
+  // Validate invalid state
+  try {
+    new CResult({value: 42, error: "Oh no"});
+    fail("should throw SyntaxError");
+  } catch (err) {
+    assert(err != null);
+  }
+});
 
 // ===============================================================================
 // [ASYNC IO UC VALIDATION] ======================================================

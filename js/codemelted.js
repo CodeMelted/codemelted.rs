@@ -242,161 +242,200 @@ export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
   "JavaScript runtime!"
 );
 
-// /**
-//  * The event handler utilized within a given JavaScript runtime. This
-//  * represents a global event handler that should suffice any JavaScript
-//  * event callback.
-//  * @callback CEventHandler
-//  * @param {Event} e The event object that was triggered
-//  * @returns {void}
-//  */
+/**
+ * The event handler utilized within a given JavaScript runtime. This
+ * represents a global event handler that should suffice any JavaScript
+ * event callback.
+ * @callback CEventHandler
+ * @param {Event} e The event object that was triggered
+ * @returns {void}
+ */
 
-// /**
-//  * Supports the {@link CProtocolHandler} for data received as part of a
-//  * protocol.
-//  * @callback CProtocolDataRxHandler
-//  * @param {CProtocolHandler} handler Reference to the handler receiving the
-//  * data.
-//  * @param {CResult} data The data received as part of protocol.
-//  */
+/**
+ * Supports the {@link CProtocolHandler} for data received as part of a
+ * protocol.
+ * @callback CProtocolDataRxHandler
+ * @param {CProtocolHandler} handler Reference to the handler receiving the
+ * data.
+ * @param {CResult} data The data received as part of protocol.
+ */
 
-// /**
-//  * Defines the "rules" for objects that will setup a protocol that directly
-//  * exchanges data with an external item, will continuously run until
-//  * terminated, requires the ability to know it is running, and get any
-//  * errors that have occurred during its run.
-//  */
-// export class CProtocolHandler {
-//   /** @type {string} */
-//   #id = "";
-//   /** @type {CProtocolDataRxHandler} */
-//   #rx_handler;
+/**
+ * Defines the "rules" for objects that will setup a protocol that directly
+ * exchanges data with an external item, will continuously run until
+ * terminated, requires the ability to know it is running, and get any
+ * errors that have occurred during its run.
+ */
+export class CProtocolHandler {
+  /** @type {string} */
+  #id = "";
+  /** @type {CProtocolDataRxHandler} */
+  #rx_handler;
 
-//   /**
-//    * Helper function to process received data on a protocol.
-//    * @protected
-//    * @param {object} params The named parameters for the object.
-//    * @param {any} [params.value] The value associated with the result
-//    * @param {any} [params.error] The error associated with the result
-//    * @returns {void}
-//    */
-//   on_data_rx({error = null, value = null}) {
-//     this.#rx_handler(this, new CResult({error: error, value: value}));
-//   }
+  /**
+   * Helper function to process received data on a protocol.
+   * @protected
+   * @param {object} params The named parameters for the object.
+   * @param {any} [params.value] The value associated with the result
+   * @param {any} [params.error] The error associated with the result
+   * @returns {void}
+   */
+  on_data_rx({error = null, value = null}) {
+    this.#rx_handler(this, new CResult({error: error, value: value}));
+  }
 
-//   /**
-//    * The identification of the protocol.
-//    * @returns {string}
-//    */
-//   id() { return this.#id; }
+  /**
+   * The identification of the protocol.
+   * @returns {string}
+   */
+  id() { return this.#id; }
 
-//   /**
-//    * Determines if the protocol is running or has been terminated.
-//    * @returns {boolean}
-//    */
-//   is_running() { throw API_NOT_IMPLEMENTED; }
+  /**
+   * Determines if the protocol is running or has been terminated.
+   * @returns {boolean}
+   */
+  is_running() { throw API_NOT_IMPLEMENTED; }
 
-//   /**
-//    * Posts a given message to the given implementing protocol.
-//    * @param {any} data
-//    * @returns {Promise<CResult>} The result of the request.
-//    */
-//   async post_message(data) { throw API_NOT_IMPLEMENTED; }
+  /**
+   * Posts a given message to the given implementing protocol.
+   * @param {any} data
+   * @returns {Promise<CResult>} The result of the request.
+   */
+  async post_message(data) { throw API_NOT_IMPLEMENTED; }
 
-//   /**
-//    * Terminates the given protocol.
-//    * @returns {void}
-//    */
-//   terminate() { throw API_NOT_IMPLEMENTED; }
+  /**
+   * Terminates the given protocol.
+   * @returns {void}
+   */
+  terminate() { throw API_NOT_IMPLEMENTED; }
 
-//   /**
-//    * Constructor for the class.
-//    * @param {string} id Identification for the protocol for debugging
-//    * purposes.
-//    * @param {CProtocolDataRxHandler} rx_handler The callback for received
-//    * data.
-//    */
-//   constructor(id, rx_handler) {
-//     json_check_type({type: "string", data: id, should_throw: true});
-//     json_check_type({
-//       type: "function",
-//       data: rx_handler,
-//       count: 2,
-//       should_throw: true
-//     });
-//     this.#id = id;
-//     this.#rx_handler = rx_handler;
-//   }
-// }
+  /**
+   * Constructor for the class.
+   * @param {string} id Identification for the protocol for debugging
+   * purposes.
+   * @param {CProtocolDataRxHandler} rx_handler The callback for received
+   * data.
+   */
+  constructor(id, rx_handler) {
+    try {
+      json_check_type({type: "string", data: id, should_throw: true});
+      json_check_type({
+        type: "function",
+        data: rx_handler,
+        count: 2,
+        should_throw: true
+      });
+      this.#id = id;
+      this.#rx_handler = rx_handler;
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CProtocolHandler improperly constructed ${err}`
+      });
+      throw err;
+    }
+  }
+}
 
-// /**
-//  * Support object for the {@link CProtocolHandler} and any other object to
-//  * provide a result where either the value or the error can be signaled for
-//  * later checking by a user.
-//  */
-// export class CResult {
-//   /** @type {any} */
-//   #error = null;
-//   /** @type {any} */
-//   #value = null;
+/**
+ * Support object for the {@link CProtocolHandler} and any other object to
+ * provide a result where either the value or the error can be signaled for
+ * later checking by a user.
+ */
+export class CResult {
+  /** @type {any} */
+  #error;
+  /** @type {any} */
+  #value;
 
-//   /**
-//    * Holds any error message associated with a failed transaction request.
-//    * @returns {any}
-//    */
-//   error() { return this.#error; }
+  /**
+   * Holds any error message associated with a failed transaction request.
+   * @returns {any}
+   */
+  error() { return this.#error; }
 
-//   /**
-//    * Signals whether an error was captured or not.
-//    * @returns {boolean}
-//    */
-//   is_error() {
-//     if (this.error() instanceof Error) {
-//       return true;
-//     }
-//     return this.error() != null && this.error().length > 0;
-//   }
+  /**
+   * Signals whether an error was captured or not.
+   * @returns {boolean}
+   */
+  is_error() {
+    if (this.error() instanceof Error) {
+      return true;
+    }
+    return this.error() != null;
+  }
 
-//   /**
-//    * Signals the transaction completed with no errors.
-//    * @returns {boolean}
-//    */
-//   is_ok() { return !this.is_error(); }
+  /**
+   * Signals the transaction completed with no errors.
+   * @returns {boolean}
+   */
+  is_ok() { return !this.is_error(); }
 
-//   /**
-//    * Hold the value of the given result or nothing if the [CResult] is
-//    * being used to signal there was no error.
-//    * @returns {any}
-//    */
-//   value() { return this.#value; }
+  /**
+   * Hold the value of the given result or nothing if the [CResult] is
+   * being used to signal there was no error.
+   * @returns {any}
+   */
+  value() { return this.#value; }
 
-//   /**
-//    * Constructor for the class.
-//    * @param {object} params The named parameters for the object.
-//    * @param {any} [params.value] The value associated with the result
-//    * @param {any} [params.error] The error associated with the
-//    * result.
-//    */
-//   constructor({value = null, error = null} = {}) {
-//     if (value && error) { throw API_MISUSE; }
-//     this.#value = value;
-//     this.#error = error;
-//   }
-// }
+  /**
+   * Constructor for the class.
+   * @param {object} params The named parameters for the object.
+   * @param {any} [params.value] The value associated with the result.
+   * @param {any} [params.error] The error associated with the result.
+   */
+  constructor({value = null, error = null} = {}) {
+    try {
+      if (value && error) {
+        throw API_MISUSE;
+      }
+      this.#value = value;
+      this.#error = error;
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CResult was improperly constructed. ${err}`
+      });
+      throw err;
+    }
+  }
+}
 
-// /**
-//  * A C-style checker for seeing if a given property (object, function,
-//  * member) exists on a given object. Useful when trying to write
-//  * cross-runtime JavaScript.
-//  * @param {string} property The name of the object, function, or member
-//  * data to check for in a given object.
-//  * @param {object} [obj = globalThis] The object to check these properties.
-//  * Defaults to globalThis to facilitate determining JavaScript runtimes.
-//  * @returns {boolean} true if property exists on object, false otherwise.
-//  */
-// export function if_def(property, obj = globalThis) {
-//   return property in obj;
-// }
+/**
+ * A C-style checker for seeing if a given property (object, function,
+ * member) exists on a given object. Useful when trying to write
+ * cross-runtime JavaScript.
+ * @param {string} property The name of the object, function, or member
+ * data to check for in a given object.
+ * @param {object} [obj = globalThis] The object to check these properties.
+ * Defaults to globalThis to facilitate determining JavaScript runtimes.
+ * @returns {boolean} true if property exists on object, false otherwise.
+ * @example
+ * // Determine if Bun V8 runtime based on globalThis
+ * let is_bun = if_def("Bun");
+ * if (is_bun) {
+ *   // Do bun runtime processing
+ * }
+ *
+ * // Determine if share feature available in browser
+ * let is_share_supported = if_def("share", globalThis.navigator);
+ * if (is_share_supported) {
+ *   // Do share logic
+ * }
+ */
+export function if_def(property, obj = globalThis) {
+  try {
+    json_check_type({type: "string", data: property, should_throw: true});
+    json_check_type({type: "object", data: obj, should_throw: true});
+    return property in obj;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `if_def() usage error. ${err}`
+    });
+    throw err;
+  }
+}
 
 // // ============================================================================
 // // [ASYNC I/O UC IMPLEMENTATION] ==============================================
@@ -1623,76 +1662,84 @@ export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
 //   return {};
 // }
 
-// /**
-//  * Utility to check parameters of a function to ensure they are of an
-//  * expected type.
-//  * @param {object} params The named parameters
-//  * @param {string | any} params.type
-//  * @param {any} params.data The parameter to be checked.
-//  * @param {number} [params.count] Checks the v parameter function
-//  * signature to ensure the appropriate number of parameters are specified.
-//  * @param {boolean} [params.should_throw=false] Whether to throw instead of
-//  * returning a value upon failure.
-//  * @returns {boolean} true if it meets the expectations, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_check_type({
-//   type,
-//   data,
-//   count = undefined,
-//   should_throw = false
-// }) {
-//   try {
-//     const isExpectedType = typeof type !== "string"
-//       ? (data instanceof type)
-//       : typeof data === type;
-//     let valid = typeof count === "number"
-//       ? isExpectedType && data.length === count
-//       : isExpectedType;
-//     if (should_throw && !valid) {
-//       logger_log({
-//         level: LOGGER.error,
-//         data: "json_check_type() - type specified not of an expected type."
-//       })
-//       throw API_TYPE_VIOLATION;
-//     }
-//     return valid;
-//   } catch (err) {
-//     throw API_MISUSE;
-//   }
-// }
+/**
+ * Utility to check parameters of a function to ensure they are of an
+ * expected type.
+ * @param {object} params The named parameters
+ * @param {string | any} params.type
+ * @param {any} params.data The parameter to be checked.
+ * @param {number} [params.count] Checks the v parameter function
+ * signature to ensure the appropriate number of parameters are specified.
+ * @param {boolean} [params.should_throw=false] Whether to throw instead of
+ * returning a value upon failure.
+ * @returns {boolean} true if it meets the expectations, false otherwise.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function json_check_type({
+  type,
+  data,
+  count = undefined,
+  should_throw = false
+}) {
+  try {
+    const isExpectedType = typeof type !== "string"
+      ? (data instanceof type)
+      : typeof data === type;
+    let valid = typeof count === "number"
+      ? isExpectedType && data.length === count
+      : isExpectedType;
+    if (should_throw && !valid) {
+      throw API_TYPE_VIOLATION;
+    }
+    return valid;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `json_check_type() execution error ${err}`
+    });
+    throw err;
+  }
+}
 
-// /**
-//  * Determines if the specified object has the specified property.
-//  * @param {object} params
-//  * @param {object} params.data The object to check.
-//  * @param {string} params.key The property to find.
-//  * @param {boolean} [params.should_throw=false] Whether to throw instead
-//  * of returning a value upon failure.
-//  * @returns {boolean} true if property was found, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_has_key({data, key, should_throw = false}) {
-//   json_check_type({type: "object", data: data, should_throw: true});
-//   json_check_type({type: "string", data: key, should_throw: true});
-//   var hasKey = Object.hasOwn(data, key);
-//   if (should_throw && !hasKey) {
-//     throw API_TYPE_VIOLATION;
-//   }
-//   return hasKey;
-// }
+/**
+ * Determines if the specified object has the specified property.
+ * @param {object} params
+ * @param {object} params.data The object to check.
+ * @param {string} params.key The property to find.
+ * @param {boolean} [params.should_throw=false] Whether to throw instead
+ * of returning a value upon failure.
+ * @returns {boolean} true if property was found, false otherwise.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function json_has_key({data, key, should_throw = false}) {
+  try {
+    json_check_type({type: "object", data: data, should_throw: true});
+    json_check_type({type: "string", data: key, should_throw: true});
+    var hasKey = Object.hasOwn(data, key);
+    if (should_throw && !hasKey) {
+      throw API_TYPE_VIOLATION;
+    }
+    return hasKey;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `json_has_key() execution error ${err}`
+    });
+    throw err;
+  }
+}
 
 // /**
 //  * Converts a string to a supported JSON data type.
@@ -1766,202 +1813,234 @@ export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
 //   return valid;
 // }
 
-// // ============================================================================
-// // [LOGGER UC IMPLEMENTATION] =================================================
-// // ============================================================================
+// ============================================================================
+// [LOGGER UC IMPLEMENTATION] =================================================
+// ============================================================================
 
-// /**
-//  * A log handler for further processing of a logged event.
-//  * @callback CLogHandler
-//  * @param {CLogRecord} record The record logged.
-//  * @returns {void}
-//  */
+/**
+ * A log handler for further processing of a logged event.
+ * @callback CLogHandler
+ * @param {CLogRecord} record The record logged.
+ * @returns {void}
+ */
 
-// /**
-//  * The log record processed via the [CLogHandler] post logging event.
-//  */
-// export class CLogRecord {
-//   /** @type {Date} */
-//   #time = new Date();
-//   /** @type {LOGGER} */
-//   #level;
-//   /** @type {any} */
-//   #data = undefined;
+/**
+ * The log record processed via the {@link CLogHandler} post logging event.
+ */
+export class CLogRecord {
+  /** @type {Date} */
+  #time = new Date();
+  /** @type {LOGGER} */
+  #level;
+  /** @type {any} */
+  #data = undefined;
 
-//   /**
-//    * The time the logged event was created.
-//    * @readonly
-//    * @type {Date}
-//    */
-//   get time() { return this.#time; }
+  /**
+   * The time the logged event was created.
+   * @returns {Date}
+   */
+  time() { return this.#time; }
 
-//   /**
-//    * The [CLogLevel] representation of the log level.
-//    * @readonly
-//    * @type {LOGGER}
-//    */
-//   get level() { return this.#level; }
+  /**
+   * The object representation of the log level.
+   * @returns {LOGGER}
+   */
+  level() { return this.#level; }
 
-//   /**
-//    * The data associated with the log event.
-//    * @readonly
-//    * @type {any}
-//    */
-//   get data() { return this.#data; }
+  /**
+   * The data associated with the log event.
+   * @returns {any}
+   */
+  data() { return this.#data; }
 
-//   /**
-//    * Constructor for the class.
-//    * @param {LOGGER} level object information.
-//    * @param {any} data The data to log.
-//    */
-//   constructor(level, data) {
-//     this.#level = level;
-//     this.#data = data;
-//   }
-// }
+  /**
+   * Constructor for the class.
+   * @param {LOGGER} level object information.
+   * @param {any} data The data to log.
+   */
+  constructor(level, data) {
+    try {
+      json_check_type({type: "object", data: level, should_throw: true});
+      json_has_key({data: level, key: "level", should_throw: true});
+      json_has_key({data: level, key: "label", should_throw: true});
+      this.#level = level;
+      this.#data = data;
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CLogRecord construction error ${err}`
+      });
+      throw err;
+    }
+  }
+}
 
-// /**
-//  * Holds the logger configuration information for log level and labels.
-//  * @readonly
-//  * @enum {object}
-//  * @property {object} debug   level (0) / label "DEBUG"
-//  * @property {object} info    level (1) / label "INFO"
-//  * @property {object} warning level (2) / label "WARNING"
-//  * @property {object} error   level (3) / label "ERROR"
-//  * @property {object} off     level (4) / label "OFF"
-//  */
-// export const LOGGER = Object.freeze({
-//   debug:   { level: 0, label: "DEBUG"   },
-//   info:    { level: 1, label: "INFO"    },
-//   warning: { level: 2, label: "WARNING" },
-//   error:   { level: 3, label: "ERROR"   },
-//   off:     { level: 4, label: "OFF"     },
-// });
+/**
+ * Holds the logger configuration information for log level and labels.
+ * @readonly
+ * @enum {object}
+ * @property {object} debug   level (0) / label "DEBUG"
+ * @property {object} info    level (1) / label "INFO"
+ * @property {object} warning level (2) / label "WARNING"
+ * @property {object} error   level (3) / label "ERROR"
+ * @property {object} off     level (4) / label "OFF"
+ */
+export const LOGGER = Object.freeze({
+  debug:   { level: 0, label: "DEBUG"   },
+  info:    { level: 1, label: "INFO"    },
+  warning: { level: 2, label: "WARNING" },
+  error:   { level: 3, label: "ERROR"   },
+  off:     { level: 4, label: "OFF"     },
+});
 
-// /**
-//  * Holds the logger level object for module logging.
-//  * One of the {@link LOGGER} settings.
-//  * @private
-//  * @type {object}
-//  */
-// let _logger_level = LOGGER.error;
+/**
+ * Holds the logger level object for module logging.
+ * One of the {@link LOGGER} settings.
+ * @private
+ * @type {object}
+ */
+let _logger_level = LOGGER.error;
 
-// /**
-//  * Holds the logger handler for post logging events.
-//  * @private
-//  * @type {CLogHandler?}
-//  */
-// let _logger_handler = null;
+/**
+ * Holds the logger handler for post logging events.
+ * @private
+ * @type {CLogHandler?}
+ */
+let _logger_handler = null;
 
+/**
+ * Sets the logger handler for post logging processing.
+ * @param {CLogHandler | null} handler The handler to utilize.
+ * @returns {void}
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function logger_handler(handler) {
+  try {
+    if (handler === null || handler === undefined) {
+      _logger_handler = null;
+    } else {
+      json_check_type({
+        type: "function",
+        data: handler,
+        count: 1,
+        should_throw: true
+      });
+      _logger_handler = handler;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `logger_handler() error ${err}`
+    });
+    throw err;
+  }
+}
 
-// /**
-//  * Sets the logger handler for post logging processing.
-//  * @param {CLogHandler | null} handler The handler to utilize.
-//  * @returns {void}
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function logger_handler(handler) {
-//   if (json_check_type({type: "function", data: handler, count: 1})) {
-//     _logger_handler = handler;
-//   } else if (handler === null) {
-//     _logger_handler = handler;
-//   } else {
-//     throw API_TYPE_VIOLATION;
-//   }
-// }
+/**
+ * Sets / retrieves the current module log level.
+ * @param {object | undefined} [level] The optional log level to set
+ * based on the {@link codemelted LOGGER} object configuration.
+ * @returns {string} The string representation of the log level.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function logger_level(level) {
+  try {
+    if (level) {
+      json_check_type({type: "object", data: level, should_throw: true});
+      json_has_key({data: level, key: "level", should_throw: true});
+      json_has_key({data: level, key: "label", should_throw: true});
+      _logger_level = level;
+    }
+    // @ts-ignore Property exists on the struct.
+    return _logger_level.label;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `logger_level() execution error ${err}`
+    });
+    throw err;
+  }
+}
 
-// /**
-//  * Sets / retrieves the current module log level.
-//  * @param {object | undefined} [level] The optional log level to set
-//  * based on the {@link codemelted LOGGER} object configuration.
-//  * @returns {string} The string representation of the log level.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function logger_level(level) {
-//   if (level) {
-//     json_check_type({type: "object", data: level, should_throw: true});
-//     json_has_key({data: level, key: "level", should_throw: true});
-//     json_has_key({data: level, key: "label", should_throw: true});
-//     _logger_level = level;
-//   }
-//   // @ts-ignore Property exists on the struct.
-//   return _logger_level.label;
-// }
+/**
+ * Logs an event with the module logger.
+ * @param {object} params The named parameters.
+ * @param {LOGGER} params.level The log level for the logged event.
+ * @param {any} params.data The data to log with the event.
+ * @returns {void}
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function logger_log({level, data}) {
+  try {
+    json_check_type({type: "object", data: level, should_throw: true});
+    if (!data) {
+      throw API_TYPE_VIOLATION;
+    }
 
-// /**
-//  * Logs an event with the module logger.
-//  * @param {object} params The named parameters.
-//  * @param {LOGGER} params.level The log level for the logged event.
-//  * @param {any} params.data The data to log with the event.
-//  * @returns {void}
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function logger_log({level, data}) {
-//   json_check_type({type: "object", data: level, should_throw: true});
-//   if (!data) {
-//     throw API_TYPE_VIOLATION;
-//   }
-//   // Check to see if our logging is on or off.
-//   // @ts-ignore Property exists on the struct.
-//   if (_logger_level.label == "OFF") {
-//     return;
-//   }
+    // Check to see if our logging is on or off.
+    // @ts-ignore Property exists on the struct.
+    if (_logger_level.label == "OFF") {
+      return;
+    }
 
-//   // It's on, go create the log record and go log some stuff.
-//   const record = new CLogRecord(level, data);
-//   // @ts-ignore Property exists on the struct.
-//   if (record.level.level >= _logger_level.level) {
-//     // @ts-ignore Property exists on the struct.
-//     switch (record.level.label) {
-//       case "DEBUG":
-//       case "INFO":
-//         console.info(
-//           record.time.toISOString(),
-//           // @ts-ignore Property exists on the struct.
-//           record.level.label,
-//           record.data
-//         );
-//       case "WARNING":
-//         console.warn(
-//           record.time.toISOString(),
-//           // @ts-ignore Property exists on the struct.
-//           record.level.label,
-//           record.data
-//         );
-//         break;
-//       case "ERROR":
-//         console.error(
-//           record.time.toISOString(),
-//           // @ts-ignore Property exists on the struct.
-//           record.level.label,
-//           record.data
-//         );
-//         break;
-//     }
+    // It's on, go create the log record and go log some stuff.
+    const record = new CLogRecord(level, data);
+    // @ts-ignore Property exists on the struct.
+    if (record.level.level >= _logger_level.level) {
+      // @ts-ignore Property exists on the struct.
+      switch (record.level.label) {
+        case "DEBUG":
+        case "INFO":
+          console.info(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level.label,
+            record.data
+          );
+        case "WARNING":
+          console.warn(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level.label,
+            record.data
+          );
+          break;
+        case "ERROR":
+          console.error(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level.label,
+            record.data
+          );
+          break;
+      }
 
-//     if (_logger_handler) {
-//       _logger_handler(record);
-//     }
-//   }
-// }
+      if (_logger_handler) {
+        _logger_handler(record);
+      }
+    }
+  } catch (err) {
+    console.error(`logger_log() execution error ${err}`, err);
+  }
+}
 
 // // ============================================================================
 // // [NETWORK UC IMPLEMENTATION] ================================================

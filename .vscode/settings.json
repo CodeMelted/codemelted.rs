@@ -12,6 +12,7 @@
     "fmod",
     "genhtml",
     "hashtable",
+    "LASTEXITCODE",
     "mdbook",
     "millis",
     "nread",

@@ -29,6 +29,9 @@ import {
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
   API_UNSUPPORTED_RUNTIME,
+  CProtocolHandler,
+  CResult,
+  if_def,
 } from "./codemelted.js";
 
 // ============================================================================
@@ -42,5 +45,75 @@ describe("MODULE COMMON DATA VALIDATION", () => {
     expect(API_TYPE_VIOLATION instanceof SyntaxError).toBe(true);
     expect(API_UNSUPPORTED_RUNTIME instanceof SyntaxError).toBe(true);
   });
-});
 
+  test("CProtocolHandler Object Test", async () => {
+    let obj = new CProtocolHandler("test_id", (proto, data) => {});
+    expect(obj.id()).toBe("test_id");
+    expect(() => obj.is_running()).toThrow<SyntaxError>();
+    await expect(() => obj.post_message("")).toThrow<SyntaxError>();
+    expect(() => obj.terminate()).toThrow<SyntaxError>();
+
+    try {
+      // @ts-ignore JavaScript can fail this. TypeScript type checks :)
+      obj = new CProtocolHandler(null, null);
+      expect.fail("Should throw SyntaxError");
+    } catch (err) {
+      expect(err instanceof SyntaxError).toBe(true);
+    }
+
+    try {
+      // @ts-ignore JavaScript can fail this. TypeScript type checks :)
+      obj = new CProtocolHandler("id", null);
+      expect.fail("Should throw SyntaxError");
+    } catch (err) {
+      expect(err instanceof SyntaxError).toBe(true);
+    }
+  });
+
+  test("CResult Object Test", () => {
+    let obj = new CResult();
+
+    // Validate ok no data.
+    expect(obj.is_ok()).toBe(true);
+    expect(obj.is_error()).toBe(false);
+    expect(obj.value()).toBe(null);
+    expect(obj.error()).toBe(null);
+
+    // Validate ok with data.
+    obj = new CResult({value: 42});
+    expect(obj.is_ok()).toBe(true);
+    expect(obj.is_error()).toBe(false);
+    expect(obj.value()).toBe(42);
+    expect(obj.error()).toBe(null);
+
+    // Validate error no data.
+    obj = new CResult({error: "Oh no"});
+    expect(obj.is_ok()).toBe(false);
+    expect(obj.is_error()).toBe(true);
+    expect(obj.value()).toBe(null);
+    expect(obj.error()).toBe("Oh no");
+
+    obj = new CResult({error: new Error("Oh no")});
+    expect(obj.is_ok()).toBe(false);
+    expect(obj.is_error()).toBe(true);
+    expect(obj.value()).toBe(null);
+    expect(obj.error() instanceof Error).toBe(true);
+
+    // Validate invalid state
+    try {
+      new CResult({value: 42, error: "Oh no"});
+      expect.fail("should throw SyntaxError");
+    } catch (err) {
+      expect(err instanceof SyntaxError).toBe(true);
+    }
+  });
+
+  test("if_def() Test", () => {
+    expect(if_def("duh")).toBe(false);
+    expect(if_def("Bun")).toBe(true);
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => if_def()).toThrow();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => if_def("duh", null)).toThrow();
+  });
+});
