@@ -26,7 +26,7 @@
 import {assert} from "https://unpkg.com/chai@6.2.2/index.js";
 import "https://unpkg.com/mocha@11.7.5/mocha.js";
 import {
-  // MODULE COMMON DATA
+  // MODULE COMMON DATA CLASSES / FUNCTIONS
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
@@ -34,8 +34,10 @@ import {
   CProtocolHandler,
   CResult,
   if_def,
-  // ASYNC I/O UC FUNCTIONS
+  // ASYNC I/O UC CLASSES / FUNCTIONS
+  CFutureResult,
   async_sleep,
+  async_task,
 } from "./codemelted.js";
 
 mocha.setup('bdd');
@@ -145,6 +147,17 @@ describe("ASYNC I/O UC VALIDATION", () => {
     const exec_time = end - start;
     assert.isTrue(exec_time >= 498);
     assert.throws(() => async_sleep("duh"));
+  });
+
+  it("async_task() Test", async () => {
+    let task = (data) => { return data + 20; };
+    assert.throws(() => async_task());
+    assert.throws(() => async_task({task: "duh"}));
+    assert.throws(() => async_task({task: task, delay: "duh"}));
+    let future = async_task({task: task, data: 22, delay: 500});
+    assert.isFalse(future.has_completed());
+    let result = (await future.result()).value();
+    assert.isTrue(result === 42);
   });
 });
 

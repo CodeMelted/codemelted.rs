@@ -25,7 +25,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  // MODULE COMMON DATA
+  // MODULE COMMON DATA CLASSES / FUNCTIONS
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
@@ -33,13 +33,20 @@ import {
   CProtocolHandler,
   CResult,
   if_def,
-  // ASYNC I/O UC FUNCTIONS
+  // ASYNC I/O UC CLASSES / FUNCTIONS
+  CFutureResult,
   async_sleep,
+  async_task,
+  // LOGGER UC CLASSES / FUNCTIONS
+  LOGGER,
+  logger_level,
 } from "./codemelted.js";
 
 // ============================================================================
 // [MODULE COMMON DATA TESTS] =================================================
 // ============================================================================
+
+logger_level(LOGGER.off);
 
 describe("MODULE COMMON DATA VALIDATION", (t) => {
   test("API_XXX (SyntaxError) Test", () => {
@@ -142,5 +149,16 @@ describe("ASYNC I/O UC VALIDATION", () => {
     const exec_time = end - start;
     assert.equal(true, exec_time >= 498);
     assert.throws(() => async_sleep("duh"));
+  });
+
+  test("async_task() Test", async () => {
+    let task = (data) => { return data + 20; };
+    assert.throws(() => async_task());
+    assert.throws(() => async_task({task: "duh"}));
+    assert.throws(() => async_task({task: task, delay: "duh"}));
+    let future = async_task({task: task, data: 22, delay: 500});
+    assert.equal(false, future.has_completed());
+    let result = (await future.result()).value();
+    assert.equal(42, result);
   });
 });

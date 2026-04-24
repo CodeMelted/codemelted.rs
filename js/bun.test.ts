@@ -25,7 +25,7 @@
 // @ts-ignore bun exists, but want to make sure codemelted recognized.
 import {describe, expect, test} from "bun:test";
 import {
-  // MODULE COMMON DATA
+  // MODULE COMMON DATA CLASSES / FUNCTIONS
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
@@ -33,13 +33,19 @@ import {
   CProtocolHandler,
   CResult,
   if_def,
-  // ASYNC I/O UC FUNCTIONS
+  // ASYNC I/O UC CLASSES / FUNCTIONS
+  CFutureResult,
   async_sleep,
+  async_task,
+  // LOGGER UC CLASSES / FUNCTIONS
+  LOGGER,
+  logger_level,
 } from "./codemelted.js";
 
 // ============================================================================
 // [MODULE COMMON DATA TESTS] =================================================
 // ============================================================================
+logger_level(LOGGER.off);
 
 describe("MODULE COMMON DATA VALIDATION", () => {
   test("API_XXX (SyntaxError) Test", () => {
@@ -117,7 +123,7 @@ describe("MODULE COMMON DATA VALIDATION", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => if_def()).toThrow();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => if_def("duh", null)).toThrow();
+    expect(() => if_def("duh", null)).toThrow<SyntaxError>();
   });
 });
 
@@ -125,7 +131,7 @@ describe("MODULE COMMON DATA VALIDATION", () => {
 // [ASYNC I/O UC VALIDATION] ==================================================
 // ============================================================================
 
-describe("MODULE COMMON DATA VALIDATION", () => {
+describe("ASYNC I/O UC VALIDATION", () => {
   test("async_sleep() Test", async () => {
     const start = Date.now();
     await async_sleep(500);
@@ -133,6 +139,20 @@ describe("MODULE COMMON DATA VALIDATION", () => {
     const exec_time = end - start;
     expect(exec_time >= 498).toBe(true);
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_sleep("duh")).toThrow();
+    expect(() => async_sleep("duh")).toThrow<SyntaxError>();
+  });
+
+  test("async_task() Test", async () => {
+    let task = (data: number) => { return data + 20; };
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_task()).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_task({task: "duh"})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_task({task: task, delay: "duh"})).toThrow();
+    let future: CFutureResult = async_task({task: task, data: 22, delay: 500});
+    expect(future.has_completed()).toBe(false);
+    let result = (await future.result()).value();
+    expect(result === 42).toBe(true);
   });
 });

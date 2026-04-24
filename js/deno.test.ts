@@ -31,7 +31,7 @@ import {
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 } from "jsr:@std/assert";
 import {
-  // MODULE COMMON DATA
+  // MODULE COMMON DATA CLASSES / FUNCTIONS
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
@@ -39,8 +39,13 @@ import {
   CProtocolHandler,
   CResult,
   if_def,
-  // ASYNC I/O UC FUNCTIONS
+  // ASYNC I/O UC CLASSES / FUNCTIONS
+  CFutureResult,
   async_sleep,
+  async_task,
+  // LOGGER UC CLASSES / FUNCTIONS
+  LOGGER,
+  logger_level,
 } from "./codemelted.js";
 
 // ===============================================================================
@@ -58,6 +63,7 @@ async function asyncAssertThrows(fn: Function, ex: any) {
     assert(err instanceof ex);
   }
 }
+logger_level(LOGGER.off);
 
 // ============================================================================
 // [MODULE COMMON DATA TESTS] =================================================
@@ -161,6 +167,21 @@ Deno.test("async_sleep() Test", async () => {
     async () => { async_sleep("duh"); },
     SyntaxError
   );
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("async_task() Test", async () => {
+  let task = (data: number) => { return data + 20; };
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_task())
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_task({task: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_task({task: task, delay: "duh"}));
+  let future: CFutureResult = async_task({task: task, data: 22, delay: 500});
+  assertEquals(false, future.has_completed());
+  let result = (await future.result()).value();
+  assertEquals(42, result);
 });
 
 // // ----------------------------------------------------------------------------

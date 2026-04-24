@@ -77,7 +77,7 @@
  * // What the import of an exported element looks like.       <br>
  * // This represents all the exported module functions.       <br>
  * import {                                                    <br>
- * &nbsp;&nbsp;// MODULE COMMON DATA                           <br>
+ * &nbsp;&nbsp;// MODULE COMMON DATA C CLASSES / FUNCTIONS     <br>
  * &nbsp;&nbsp;API_MISUSE,                                     <br>
  * &nbsp;&nbsp;API_NOT_IMPLEMENTED,                            <br>
  * &nbsp;&nbsp;API_TYPE_VIOLATION,                             <br>
@@ -85,8 +85,10 @@
  * &nbsp;&nbsp;CProtocolHandler,                               <br>
  * &nbsp;&nbsp;CResult,                                        <br>
  * &nbsp;&nbsp;if_def,                                         <br>
- * &nbsp;&nbsp;// ASYNC I/O UC FUNCTIONS                       <br>
+ * &nbsp;&nbsp;// ASYNC I/O UC CLASSES / FUNCTIONS             <br>
+ * &nbsp;&nbsp;CFutureResult,                                  <br>
  * &nbsp;&nbsp;async_sleep,                                    <br>
+ * &nbsp;&nbsp;async_task,                                     <br>
  * } from "path/to/codemelted.js";                             <br>
  * </code>
  * </p>
@@ -122,7 +124,7 @@
  * </thead>
  * <tbody>
  * <tr><td>async_sleep             </td><td>Bun / Deno / Node / Worker</td></tr>
- * <tr><td>async_task              </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
+ * <tr><td>async_task              </td><td>Bun / Deno / Node / Worker</td></tr>
  * <tr><td>async_timer             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>async_worker            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>db_exists               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
@@ -444,69 +446,77 @@ export function if_def(property, obj = globalThis) {
   }
 }
 
-// // ============================================================================
-// // [ASYNC I/O UC IMPLEMENTATION] ==============================================
-// // ============================================================================
+// ============================================================================
+// [ASYNC I/O UC IMPLEMENTATION] ==============================================
+// ============================================================================
 
-// /**
-//  * The task to run as part of the {@link async_task} call.
-//  * @callback CTaskCB
-//  * @param {any} [data] Optional data to pass to the task.
-//  * @returns {any} The result of the task completing.
-//  */
+/**
+ * The task to run as part of the {@link async_task} call.
+ * @callback CTaskCB
+ * @param {any} [data] Optional data to pass to the task.
+ * @returns {any} The result of the task completing.
+ */
 
-// /**
-//  * The resulting object from the {@link async_task} function call with a
-//  * promise of the future {@link CResult}.
-//  */
-// class CTaskResult {
-//   /** @type {Promise<CResult>} */
-//   #task
-//   /** @type {boolean} */
-//   #has_task_completed = false;
+/**
+ * The resulting object from the {@link async_task} function call with a
+ * promise of the future {@link CResult}.
+ */
+export class CFutureResult {
+  /** @type {Promise<CResult>} */
+  #task
+  /** @type {boolean} */
+  #has_task_completed = false;
 
-//   /**
-//    * Determines if the task has completed or not.
-//    * @returns {boolean} true if completed, false otherwise.
-//    */
-//   has_completed() { return this.#has_task_completed; }
+  /**
+   * Determines if the task has completed or not.
+   * @returns {boolean} true if completed, false otherwise.
+   */
+  has_completed() { return this.#has_task_completed; }
 
-//   /**
-//    * Holds the result of the {@link async_task} function call.
-//    * @returns {Promise<CResult>} The result of the asynchronous processing.
-//    */
-//   async result() {
-//     let result = await this.#task;
-//     return result;
-//   }
+  /**
+   * Holds the result of the {@link async_task} function call.
+   * @returns {Promise<CResult>} The result of the asynchronous processing.
+   */
+  async result() {
+    let result = await this.#task;
+    return result;
+  }
 
-//   /**
-//    * Result for the {@link async_task} function call.
-//    * @param {CTaskCB} task The task to run.
-//    * @param {any} [data] The optional data to pass to the task.
-//    * @param {number} [delay=0] The delay to schedule the task in the
-//    * future.
-//    */
-//   constructor(task, data, delay = 0) {
-//     json_check_type({type: "function", data: task, should_throw: true});
-//     json_check_type({type: "number", data: delay, should_throw: true});
-//     this.#task = new Promise((resolve) => {
-//       try {
-//         setTimeout(() => {
-//           let answer = task(data);
-//           resolve(new CResult(answer));
-//         }, delay);
-//       } catch (err) {
-//         logger_log({
-//           level: LOGGER.error,
-//           data: `CTaskResult error occurred. ${err}`
-//         });
-//         this.#has_task_completed = true;
-//         resolve(new CResult({error: err}));
-//       }
-//     });
-//   }
-// }
+  /**
+   * Result for the {@link async_task} function call.
+   * @param {CTaskCB} task The task to run.
+   * @param {any} [data] The optional data to pass to the task.
+   * @param {number} [delay=0] The delay to schedule the task in the
+   * future.
+   */
+  constructor(task, data, delay = 0) {
+    try {
+      json_check_type({type: "function", data: task, should_throw: true});
+      json_check_type({type: "number", data: delay, should_throw: true});
+      this.#task = new Promise((resolve) => {
+        try {
+          setTimeout(() => {
+            let answer = task(data);
+            resolve(new CResult({value: answer}));
+          }, delay);
+        } catch (err) {
+          logger_log({
+            level: LOGGER.error,
+            data: `CTaskResult error occurred. ${err}`
+          });
+          this.#has_task_completed = true;
+          resolve(new CResult({error: err}));
+        }
+      });
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CFutureResult construction failure. ${err}`
+      });
+      throw err;
+    }
+  }
+}
 
 // /**
 //  * The task to run as part of the [asyncTimer] function call.
@@ -676,35 +686,43 @@ export function async_sleep(delay) {
   }
 }
 
-// /**
-//  * Will execute an asynchronous task with the ability to delay it into the
-//  * future and return a result if necessary.
-//  * @param {object} params The named parameters.
-//  * @param {CTaskCB} params.task The task to run.
-//  * @param {any} [params.data] The optional data to pass to the task.
-//  * @param {number} [params.delay=0] The delay to schedule the task in the
-//  * future.
-//  * @returns {CTaskResult} A future promise with the result of the
-//  * task.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // Schedule a task for getting a future result and write it to the
-//  * // console.
-//  * let result = async_task({
-//  *   task: (data) => { return data + 20; },
-//  *   data: 22,
-//  *   delay: 1000,
-//  * });
-//  * let answer = await result.value();
-//  * console.log("answer = ", answer);
-//  */
-// export function async_task({task, data, delay = 0}) {
-//   return new CTaskResult(task, data, delay);
-// }
+/**
+ * Will execute an asynchronous task and get its result in the future.
+ * @param {object} params The named parameters.
+ * @param {CTaskCB} params.task The task to run.
+ * @param {any} [params.data] The optional data to pass to the task.
+ * @param {number} [params.delay=0] The delay to schedule the task in the
+ * future.
+ * @returns {CFutureResult} A future promise with the result of the
+ * task.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Schedule a task for getting a future result and write it to the
+ * // console.
+ * let future = async_task({
+ *   task: (data) => { return data + 20; },
+ *   data: 22,
+ *   delay: 1000,
+ * });
+ * let result = await future.result();
+ * console.log("result = ", result.value());
+ */
+export function async_task({task, data, delay = 0}) {
+  try {
+    let future = new CFutureResult(task, data, delay);
+    return future;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `async_task() execution error. ${err}`
+    })
+    throw err;
+  }
+}
 
 // /**
 //  * Creates an asynchronous repeating task on the main thread.
@@ -2019,31 +2037,31 @@ export function logger_log({level, data}) {
     // It's on, go create the log record and go log some stuff.
     const record = new CLogRecord(level, data);
     // @ts-ignore Property exists on the struct.
-    if (record.level.level >= _logger_level.level) {
+    if (record.level().level >= _logger_level.level) {
       // @ts-ignore Property exists on the struct.
-      switch (record.level.label) {
+      switch (record.level().label) {
         case "DEBUG":
         case "INFO":
-          console.info(
+          console.log(
             record.time().toISOString(),
             // @ts-ignore Property exists on the struct.
-            record.level.label,
-            record.data
+            record.level().label,
+            record.data()
           );
         case "WARNING":
           console.warn(
             record.time().toISOString(),
             // @ts-ignore Property exists on the struct.
-            record.level.label,
-            record.data
+            record.level().label,
+            record.data()
           );
           break;
         case "ERROR":
           console.error(
             record.time().toISOString(),
             // @ts-ignore Property exists on the struct.
-            record.level.label,
-            record.data
+            record.level().label,
+            record.data()
           );
           break;
       }
@@ -5467,3 +5485,74 @@ export function logger_log({level, data}) {
 //     throw API_MISUSE;
 //   }
 // }
+
+// ============================================================================
+// [UI UC CUSTOM HTML ELEMENTS] ===============================================
+// ============================================================================
+
+/**
+ * Flag to determine if the module has been imported or not as to not define
+ * the custom elements multiple times. That would cause an issue.
+ * @private
+ * @type {boolean}
+ */
+let _has_custom_elements_been_initialized = false;
+
+/**
+ * Test Test Test
+ * @class
+ */
+let CBaseHtmlElement = if_def("HTMLElement")
+  // @ts-ignore HTMLElement will exist in the Browser runtime.
+  ? class extends HTMLElement {
+    /**
+     * Utility method to support CSS variables for custom components or utilize
+     * the specified v parameter.
+     * @param {string} v The CSS variable to query.
+     * @returns {string} value of the CSS variable or the original value of v.
+     */
+    get_css_var(v) {
+      // let css_var = ui_widget({
+      //   request: WIDGET_REQUEST.CssVariable,
+      //   data: v
+      // }) ?? "";
+      // // @ts-ignore Will be a string is this context.
+      // return css_var.length > 0 ? css_var : v;
+      return "";
+    }
+    constructor() { super(); }
+  }
+  : class {
+    /**
+     * Utility method to support CSS variables for custom components or utilize
+     * the specified v parameter.
+     * @param {string} v The CSS variable to query.
+     * @returns {string} value of the CSS variable or the original value of v.
+     */
+    get_css_var(v) {
+      // let css_var = ui_widget({
+      //   request: WIDGET_REQUEST.CssVariable,
+      //   data: v
+      // }) ?? "";
+      // // @ts-ignore Will be a string is this context.
+      // return css_var.length > 0 ? css_var : v;
+      return "";
+    }
+    constructor() {}
+  };
+
+/**
+ * We trying something here.
+ * @extends {CBaseHtmlElement}
+ */
+export class CTestHtmlElement extends CBaseHtmlElement {
+  constructor() {
+    super();
+  }
+}
+
+if (if_def("HTMLElement") && !_has_custom_elements_been_initialized) {
+  // @ts-ignore This will exist in a browser context
+  globalThis.customElements.define('codemelted-ui-test-element', CTestHtmlElement);
+  _has_custom_elements_been_initialized = true;
+}
