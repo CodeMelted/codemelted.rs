@@ -194,6 +194,68 @@ describe("LOGGER UC FUNCTIONS VALIDATION", () => {
     assert.equal(LOGGER.Info.label, logger_level(LOGGER.Info));
     assert.equal(false, LOGGER.Debug.label === logger_level());
   });
+
+  test("logger_log() Test", () => {
+    // API violation tests
+    assert.throws(() => logger_log());
+    assert.throws(() => logger_log({level: {}, data: null}));
+    assert.throws(() => logger_log({level: LOGGER.Debug, data: null}));
+
+    // Validate log levels only log events based on log settings.
+    let counter = 0;
+    let log_handler = (record) => { counter += 1; };
+    logger_handler(log_handler);
+    logger_level(LOGGER.Debug);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    assert.equal(4, counter);
+
+    counter = 0;
+    logger_level(LOGGER.Info);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    assert.equal(3, counter);
+
+    counter = 0;
+    logger_level(LOGGER.Warning);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    assert.equal(2, counter);
+
+    counter = 0;
+    logger_level(LOGGER.Error);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    assert.equal(1, counter);
+
+    counter = 0;
+    logger_level(LOGGER.Off);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    assert.equal(0, counter);
+
+    // Confirm when no handler is attached, noting is sent forward.
+    counter = 0;
+    logger_handler();
+    logger_level(LOGGER.Debug);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    assert.equal(0, counter);
+
+    logger_level(LOGGER.Off);
+  });
 });
 
 // ============================================================================

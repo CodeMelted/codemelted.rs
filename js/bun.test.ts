@@ -189,6 +189,70 @@ describe ("LOGGER UC FUNCTIONS VALIDATION", () => {
     expect(LOGGER.Info.label === logger_level(LOGGER.Info)).toBe(true);
     expect(LOGGER.Debug.label === logger_level()).toBe(false);
   });
+
+  test("logger_log() Test", () => {
+    // API violation tests
+
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => logger_log()).toThrow<SyntaxError>();
+    expect(() => logger_log({level: {}, data: null})).toThrow<SyntaxError>();
+    expect(() => logger_log({level: LOGGER.Debug, data: null})).toThrow<SyntaxError>();
+
+    // Validate log levels only log events based on log settings.
+    let counter = 0;
+    let log_handler = (record: CLogRecord) => { counter += 1; };
+    logger_handler(log_handler);
+    logger_level(LOGGER.Debug);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    expect(counter).toBe(4);
+
+    counter = 0;
+    logger_level(LOGGER.Info);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    expect(counter).toBe(3);
+
+    counter = 0;
+    logger_level(LOGGER.Warning);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    expect(counter).toBe(2);
+
+    counter = 0;
+    logger_level(LOGGER.Error);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    expect(counter).toBe(1);
+
+    counter = 0;
+    logger_level(LOGGER.Off);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    expect(counter).toBe(0);
+
+    // Confirm when no handler is attached, noting is sent forward.
+    counter = 0;
+    logger_handler();
+    logger_level(LOGGER.Debug);
+    logger_log({level: LOGGER.Debug, data: "Debug Event"});
+    logger_log({level: LOGGER.Info, data: "Info Event"});
+    logger_log({level: LOGGER.Warning, data: "Warning Event"});
+    logger_log({level: LOGGER.Error, data: "Error Event"});
+    expect(counter).toBe(0);
+
+    logger_level(LOGGER.Off);
+  });
 });
 
 // ============================================================================

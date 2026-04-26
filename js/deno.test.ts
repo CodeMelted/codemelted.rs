@@ -212,6 +212,71 @@ Deno.test("logger_level() Test", () => {
   assertEquals(false, LOGGER.Debug.label === logger_level());
 });
 
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("logger_log() Test", () => {
+  // API violation tests
+
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => logger_log());
+  assertThrows(() => logger_log({level: {}, data: null}));
+  assertThrows(() => logger_log({level: LOGGER.Debug, data: null}));
+
+  // Validate log levels only log events based on log settings.
+  let counter = 0;
+  let log_handler = (record: CLogRecord) => { counter += 1; };
+  logger_handler(log_handler);
+  logger_level(LOGGER.Debug);
+  logger_log({level: LOGGER.Debug, data: "Debug Event"});
+  logger_log({level: LOGGER.Info, data: "Info Event"});
+  logger_log({level: LOGGER.Warning, data: "Warning Event"});
+  logger_log({level: LOGGER.Error, data: "Error Event"});
+  assertEquals(4, counter);
+
+  counter = 0;
+  logger_level(LOGGER.Info);
+  logger_log({level: LOGGER.Debug, data: "Debug Event"});
+  logger_log({level: LOGGER.Info, data: "Info Event"});
+  logger_log({level: LOGGER.Warning, data: "Warning Event"});
+  logger_log({level: LOGGER.Error, data: "Error Event"});
+  assertEquals(3, counter);
+
+  counter = 0;
+  logger_level(LOGGER.Warning);
+  logger_log({level: LOGGER.Debug, data: "Debug Event"});
+  logger_log({level: LOGGER.Info, data: "Info Event"});
+  logger_log({level: LOGGER.Warning, data: "Warning Event"});
+  logger_log({level: LOGGER.Error, data: "Error Event"});
+  assertEquals(2, counter);
+
+  counter = 0;
+  logger_level(LOGGER.Error);
+  logger_log({level: LOGGER.Debug, data: "Debug Event"});
+  logger_log({level: LOGGER.Info, data: "Info Event"});
+  logger_log({level: LOGGER.Warning, data: "Warning Event"});
+  logger_log({level: LOGGER.Error, data: "Error Event"});
+  assertEquals(1, counter);
+
+  counter = 0;
+  logger_level(LOGGER.Off);
+  logger_log({level: LOGGER.Debug, data: "Debug Event"});
+  logger_log({level: LOGGER.Info, data: "Info Event"});
+  logger_log({level: LOGGER.Warning, data: "Warning Event"});
+  logger_log({level: LOGGER.Error, data: "Error Event"});
+  assertEquals(0, counter);
+
+  // Confirm when no handler is attached, noting is sent forward.
+  counter = 0;
+  logger_handler();
+  logger_level(LOGGER.Debug);
+  logger_log({level: LOGGER.Debug, data: "Debug Event"});
+  logger_log({level: LOGGER.Info, data: "Info Event"});
+  logger_log({level: LOGGER.Warning, data: "Warning Event"});
+  logger_log({level: LOGGER.Error, data: "Error Event"});
+  assertEquals(0, counter);
+
+  logger_level(LOGGER.Off);
+});
+
 // ============================================================================
 // [JSON UC FUNCTIONS VALIDATION] =============================================
 // ============================================================================

@@ -82,11 +82,11 @@
  * &nbsp;&nbsp;API_NOT_IMPLEMENTED,                            <br>
  * &nbsp;&nbsp;API_TYPE_VIOLATION,                             <br>
  * &nbsp;&nbsp;API_UNSUPPORTED_RUNTIME,                        <br>
- * &nbsp;&nbsp;CProtocol,                               <br>
+ * &nbsp;&nbsp;CProtocol,                                      <br>
  * &nbsp;&nbsp;CResult,                                        <br>
  * &nbsp;&nbsp;runtime_defined,                                <br>
  * &nbsp;&nbsp;// ASYNC I/O UC CLASSES / FUNCTIONS             <br>
- * &nbsp;&nbsp;CFuture,                                  <br>
+ * &nbsp;&nbsp;CFuture,                                        <br>
  * &nbsp;&nbsp;async_sleep,                                    <br>
  * &nbsp;&nbsp;async_task,                                     <br>
  * } from "path/to/codemelted.js";                             <br>
@@ -825,11 +825,15 @@ export function logger_level(level) {
  * violations. You should not try-catch these as they serve as asserts
  * to the developer.
  * @example
- * // TBD
+ * // When the logger is on and you want to log an event
+ * // It will only log if the log level is set to log those events.
+ * logger_log({level: Logger.Warning, data: "A thing happened"});
  */
 export function logger_log({level, data}) {
   try {
     json_check_type({type: "object", data: level, should_throw: true});
+    json_has_key({data: level, key: "level", should_throw: true});
+    json_has_key({data: level, key: "label", should_throw: true});
     if (!data) {
       throw API_TYPE_VIOLATION;
     }
@@ -878,6 +882,7 @@ export function logger_log({level, data}) {
     }
   } catch (err) {
     console.error(`logger_log() execution error ${err}`, err);
+    throw err;
   }
 }
 
