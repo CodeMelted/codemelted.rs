@@ -82,11 +82,11 @@
  * &nbsp;&nbsp;API_NOT_IMPLEMENTED,                            <br>
  * &nbsp;&nbsp;API_TYPE_VIOLATION,                             <br>
  * &nbsp;&nbsp;API_UNSUPPORTED_RUNTIME,                        <br>
- * &nbsp;&nbsp;CProtocolHandler,                               <br>
+ * &nbsp;&nbsp;CProtocol,                               <br>
  * &nbsp;&nbsp;CResult,                                        <br>
- * &nbsp;&nbsp;if_def,                                         <br>
+ * &nbsp;&nbsp;runtime_defined,                                <br>
  * &nbsp;&nbsp;// ASYNC I/O UC CLASSES / FUNCTIONS             <br>
- * &nbsp;&nbsp;CFutureResult,                                  <br>
+ * &nbsp;&nbsp;CFuture,                                  <br>
  * &nbsp;&nbsp;async_sleep,                                    <br>
  * &nbsp;&nbsp;async_task,                                     <br>
  * } from "path/to/codemelted.js";                             <br>
@@ -137,12 +137,6 @@
  * <tr><td>hw_request_orientation  </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>hw_request_serial_port  </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>hw_request_usb          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_support_bluetooth    </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_support_midi         </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_support_orientation  </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_support_serial_port  </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_support_usb          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>if_def                  </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>json_atob               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>json_btoa               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>json_check_type         </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
@@ -161,13 +155,10 @@
  * <tr><td>npu_compute             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>npu_math                </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>runtime_cpu_count       </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
+ * <tr><td>runtime_defined         </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>runtime_environment     </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>runtime_event           </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>runtime_hostname        </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_is_browser      </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_is_deno         </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_is_nodejs       </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_is_worker       </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>runtime_name            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>runtime_online          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>storage_clear           </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
@@ -179,7 +170,6 @@
  * <tr><td>ui_action               </td><td>None</td></tr>
  * <tr><td>ui_audio                </td><td>None</td></tr>
  * <tr><td>ui_dialog               </td><td>None</td></tr>
- * <tr><td>ui_is                   </td><td>None</td></tr>
  * <tr><td>ui_open                 </td><td>None</td></tr>
  * <tr><td>ui_screen               </td><td>None</td></tr>
  * <tr><td>ui_widget               </td><td>None</td></tr>
@@ -210,7 +200,7 @@
  */
 
 // ============================================================================
-// [MODULE COMMON DATA] =======================================================
+// [MODULE SYNTAX ERRORS] =====================================================
 // ============================================================================
 
 /**
@@ -251,6 +241,82 @@ export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
   "JavaScript runtime!"
 );
 
+// ============================================================================
+// [MODULE TYPEDEFS] ==========================================================
+// ============================================================================
+
+/**
+ * Provides the request actions of the {@link runtime_defined} function call.
+ * @readonly
+ * @enum {string}
+ * @property {string} AskRuntime When performing a search for a specific
+ * definition on a particular object or globalThis namespace.
+ * @property {string} Audio Determines if audio is available in the runtime.
+ * @property {string} Browser Determine if the runtime is a Web Browser.
+ * @property {string} Bun Determines if the runtime is Bun.
+ * @property {string} Bluetooth Determines if bluetooth is available.
+ * @property {string} Deno Determines if the runtime is Deno.
+ * @property {string} MIDI Determines if MIDI devices are available.
+ * @property {String} Node Determines if the runtime is Node.
+ * @property {String} Orientation Determines if Orientation is available
+ * (i.e. GPS and 3D space device orientation.)
+ * @property {string} PWA Determines if the browser window represents an
+ * installed Progressive Web Application.
+ * @property {string} SerialPort Determines if SerialPort protocols are
+ * available.
+ * @property {string} SecureContext indicating whether the current context
+ * is secure (true) or not (false).
+ * @property {string} Share Determines if sharing is available to the
+ * runtime.
+ * @property {string} TextToSpeech Determines if text-to-speech is available
+ * to the runtime.
+ * @property {string} TouchEnabled Identifies if the browser is accessible
+ * via a touch device.
+ * @property {string} USB Determines if USB is available to the runtime.
+ * @property {string} WorkerRT Determines if the runtime is a Worker.
+ */
+export const DEFINED_REQUEST = Object.freeze({
+  AskRuntime: "AskRuntime",
+  Audio: "Audio",
+  Browser: "Browser",
+  Bun: "Bun",
+  Bluetooth: "Bluetooth",
+  Deno: "Deno",
+  MIDI: "MIDI",
+  Node: "Node",
+  Orientation: "Orientation",
+  PWA: "PWA",
+  SerialPort: "SerialPort",
+  SecureContext: "SecureContext",
+  Share: "Share",
+  TextToSpeech: "TextToSpeech",
+  TouchEnabled: "TouchEnabled",
+  USB: "USB",
+  WorkerRT: "WorkerRT",
+});
+
+/**
+ * Holds the logger configuration information for log level and labels.
+ * @readonly
+ * @enum {object}
+ * @property {object} debug   level (0) / label "DEBUG"
+ * @property {object} info    level (1) / label "INFO"
+ * @property {object} warning level (2) / label "WARNING"
+ * @property {object} error   level (3) / label "ERROR"
+ * @property {object} off     level (4) / label "OFF"
+ */
+export const LOGGER = Object.freeze({
+  debug:   { level: 0, label: "DEBUG"   },
+  info:    { level: 1, label: "INFO"    },
+  warning: { level: 2, label: "WARNING" },
+  error:   { level: 3, label: "ERROR"   },
+  off:     { level: 4, label: "OFF"     },
+});
+
+// ============================================================================
+// [MODULE CALLBACKS] =========================================================
+// ============================================================================
+
 /**
  * The event handler utilized within a given JavaScript runtime. This
  * represents a global event handler that should suffice any JavaScript
@@ -261,13 +327,31 @@ export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
  */
 
 /**
- * Supports the {@link CProtocolHandler} for data received as part of a
+ * A log handler for further processing of a logged event.
+ * @callback CLogHandler
+ * @param {CLogRecord} record The record logged.
+ * @returns {void}
+ */
+
+/**
+ * Supports the {@link CProtocol} for data received as part of a
  * protocol.
  * @callback CProtocolDataRxHandler
- * @param {CProtocolHandler} handler Reference to the handler receiving the
+ * @param {CProtocol} handler Reference to the handler receiving the
  * data.
  * @param {CResult} data The data received as part of protocol.
  */
+
+/**
+ * The task to run as part of the {@link async_task} call.
+ * @callback CTaskCB
+ * @param {any} [data] Optional data to pass to the task.
+ * @returns {any} The result of the task completing.
+ */
+
+// ============================================================================
+// [MODULE PROTOCOL HANDLERS] =================================================
+// ============================================================================
 
 /**
  * Defines the "rules" for objects that will setup a protocol that directly
@@ -275,7 +359,7 @@ export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
  * terminated, requires the ability to know it is running, and get any
  * errors that have occurred during its run.
  */
-export class CProtocolHandler {
+export class CProtocol {
   /** @type {string} */
   #id = "";
   /** @type {CProtocolDataRxHandler} */
@@ -339,7 +423,62 @@ export class CProtocolHandler {
     } catch (err) {
       logger_log({
         level: LOGGER.error,
-        data: `CProtocolHandler improperly constructed ${err}`
+        data: `CProtocol improperly constructed ${err}`
+      });
+      throw err;
+    }
+  }
+}
+
+// ============================================================================
+// [MODULE CLASSES] ===========================================================
+// ============================================================================
+
+/**
+ * The log record processed via the {@link CLogHandler} post logging event.
+ */
+export class CLogRecord {
+  /** @type {Date} */
+  #time = new Date();
+  /** @type {LOGGER} */
+  #level;
+  /** @type {any} */
+  #data = undefined;
+
+  /**
+   * The time the logged event was created.
+   * @returns {Date}
+   */
+  time() { return this.#time; }
+
+  /**
+   * The object representation of the log level.
+   * @returns {LOGGER}
+   */
+  level() { return this.#level; }
+
+  /**
+   * The data associated with the log event.
+   * @returns {any}
+   */
+  data() { return this.#data; }
+
+  /**
+   * Constructor for the class.
+   * @param {LOGGER} level object information.
+   * @param {any} data The data to log.
+   */
+  constructor(level, data) {
+    try {
+      json_check_type({type: "object", data: level, should_throw: true});
+      json_has_key({data: level, key: "level", should_throw: true});
+      json_has_key({data: level, key: "label", should_throw: true});
+      this.#level = level;
+      this.#data = data;
+    } catch (err) {
+      logger_log({
+        level: LOGGER.error,
+        data: `CLogRecord construction error ${err}`
       });
       throw err;
     }
@@ -347,7 +486,7 @@ export class CProtocolHandler {
 }
 
 /**
- * Support object for the {@link CProtocolHandler} and any other object to
+ * Support object for the {@link CProtocol} and any other object to
  * provide a result where either the value or the error can be signaled for
  * later checking by a user.
  */
@@ -411,57 +550,10 @@ export class CResult {
 }
 
 /**
- * A C-style checker for seeing if a given property (object, function,
- * member) exists on a given object. Useful when trying to write
- * cross-runtime JavaScript.
- * @param {string} property The name of the object, function, or member
- * data to check for in a given object.
- * @param {object} [obj = globalThis] The object to check these properties.
- * Defaults to globalThis to facilitate determining JavaScript runtimes.
- * @returns {boolean} true if property exists on object, false otherwise.
- * @example
- * // Determine if Bun V8 runtime based on globalThis
- * let is_bun = if_def("Bun");
- * if (is_bun) {
- *   // Do bun runtime processing
- * }
- *
- * // Determine if share feature available in browser
- * let is_share_supported = if_def("share", globalThis.navigator);
- * if (is_share_supported) {
- *   // Do share logic
- * }
- */
-export function if_def(property, obj = globalThis) {
-  try {
-    json_check_type({type: "string", data: property, should_throw: true});
-    json_check_type({type: "object", data: obj, should_throw: true});
-    return property in obj;
-  } catch (err) {
-    logger_log({
-      level: LOGGER.error,
-      data: `if_def() usage error. ${err}`
-    });
-    throw err;
-  }
-}
-
-// ============================================================================
-// [ASYNC I/O UC IMPLEMENTATION] ==============================================
-// ============================================================================
-
-/**
- * The task to run as part of the {@link async_task} call.
- * @callback CTaskCB
- * @param {any} [data] Optional data to pass to the task.
- * @returns {any} The result of the task completing.
- */
-
-/**
  * The resulting object from the {@link async_task} function call with a
  * promise of the future {@link CResult}.
  */
-export class CFutureResult {
+export class CFuture {
   /** @type {Promise<CResult>} */
   #task
   /** @type {boolean} */
@@ -511,12 +603,371 @@ export class CFutureResult {
     } catch (err) {
       logger_log({
         level: LOGGER.error,
-        data: `CFutureResult construction failure. ${err}`
+        data: `CFuture construction failure. ${err}`
       });
       throw err;
     }
   }
 }
+
+// ============================================================================
+// [MODULE PUBLIC API FUNCTIONS] ==============================================
+// ============================================================================
+
+/**
+ * Supports the module public facing APIs to hold state necessary for tracking
+ * for initialization and or settings necessary to support the public API
+ * functions.
+ * @private
+ */
+class ModuleUtils {
+  /**
+   * Holds the logger level object for module logging.
+   * One of the {@link LOGGER} settings.
+   * @type {object}
+   */
+   static logger_level = LOGGER.error;
+
+  /**
+   * Holds the logger handler for post logging events.
+   * @type {CLogHandler?}
+   */
+  static logger_handler = null;
+
+  /**
+   * Helper function for the {@link runtime_defined} to search for properties
+   * within the runtime.
+   * @param {string} property The name of the property to find on the given
+   * object.
+   * @param {object} [obj = globalThis] The object to identify if the given
+   * property exists on it.
+   * @returns true if property defined on object, false otherwise.
+   */
+  static is_defined(property, obj = globalThis) {
+    json_check_type({type: "string", data: property, should_throw: true});
+    json_check_type({type: "object", data: obj, should_throw: true});
+    return property in obj;
+  }
+}
+
+// ============================================================================
+// [ASYNC I/O UC FUNCTIONS] ===================================================
+// ============================================================================
+
+/**
+ * Will put a currently running async task to sleep for a specified delay
+ * in milliseconds.
+ * @param {number} delay Time is milliseconds to delay the task.
+ * @returns {Promise<void>} The promise to await on for the delay.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // From within an async function, sleep 2 seconds.
+ * await codemelted.async_sleep(2000);
+ */
+export function async_sleep(delay) {
+  try {
+    json_check_type({type: "number", data: delay, should_throw: true});
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, delay);
+    });
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `async_sleep() error encountered: ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Will execute an asynchronous task and get its result in the future.
+ * @param {object} params The named parameters.
+ * @param {CTaskCB} params.task The task to run.
+ * @param {any} [params.data] The optional data to pass to the task.
+ * @param {number} [params.delay=0] The delay to schedule the task in the
+ * future.
+ * @returns {CFuture} A future promise with the result of the
+ * task.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Schedule a task for getting a future result and write it to the
+ * // console.
+ * let future = async_task({
+ *   task: (data) => { return data + 20; },
+ *   data: 22,
+ *   delay: 1000,
+ * });
+ * let result = await future.result();
+ * console.log("result = ", result.value());
+ */
+export function async_task({task, data, delay = 0}) {
+  try {
+    let future = new CFuture(task, data, delay);
+    return future;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `async_task() execution error. ${err}`
+    })
+    throw err;
+  }
+}
+
+// ============================================================================
+// [LOGGER UC FUNCTIONS] ======================================================
+// ============================================================================
+
+/**
+ * Sets the logger handler for post logging processing.
+ * @param {CLogHandler | null} handler The handler to utilize.
+ * @returns {void}
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function logger_handler(handler) {
+  try {
+    if (handler === null || handler === undefined) {
+      ModuleUtils.logger_handler = null;
+    } else {
+      json_check_type({
+        type: "function",
+        data: handler,
+        count: 1,
+        should_throw: true
+      });
+      ModuleUtils.logger_handler = handler;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `logger_handler() error ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Sets / retrieves the current module log level.
+ * @param {object | undefined} [level] The optional log level to set
+ * based on the {@link codemelted LOGGER} object configuration.
+ * @returns {string} The string representation of the log level.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function logger_level(level) {
+  try {
+    if (level) {
+      json_check_type({type: "object", data: level, should_throw: true});
+      json_has_key({data: level, key: "level", should_throw: true});
+      json_has_key({data: level, key: "label", should_throw: true});
+      ModuleUtils.logger_level = level;
+    }
+    // @ts-ignore Property exists on the struct.
+    return ModuleUtils.logger_level.label;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `logger_level() execution error ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Logs an event with the module logger.
+ * @param {object} params The named parameters.
+ * @param {LOGGER} params.level The log level for the logged event.
+ * @param {any} params.data The data to log with the event.
+ * @returns {void}
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function logger_log({level, data}) {
+  try {
+    json_check_type({type: "object", data: level, should_throw: true});
+    if (!data) {
+      throw API_TYPE_VIOLATION;
+    }
+
+    // Check to see if our logging is on or off.
+    // @ts-ignore Property exists on the struct.
+    if (ModuleUtils.logger_level.label == "OFF") {
+      return;
+    }
+
+    // It's on, go create the log record and go log some stuff.
+    const record = new CLogRecord(level, data);
+    // @ts-ignore Property exists on the struct.
+    if (record.level().level >= ModuleUtils.logger_level.level) {
+      // @ts-ignore Property exists on the struct.
+      switch (record.level().label) {
+        case "DEBUG":
+        case "INFO":
+          console.log(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+        case "WARNING":
+          console.warn(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+          break;
+        case "ERROR":
+          console.error(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+          break;
+      }
+
+      if (ModuleUtils.logger_handler) {
+        ModuleUtils.logger_handler(record);
+      }
+    }
+  } catch (err) {
+    console.error(`logger_log() execution error ${err}`, err);
+  }
+}
+
+// ============================================================================
+// [RUNTIME UC FUNCTIONS] =====================================================
+// ============================================================================
+
+/**
+ * Utility function to determine what is available to the module within a
+ * given JavaScript runtime environment.
+ * @param {object} params The named parameters.
+ * @param {DEFINED_REQUEST} [params.request = DEFINED_REQUEST.AskRuntime] The
+ * requested item to determine if it is defined within the runtime or not.
+ * Also can perform a general query  utilizing the property / obj properties.
+ * @param {string} [params.property] The name of the object, function, or
+ * member data to check for in a given object when the
+ * {@link DEFINED_REQUEST.AskRuntime} is specified.
+ * @param {object} [params.obj = globalThis] The object to check the property.
+ * Defaults to globalThis to facilitate determining JavaScript runtimes.
+ * @returns {boolean} true if property exists on object, false otherwise.
+ * @example
+ * // Determine if Bun V8 runtime based on globalThis
+ * let is_bun = runtime_defined({request: DEFINED_REQUEST.Bun});
+ * if (is_bun) {
+ *   // Do bun runtime processing
+ * }
+ *
+ * // Determine if share feature available in browser
+ * let is_share_supported = runtime_defined({
+ *   property: "share",
+ *   obj: globalThis["navigator"]
+ * });
+ * if (is_share_supported) {
+ *   // Do share logic
+ * }
+ */
+export function runtime_defined({
+    request = DEFINED_REQUEST.AskRuntime,
+    property,
+    obj = globalThis
+}) {
+  try {
+    switch (request) {
+      case DEFINED_REQUEST.AskRuntime:
+        // @ts-ignore This is in a browser context
+        return ModuleUtils.is_defined(property, obj);
+      case DEFINED_REQUEST.Audio:
+        return ModuleUtils.is_defined("HTMLAudioElement");
+      case DEFINED_REQUEST.Bluetooth:
+        return ModuleUtils.is_defined("navigator") &&
+          ModuleUtils.is_defined("bluetooth", globalThis["navigator"]);
+      case DEFINED_REQUEST.Browser:
+        return ModuleUtils.is_defined("HTMLElement");
+      case DEFINED_REQUEST.Bun:
+        return ModuleUtils.is_defined("Bun");
+      case DEFINED_REQUEST.Deno:
+        return ModuleUtils.is_defined("Deno");
+      case DEFINED_REQUEST.MIDI:
+        return ModuleUtils.is_defined("navigator") &&
+          ModuleUtils.is_defined("requestMIDIAccess",
+          globalThis["navigator"]);
+      case DEFINED_REQUEST.Node:
+        return ModuleUtils.is_defined("process") &&
+          !ModuleUtils.is_defined("Deno") &&
+          !ModuleUtils.is_defined("Bun");
+      case DEFINED_REQUEST.Orientation:
+        return ModuleUtils.is_defined("navigator") &&
+          ModuleUtils.is_defined("geolocation", globalThis["navigator"]);
+      case DEFINED_REQUEST.PWA:
+        return ModuleUtils.is_defined("matchMedia") &&
+          // @ts-ignore This is in a browser context
+          globalThis.matchMedia("(display-mode: standalone)"
+        ).matches;
+      case DEFINED_REQUEST.SecureContext:
+        return ModuleUtils.is_defined("isSecureContext") &&
+          // @ts-ignore This is in a browser context
+          globalThis.isSecureContext;
+      case DEFINED_REQUEST.SerialPort:
+        return ModuleUtils.is_defined("navigator") &&
+          ModuleUtils.is_defined("serial", globalThis["navigator"]);
+      case DEFINED_REQUEST.Share:
+        return ModuleUtils.is_defined("navigator") &&
+          ModuleUtils.is_defined("share", globalThis["navigator"]);
+      case DEFINED_REQUEST.TextToSpeech:
+        return ModuleUtils.is_defined("SpeechSynthesisUtterance");
+      case DEFINED_REQUEST.TouchEnabled:
+        return ModuleUtils.is_defined("navigator") &&
+          ModuleUtils.is_defined("maxTouchPoints", navigator) &&
+          // @ts-ignore This is in a browser context
+          globalThis.navigator.maxTouchPoints > 0;
+      case DEFINED_REQUEST.USB:
+        return ModuleUtils.is_defined("navigator") &&
+          ModuleUtils.is_defined("usb", globalThis["navigator"]);
+      case DEFINED_REQUEST.WorkerRT:
+        return ModuleUtils.is_defined("WorkerGlobalScope");
+      default:
+        throw API_MISUSE;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.error,
+      data: `runtime_defined() usage error. ${err}`
+    });
+    throw err;
+  }
+}
+
+// ============================================================================
+// [ASYNC I/O UC IMPLEMENTATION] ==============================================
+// ============================================================================
 
 // /**
 //  * The task to run as part of the [asyncTimer] function call.
@@ -582,7 +1033,7 @@ export class CFutureResult {
 // /**
 //  * {@link async_worker}
 //  */
-// class CWorkerProtocol extends CProtocolHandler {
+// class CWorkerProtocol extends CProtocol {
 //   /** @type {Worker} */
 //   #worker;
 
@@ -655,74 +1106,7 @@ export class CFutureResult {
 //   }
 // }
 
-/**
- * Will put a currently running async task to sleep for a specified delay
- * in milliseconds.
- * @param {number} delay Time is milliseconds to delay the task.
- * @returns {Promise<void>} The promise to await on for the delay.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // From within an async function, sleep 2 seconds.
- * await codemelted.async_sleep(2000);
- */
-export function async_sleep(delay) {
-  try {
-    json_check_type({type: "number", data: delay, should_throw: true});
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, delay);
-    });
-  } catch (err) {
-    logger_log({
-      level: LOGGER.error,
-      data: `async_sleep() error encountered: ${err}`
-    });
-    throw err;
-  }
-}
 
-/**
- * Will execute an asynchronous task and get its result in the future.
- * @param {object} params The named parameters.
- * @param {CTaskCB} params.task The task to run.
- * @param {any} [params.data] The optional data to pass to the task.
- * @param {number} [params.delay=0] The delay to schedule the task in the
- * future.
- * @returns {CFutureResult} A future promise with the result of the
- * task.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // Schedule a task for getting a future result and write it to the
- * // console.
- * let future = async_task({
- *   task: (data) => { return data + 20; },
- *   data: 22,
- *   delay: 1000,
- * });
- * let result = await future.result();
- * console.log("result = ", result.value());
- */
-export function async_task({task, data, delay = 0}) {
-  try {
-    let future = new CFutureResult(task, data, delay);
-    return future;
-  } catch (err) {
-    logger_log({
-      level: LOGGER.error,
-      data: `async_task() execution error. ${err}`
-    })
-    throw err;
-  }
-}
 
 // /**
 //  * Creates an asynchronous repeating task on the main thread.
@@ -1018,9 +1402,9 @@ export function async_task({task, data, delay = 0}) {
 //  * position in 3D space based on the sensors on the device.
 //  * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
 //  * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/deviceorientation_event
-//  * @extends {CProtocolHandler}
+//  * @extends {CProtocol}
 //  */
-// export class COrientationProtocol extends CProtocolHandler {
+// export class COrientationProtocol extends CProtocol {
 //   /** @type {CGeodeticData} */
 //   #data = new CGeodeticData();
 //   #onDeviceOrientation;
@@ -1135,9 +1519,9 @@ export function async_task({task, data, delay = 0}) {
 //  * With the opened serial port, utilize the [CSerialPort::get_message] and
 //  * [CSerialPort::post_message] to interact with the port until it is
 //  * [CSerialPort::terminate].
-//  * @extends {CProtocolHandler}
+//  * @extends {CProtocol}
 //  */
-// export class CSerialPortProtocol extends CProtocolHandler {
+// export class CSerialPortProtocol extends CProtocol {
 //   /** @type {SerialPort} */
 //   #port;
 
@@ -1422,7 +1806,7 @@ export function async_task({task, data, delay = 0}) {
 //  * // TBD
 //  */
 // export function hw_request_bluetooth() {
-//   // TODO: Develop actual protocol against CProtocolHandler
+//   // TODO: Develop actual protocol against CProtocol
 //   throw API_NOT_IMPLEMENTED;
 // }
 
@@ -1437,7 +1821,7 @@ export function async_task({task, data, delay = 0}) {
 //  * // TBD
 //  */
 // export function hw_request_midi() {
-//   // TODO: Develop actual protocol against CProtocolHandler
+//   // TODO: Develop actual protocol against CProtocol
 //   throw API_NOT_IMPLEMENTED;
 // }
 
@@ -1508,98 +1892,8 @@ export function async_task({task, data, delay = 0}) {
 //  * to the developer.
 //  */
 // export function hw_request_usb() {
-//   // TODO: Develop actual protocol against CProtocolHandler
+//   // TODO: Develop actual protocol against CProtocol
 //   throw API_NOT_IMPLEMENTED;
-// }
-
-// /**
-//  * Determines if the JavaScript runtime support connecting to external
-//  * devices via bluetooth protocol.
-//  * @returns {boolean} Indication of runtime support.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function hw_support_bluetooth() {
-//   return if_def("navigator") &&
-//     if_def("bluetooth", globalThis["navigator"]);
-// }
-
-// /**
-//  * Determines if the JavaScript runtime support connecting to Musical
-//  * Instrument Digital Interface (MIDI) Devices.
-//  * @returns {boolean} Indication of runtime support.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function hw_support_midi() {
-//   return if_def("navigator") &&
-//     if_def("requestMIDIAccess", globalThis["navigator"]);
-// }
-
-// /**
-//  * Determines if the JavaScript runtime will support the ability to
-//  * retrieve device orientation.
-//  * @returns {boolean} Indication of runtime support.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function hw_support_orientation() {
-//   return if_def("navigator") &&
-//     if_def("geolocation", globalThis["navigator"]);
-// }
-
-// /**
-//  * Determines if the JavaScript runtime will provide the ability to
-//  * connect with serial ports.
-//  * @returns {boolean} true if available, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // Determine if serial port processing is supported.
-//  * const supported = hw_serial_ports_supported();
-//  * if (supported) {
-//  *    const port = await hw_request_serial_port();
-//  *    if (port) {
-//  *      // Do something with port!
-//  *    }
-//  * }
-//  */
-// export function hw_support_serial_port() {
-//   return if_def("navigator") && if_def("serial", globalThis["navigator"]);
-// }
-
-// /**
-//  * Determines if the JavaScript runtime supports connecting to a usb
-//  * device.
-//  * @returns {boolean} Indication of runtime support.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function hw_support_usb() {
-//   return if_def("navigator") && if_def("usb", globalThis["navigator"]);
 // }
 
 // // ============================================================================
@@ -1846,235 +2140,6 @@ export function json_has_key({data, key, should_throw = false}) {
 //   return valid;
 // }
 
-// ============================================================================
-// [LOGGER UC IMPLEMENTATION] =================================================
-// ============================================================================
-
-/**
- * A log handler for further processing of a logged event.
- * @callback CLogHandler
- * @param {CLogRecord} record The record logged.
- * @returns {void}
- */
-
-/**
- * The log record processed via the {@link CLogHandler} post logging event.
- */
-export class CLogRecord {
-  /** @type {Date} */
-  #time = new Date();
-  /** @type {LOGGER} */
-  #level;
-  /** @type {any} */
-  #data = undefined;
-
-  /**
-   * The time the logged event was created.
-   * @returns {Date}
-   */
-  time() { return this.#time; }
-
-  /**
-   * The object representation of the log level.
-   * @returns {LOGGER}
-   */
-  level() { return this.#level; }
-
-  /**
-   * The data associated with the log event.
-   * @returns {any}
-   */
-  data() { return this.#data; }
-
-  /**
-   * Constructor for the class.
-   * @param {LOGGER} level object information.
-   * @param {any} data The data to log.
-   */
-  constructor(level, data) {
-    try {
-      json_check_type({type: "object", data: level, should_throw: true});
-      json_has_key({data: level, key: "level", should_throw: true});
-      json_has_key({data: level, key: "label", should_throw: true});
-      this.#level = level;
-      this.#data = data;
-    } catch (err) {
-      logger_log({
-        level: LOGGER.error,
-        data: `CLogRecord construction error ${err}`
-      });
-      throw err;
-    }
-  }
-}
-
-/**
- * Holds the logger configuration information for log level and labels.
- * @readonly
- * @enum {object}
- * @property {object} debug   level (0) / label "DEBUG"
- * @property {object} info    level (1) / label "INFO"
- * @property {object} warning level (2) / label "WARNING"
- * @property {object} error   level (3) / label "ERROR"
- * @property {object} off     level (4) / label "OFF"
- */
-export const LOGGER = Object.freeze({
-  debug:   { level: 0, label: "DEBUG"   },
-  info:    { level: 1, label: "INFO"    },
-  warning: { level: 2, label: "WARNING" },
-  error:   { level: 3, label: "ERROR"   },
-  off:     { level: 4, label: "OFF"     },
-});
-
-/**
- * Holds the logger level object for module logging.
- * One of the {@link LOGGER} settings.
- * @private
- * @type {object}
- */
-let _logger_level = LOGGER.error;
-
-/**
- * Holds the logger handler for post logging events.
- * @private
- * @type {CLogHandler?}
- */
-let _logger_handler = null;
-
-/**
- * Sets the logger handler for post logging processing.
- * @param {CLogHandler | null} handler The handler to utilize.
- * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function logger_handler(handler) {
-  try {
-    if (handler === null || handler === undefined) {
-      _logger_handler = null;
-    } else {
-      json_check_type({
-        type: "function",
-        data: handler,
-        count: 1,
-        should_throw: true
-      });
-      _logger_handler = handler;
-    }
-  } catch (err) {
-    logger_log({
-      level: LOGGER.error,
-      data: `logger_handler() error ${err}`
-    });
-    throw err;
-  }
-}
-
-/**
- * Sets / retrieves the current module log level.
- * @param {object | undefined} [level] The optional log level to set
- * based on the {@link codemelted LOGGER} object configuration.
- * @returns {string} The string representation of the log level.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function logger_level(level) {
-  try {
-    if (level) {
-      json_check_type({type: "object", data: level, should_throw: true});
-      json_has_key({data: level, key: "level", should_throw: true});
-      json_has_key({data: level, key: "label", should_throw: true});
-      _logger_level = level;
-    }
-    // @ts-ignore Property exists on the struct.
-    return _logger_level.label;
-  } catch (err) {
-    logger_log({
-      level: LOGGER.error,
-      data: `logger_level() execution error ${err}`
-    });
-    throw err;
-  }
-}
-
-/**
- * Logs an event with the module logger.
- * @param {object} params The named parameters.
- * @param {LOGGER} params.level The log level for the logged event.
- * @param {any} params.data The data to log with the event.
- * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function logger_log({level, data}) {
-  try {
-    json_check_type({type: "object", data: level, should_throw: true});
-    if (!data) {
-      throw API_TYPE_VIOLATION;
-    }
-
-    // Check to see if our logging is on or off.
-    // @ts-ignore Property exists on the struct.
-    if (_logger_level.label == "OFF") {
-      return;
-    }
-
-    // It's on, go create the log record and go log some stuff.
-    const record = new CLogRecord(level, data);
-    // @ts-ignore Property exists on the struct.
-    if (record.level().level >= _logger_level.level) {
-      // @ts-ignore Property exists on the struct.
-      switch (record.level().label) {
-        case "DEBUG":
-        case "INFO":
-          console.log(
-            record.time().toISOString(),
-            // @ts-ignore Property exists on the struct.
-            record.level().label,
-            record.data()
-          );
-        case "WARNING":
-          console.warn(
-            record.time().toISOString(),
-            // @ts-ignore Property exists on the struct.
-            record.level().label,
-            record.data()
-          );
-          break;
-        case "ERROR":
-          console.error(
-            record.time().toISOString(),
-            // @ts-ignore Property exists on the struct.
-            record.level().label,
-            record.data()
-          );
-          break;
-      }
-
-      if (_logger_handler) {
-        _logger_handler(record);
-      }
-    }
-  } catch (err) {
-    console.error(`logger_log() execution error ${err}`, err);
-  }
-}
-
 // // ============================================================================
 // // [NETWORK UC IMPLEMENTATION] ================================================
 // // ============================================================================
@@ -2085,9 +2150,9 @@ export function logger_log({level, data}) {
 //  * different documents (in different windows, tabs, frames or iframes) of the
 //  * same origin.
 //  * @see https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API
-//  * @extends {CProtocolHandler}
+//  * @extends {CProtocol}
 //  */
-// export class CBroadcastChannelProtocol extends CProtocolHandler {
+// export class CBroadcastChannelProtocol extends CProtocol {
 //   /** @type {BroadcastChannel} */
 //   #channel
 
@@ -2233,9 +2298,9 @@ export function logger_log({level, data}) {
 //  * text/event-stream format. The connection remains open until terminate is
 //  * called.
 //  * @see https://developer.mozilla.org/en-US/docs/Web/API/EventSource
-//  * @extends {CProtocolHandler}
+//  * @extends {CProtocol}
 //  */
-// export class CEventSourceProtocol extends CProtocolHandler {
+// export class CEventSourceProtocol extends CProtocol {
 //   /**
 //    * Supports the [CEventSourceProtocol.state] function.
 //    * @constant {number}
@@ -2458,9 +2523,9 @@ export function logger_log({level, data}) {
 //  * Provides the API for creating and managing a WebSocket connection to a
 //  * server, as well as for sending and receiving data on the connection.
 //  * @see https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
-//  * @extends {CProtocolHandler}
+//  * @extends {CProtocol}
 //  */
-// export class CWebSocketProtocol extends CProtocolHandler {
+// export class CWebSocketProtocol extends CProtocol {
 //   /**
 //    * Supports the [CWebSocketProtocol.state] function.
 //    * @constant {number}
@@ -3036,67 +3101,6 @@ export function logger_log({level, data}) {
 //     return globalThis.location.hostname;
 //   }
 //   throw API_UNSUPPORTED_RUNTIME;
-// }
-
-// /**
-//  * Determines if the JavaScript runtime is web browser.
-//  * @returns {boolean} true if web browser, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_is_browser() {
-//   return if_def("document");
-// }
-
-// /**
-//  * Determines if the JavaScript runtime is Deno runtime.
-//  * @returns {boolean} true if Deno, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_is_deno() {
-//   // @ts-ignore
-//   return if_def("Deno") && if_def("version", globalThis["Deno"]);
-// }
-
-// /**
-//  * Determines if the JavaScript runtime is a NodeJS runtime.
-//  * @returns {boolean} true if NodeJS, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_is_nodejs() {
-//   return if_def("process") && !runtime_is_deno();
-// }
-
-// /**
-//  * Determines if the JavaScript runtime is a Worker thread.
-//  * @returns {boolean} true if worker, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_is_worker() {
-//   return if_def("WorkerGlobalScope");
 // }
 
 // /**
@@ -4105,23 +4109,6 @@ export function logger_log({level, data}) {
 //  */
 
 // /**
-//  * Provides the request actions of the {@link ui_is} function call.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} PWA Determines if the browser window represents an
-//  * installed Progressive Web Application.
-//  * @property {string} SecureContext indicating whether the current context
-//  * is secure (true) or not (false).
-//  * @property {string} TouchEnabled Identifies if the browser is accessible
-//  * via a touch device.
-//  */
-// export const IS_REQUEST = Object.freeze({
-//   PWA: "PWA",
-//   SecureContext: "SecureContext",
-//   TouchEnabled: "TouchEnabled",
-// });
-
-// /**
 //  * Identifies the schema to {@link ui_open} with the browser desktop
 //  * services.
 //  * @readonly
@@ -4720,40 +4707,6 @@ export function logger_log({level, data}) {
 // }
 
 // /**
-//  * Boolean queries of the given browser runtime to discovery different
-//  * features about the given browser window.
-//  * @param {IS_REQUEST} request The enumerated value of different browser
-//  * properties.
-//  * @returns {boolean} true if the given property is supported, false
-//  * otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function ui_is(request) {
-//   if (!runtime_is_browser()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   switch (request) {
-//     case IS_REQUEST.PWA:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.matchMedia("(display-mode: standalone)").matches;
-//     case IS_REQUEST.SecureContext:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.isSecureContext;
-//     case IS_REQUEST.TouchEnabled:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.navigator.maxTouchPoints > 0;
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
-
-// /**
 //  * Opens the specified protocol to a browser window or native app
 //  * configured to handle the given specified schema.
 //  * @param {object} params The named parameters
@@ -4985,7 +4938,7 @@ export function logger_log({level, data}) {
 //  */
 // export function ui_widget({request, data}) {
 //   // Check if we are in a supported runtime or not.
-//   if (!if_def("HTMLElement")) {
+//   if (!runtime_defined("HTMLElement")) {
 //     throw API_UNSUPPORTED_RUNTIME;
 //   }
 
@@ -5490,69 +5443,71 @@ export function logger_log({level, data}) {
 // [UI UC CUSTOM HTML ELEMENTS] ===============================================
 // ============================================================================
 
-/**
- * Flag to determine if the module has been imported or not as to not define
- * the custom elements multiple times. That would cause an issue.
- * @private
- * @type {boolean}
- */
-let _has_custom_elements_been_initialized = false;
+// TODO: Prototyping
 
-/**
- * Test Test Test
- * @class
- */
-let CBaseHtmlElement = if_def("HTMLElement")
-  // @ts-ignore HTMLElement will exist in the Browser runtime.
-  ? class extends HTMLElement {
-    /**
-     * Utility method to support CSS variables for custom components or utilize
-     * the specified v parameter.
-     * @param {string} v The CSS variable to query.
-     * @returns {string} value of the CSS variable or the original value of v.
-     */
-    get_css_var(v) {
-      // let css_var = ui_widget({
-      //   request: WIDGET_REQUEST.CssVariable,
-      //   data: v
-      // }) ?? "";
-      // // @ts-ignore Will be a string is this context.
-      // return css_var.length > 0 ? css_var : v;
-      return "";
-    }
-    constructor() { super(); }
-  }
-  : class {
-    /**
-     * Utility method to support CSS variables for custom components or utilize
-     * the specified v parameter.
-     * @param {string} v The CSS variable to query.
-     * @returns {string} value of the CSS variable or the original value of v.
-     */
-    get_css_var(v) {
-      // let css_var = ui_widget({
-      //   request: WIDGET_REQUEST.CssVariable,
-      //   data: v
-      // }) ?? "";
-      // // @ts-ignore Will be a string is this context.
-      // return css_var.length > 0 ? css_var : v;
-      return "";
-    }
-    constructor() {}
-  };
+// /**
+//  * Flag to determine if the module has been imported or not as to not define
+//  * the custom elements multiple times. That would cause an issue.
+//  * @private
+//  * @type {boolean}
+//  */
+// let _has_custom_elements_been_initialized = false;
 
-/**
- * We trying something here.
- * @extends {CBaseHtmlElement}
- */
-export class CTestHtmlElement extends CBaseHtmlElement {
-  constructor() {
-    super();
-  }
-}
+// /**
+//  * Test Test Test
+//  * @class
+//  */
+// let CBaseHtmlElement = ModuleUtils.is_defined("HTMLElement")
+//   // @ts-ignore HTMLElement will exist in the Browser runtime.
+//   ? class extends HTMLElement {
+//     /**
+//      * Utility method to support CSS variables for custom components or utilize
+//      * the specified v parameter.
+//      * @param {string} v The CSS variable to query.
+//      * @returns {string} value of the CSS variable or the original value of v.
+//      */
+//     get_css_var(v) {
+//       // let css_var = ui_widget({
+//       //   request: WIDGET_REQUEST.CssVariable,
+//       //   data: v
+//       // }) ?? "";
+//       // // @ts-ignore Will be a string is this context.
+//       // return css_var.length > 0 ? css_var : v;
+//       return "";
+//     }
+//     constructor() { super(); }
+//   }
+//   : class {
+//     /**
+//      * Utility method to support CSS variables for custom components or utilize
+//      * the specified v parameter.
+//      * @param {string} v The CSS variable to query.
+//      * @returns {string} value of the CSS variable or the original value of v.
+//      */
+//     get_css_var(v) {
+//       // let css_var = ui_widget({
+//       //   request: WIDGET_REQUEST.CssVariable,
+//       //   data: v
+//       // }) ?? "";
+//       // // @ts-ignore Will be a string is this context.
+//       // return css_var.length > 0 ? css_var : v;
+//       return "";
+//     }
+//     constructor() {}
+//   };
 
-if (if_def("HTMLElement") && !_has_custom_elements_been_initialized) {
-  // @ts-ignore This will exist in a browser context
-  globalThis.customElements.define('codemelted-ui-test-element', CTestHtmlElement);
-  _has_custom_elements_been_initialized = true;
-}
+// /**
+//  * We trying something here.
+//  * @extends {CBaseHtmlElement}
+//  */
+// export class CTestHtmlElement extends CBaseHtmlElement {
+//   constructor() {
+//     super();
+//   }
+// }
+
+// if (ModuleUtils.is_defined("HTMLElement") && !_has_custom_elements_been_initialized) {
+//   // @ts-ignore This will exist in a browser context
+//   globalThis.customElements.define('codemelted-ui-test-element', CTestHtmlElement);
+//   _has_custom_elements_been_initialized = true;
+// }

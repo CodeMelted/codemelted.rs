@@ -26,36 +26,52 @@
 import {assert} from "https://unpkg.com/chai@6.2.2/index.js";
 import "https://unpkg.com/mocha@11.7.5/mocha.js";
 import {
-  // MODULE COMMON DATA CLASSES / FUNCTIONS
+  // MODULE SYNTAX ERRORS
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
   API_UNSUPPORTED_RUNTIME,
-  CProtocolHandler,
+  // MODULE TYPEDEFS
+  DEFINED_REQUEST,
+  LOGGER,
+  // MODULE PROTOCOL CLASSES
+  CProtocol,
+  // MODULE CLASSES
+  CLogRecord,
   CResult,
-  if_def,
-  // ASYNC I/O UC CLASSES / FUNCTIONS
-  CFutureResult,
+  CFuture,
+  // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
+  // LOGGER UC FUNCTIONS
+  logger_level,
+  // RUNTIME UC FUNCTIONS
+  runtime_defined,
 } from "./codemelted.js";
 
+logger_level(LOGGER.off);
 mocha.setup('bdd');
 
 // ============================================================================
-// [MODULE COMMON DATA TESTS] =================================================
+// [MODULE SYNTAX ERRORS VALIDATION] ==========================================
 // ============================================================================
 
-describe("MODULE COMMON DATA VALIDATION", () => {
+describe("MODULE SYNTAX ERRORS VALIDATION", () => {
   it("API_XXX (SyntaxError) Test", () => {
     assert.isTrue(API_MISUSE instanceof SyntaxError);
     assert.isTrue(API_NOT_IMPLEMENTED instanceof SyntaxError);
     assert.isTrue(API_TYPE_VIOLATION instanceof SyntaxError);
     assert.isTrue(API_UNSUPPORTED_RUNTIME instanceof SyntaxError);
   });
+});
 
-  it("CProtocolHandler Object Test", async () => {
-    let obj = new CProtocolHandler("test_id", (proto, data) => {});
+// ============================================================================
+// [MODULE PROTOCOL CLASSES VALIDATION] =======================================
+// ============================================================================
+
+describe("MODULE PROTOCOL CLASSES VALIDATION", () => {
+  it("CProtocol Object Test", async () => {
+    let obj = new CProtocol("test_id", (proto, data) => {});
     assert.equal("test_id", obj.id());
 
     try {
@@ -75,20 +91,26 @@ describe("MODULE COMMON DATA VALIDATION", () => {
     assert.throws(() => obj.terminate(), SyntaxError);
 
     try {
-      obj = new CProtocolHandler(null, null);
+      obj = new CProtocol(null, null);
       assert.fail("Should Throw SyntaxError");
     } catch (err) {
       assert.isNotNull(err);
     }
 
     try {
-      obj = new CProtocolHandler("id", null);
+      obj = new CProtocol("id", null);
       assert.fail("Should Throw SyntaxError");
     } catch (err) {
       assert.isNotNull(err);
     }
   });
+});
 
+// ============================================================================
+// [MODULE CLASSES VALIDATION] ================================================
+// ============================================================================
+
+describe("MODULE CLASSES VALIDATION", () => {
   it("CResult Object Test", () => {
     let obj = new CResult();
 
@@ -126,20 +148,13 @@ describe("MODULE COMMON DATA VALIDATION", () => {
       assert.isNotNull(err);
     }
   });
-
-  it("if_def() Test", () => {
-    assert.isTrue(if_def("navigator"));
-    assert.isFalse(if_def("navigator", {}));
-    assert.throws(() => if_def());
-    assert.throws(() => if_def("duh", null));
-  });
 });
 
 // ============================================================================
-// [ASYNC I/O UC VALIDATION] ==================================================
+// [ASYNC I/O UC FUNCTIONS VALIDATION] ========================================
 // ============================================================================
 
-describe("ASYNC I/O UC VALIDATION", () => {
+describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
   it("async_sleep() Test", async () => {
     const start = Date.now();
     await async_sleep(500);
@@ -160,6 +175,50 @@ describe("ASYNC I/O UC VALIDATION", () => {
     assert.isTrue(result === 42);
   });
 });
+
+// ============================================================================
+// [LOGGER UC FUNCTIONS VALIDATION] ===========================================
+// ============================================================================
+
+// ============================================================================
+// [JSON UC FUNCTIONS VALIDATION] =============================================
+// ============================================================================
+
+// ============================================================================
+// [RUNTIME UC FUNCTIONS VALIDATION] ==========================================
+// ============================================================================
+
+describe ("RUNTIME UC FUNCTIONS VALIDATION", () => {
+  it("runtime_defined() Test", () => {
+    let is_true_or_false = (v) => {
+      return typeof v === "boolean";
+    };
+    assert.throws(() => runtime_defined());
+    assert.throws(() => runtime_defined({request: "duh"}));
+    assert.throws(() => runtime_defined({property: 42}));
+    assert.throws(() => runtime_defined({property: "duh", obj: 42}));
+
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.Audio})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.Bluetooth})));
+    assert.isTrue(runtime_defined({request: DEFINED_REQUEST.Browser}));
+    assert.isFalse(runtime_defined({request: DEFINED_REQUEST.Bun}));
+    assert.isFalse(runtime_defined({request: DEFINED_REQUEST.Deno}));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.MIDI})));
+    assert.isFalse(runtime_defined({request: DEFINED_REQUEST.Node}));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.Orientation})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.PWA})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.SecureContext})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.SerialPort})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.Share})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.TextToSpeech})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.TouchEnabled})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.USB})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.WorkerRT})));
+    assert.isTrue(runtime_defined({property: "navigator"}));
+    assert.isFalse(runtime_defined({property: "navigator", obj: {}}));
+  });
+});
+
 
 // ============================================================================
 // [RUN THE TESTS] ============================================================

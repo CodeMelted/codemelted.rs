@@ -31,22 +31,30 @@ import {
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 } from "jsr:@std/assert";
 import {
-  // MODULE COMMON DATA CLASSES / FUNCTIONS
+  // MODULE SYNTAX ERRORS
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
   API_UNSUPPORTED_RUNTIME,
-  CProtocolHandler,
+  // MODULE TYPEDEFS
+  DEFINED_REQUEST,
+  LOGGER,
+  // MODULE PROTOCOL CLASSES
+  CProtocol,
+  // MODULE CLASSES
+  CLogRecord,
   CResult,
-  if_def,
-  // ASYNC I/O UC CLASSES / FUNCTIONS
-  CFutureResult,
+  CFuture,
+  // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
-  // LOGGER UC CLASSES / FUNCTIONS
-  LOGGER,
+  // LOGGER UC FUNCTIONS
   logger_level,
+  // RUNTIME UC FUNCTIONS
+  runtime_defined,
 } from "./codemelted.js";
+
+logger_level(LOGGER.off);
 
 // ===============================================================================
 // [HELPER TEST FUNCTIONS] =======================================================
@@ -63,10 +71,9 @@ async function asyncAssertThrows(fn: Function, ex: any) {
     assert(err instanceof ex);
   }
 }
-logger_level(LOGGER.off);
 
 // ============================================================================
-// [MODULE COMMON DATA TESTS] =================================================
+// [MODULE SYNTAX ERRORS VALIDATION] ==========================================
 // ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
@@ -77,20 +84,13 @@ Deno.test("API_XXX (SyntaxError) Test", () => {
   assertEquals(true, API_UNSUPPORTED_RUNTIME instanceof SyntaxError);
 });
 
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted.if_def() Test", () => {
-  const obj = {};
-  assertEquals(true, if_def("Deno"));
-  assertEquals(false, if_def("Deno", obj));
-  // @ts-ignore TypeScript won't let this happen, JavaScript would
-  assertThrows(() => if_def());
-  // @ts-ignore TypeScript won't let this happen, JavaScript would
-  assertThrows(() => if_def("duh", null));
-});
+// ============================================================================
+// [MODULE PROTOCOL CLASSES VALIDATION] =======================================
+// ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("CProtocolHandler Object Test", async () => {
-  let obj = new CProtocolHandler("test_id", (proto, data) => {});
+Deno.test("CProtocol Object Test", async () => {
+  let obj = new CProtocol("test_id", (proto, data) => {});
   assertEquals("test_id", obj.id());
   await asyncAssertThrows(() => obj.is_running(), SyntaxError);
   await asyncAssertThrows(() => obj.post_message(""), SyntaxError);
@@ -98,18 +98,22 @@ Deno.test("CProtocolHandler Object Test", async () => {
 
   try {
     // @ts-ignore JavaScript can fail this. TypeScript type checks :)
-    obj = new CProtocolHandler(null, null);
+    obj = new CProtocol(null, null);
   } catch (err) {
     assert(err != null);
   }
 
   try {
     // @ts-ignore JavaScript can fail this. TypeScript type checks :)
-    obj = new CProtocolHandler("id", null);
+    obj = new CProtocol("id", null);
   } catch (err) {
     assert(err != null);
   }
 });
+
+// ============================================================================
+// [MODULE CLASSES VALIDATION] ================================================
+// ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("CResult Object Test", () => {
@@ -150,9 +154,9 @@ Deno.test("CResult Object Test", () => {
   }
 });
 
-// ===============================================================================
-// [ASYNC IO UC VALIDATION] ======================================================
-// ===============================================================================
+// ============================================================================
+// [ASYNC I/O UC FUNCTIONS VALIDATION] ========================================
+// ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("async_sleep() Test", async () => {
@@ -178,11 +182,55 @@ Deno.test("async_task() Test", async () => {
   assertThrows(() => async_task({task: "duh"}));
   // @ts-ignore TypeScript won't let this happen, JavaScript would
   assertThrows(() => async_task({task: task, delay: "duh"}));
-  let future: CFutureResult = async_task({task: task, data: 22, delay: 500});
+  let future: CFuture = async_task({task: task, data: 22, delay: 500});
   assertEquals(false, future.has_completed());
   let result = (await future.result()).value();
   assertEquals(42, result);
 });
+
+// ============================================================================
+// [LOGGER UC FUNCTIONS VALIDATION] ===========================================
+// ============================================================================
+
+// ============================================================================
+// [JSON UC FUNCTIONS VALIDATION] =============================================
+// ============================================================================
+
+// ============================================================================
+// [RUNTIME UC FUNCTIONS VALIDATION] ==========================================
+// ============================================================================
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("runtime_defined() Test", () => {
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => runtime_defined());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => runtime_defined({request: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => runtime_defined({property: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => runtime_defined({property: "duh", obj: 42}));
+
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.Audio}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.Bluetooth}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.Browser}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.Bun}));
+  assertEquals(true, runtime_defined({request: DEFINED_REQUEST.Deno}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.MIDI}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.Node}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.Orientation}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.PWA}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.SecureContext}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.SerialPort}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.Share}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.TextToSpeech}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.TouchEnabled}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.USB}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.WorkerRT}));
+  assertEquals(true, runtime_defined({property: "navigator"}));
+  assertEquals(false, runtime_defined({property: "navigator", obj: {}}));
+});
+
 
 // // ----------------------------------------------------------------------------
 // // [json use case] ------------------------------------------------------------

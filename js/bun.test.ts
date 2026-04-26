@@ -25,27 +25,34 @@
 // @ts-ignore bun exists, but want to make sure codemelted recognized.
 import {describe, expect, test} from "bun:test";
 import {
-  // MODULE COMMON DATA CLASSES / FUNCTIONS
+  // MODULE SYNTAX ERRORS
   API_MISUSE,
   API_NOT_IMPLEMENTED,
   API_TYPE_VIOLATION,
   API_UNSUPPORTED_RUNTIME,
-  CProtocolHandler,
+  // MODULE TYPEDEFS
+  DEFINED_REQUEST,
+  LOGGER,
+  // MODULE PROTOCOL CLASSES
+  CProtocol,
+  // MODULE CLASSES
+  CLogRecord,
   CResult,
-  if_def,
-  // ASYNC I/O UC CLASSES / FUNCTIONS
-  CFutureResult,
+  CFuture,
+  // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
-  // LOGGER UC CLASSES / FUNCTIONS
-  LOGGER,
+  // LOGGER UC FUNCTIONS
   logger_level,
+  // RUNTIME UC FUNCTIONS
+  runtime_defined,
 } from "./codemelted.js";
 
-// ============================================================================
-// [MODULE COMMON DATA TESTS] =================================================
-// ============================================================================
 logger_level(LOGGER.off);
+
+// ============================================================================
+// [MODULE SYNTAX ERROR VIOLATIONS] ===========================================
+// ============================================================================
 
 describe("MODULE COMMON DATA VALIDATION", () => {
   test("API_XXX (SyntaxError) Test", () => {
@@ -54,9 +61,15 @@ describe("MODULE COMMON DATA VALIDATION", () => {
     expect(API_TYPE_VIOLATION instanceof SyntaxError).toBe(true);
     expect(API_UNSUPPORTED_RUNTIME instanceof SyntaxError).toBe(true);
   });
+});
 
-  test("CProtocolHandler Object Test", async () => {
-    let obj = new CProtocolHandler("test_id", (proto, data) => {});
+// ============================================================================
+// [MODULE PROTOCOL CLASSES VALIDATION] =======================================
+// ============================================================================
+
+describe("MODULE PROTOCOL CLASSES VALIDATION", () => {
+  test("CProtocol Object Test", async () => {
+    let obj = new CProtocol("test_id", (proto, data) => {});
     expect(obj.id()).toBe("test_id");
     expect(() => obj.is_running()).toThrow<SyntaxError>();
     await expect(() => obj.post_message("")).toThrow<SyntaxError>();
@@ -64,7 +77,7 @@ describe("MODULE COMMON DATA VALIDATION", () => {
 
     try {
       // @ts-ignore JavaScript can fail this. TypeScript type checks :)
-      obj = new CProtocolHandler(null, null);
+      obj = new CProtocol(null, null);
       expect.fail("Should throw SyntaxError");
     } catch (err) {
       expect(err instanceof SyntaxError).toBe(true);
@@ -72,13 +85,19 @@ describe("MODULE COMMON DATA VALIDATION", () => {
 
     try {
       // @ts-ignore JavaScript can fail this. TypeScript type checks :)
-      obj = new CProtocolHandler("id", null);
+      obj = new CProtocol("id", null);
       expect.fail("Should throw SyntaxError");
     } catch (err) {
       expect(err instanceof SyntaxError).toBe(true);
     }
   });
+});
 
+// ============================================================================
+// [MODULE CLASSES VALIDATION] ================================================
+// ============================================================================
+
+describe("MODULE CLASSES VALIDATION", () => {
   test("CResult Object Test", () => {
     let obj = new CResult();
 
@@ -116,22 +135,13 @@ describe("MODULE COMMON DATA VALIDATION", () => {
       expect(err instanceof SyntaxError).toBe(true);
     }
   });
-
-  test("if_def() Test", () => {
-    expect(if_def("duh")).toBe(false);
-    expect(if_def("Bun")).toBe(true);
-    // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => if_def()).toThrow();
-    // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => if_def("duh", null)).toThrow<SyntaxError>();
-  });
 });
 
 // ============================================================================
-// [ASYNC I/O UC VALIDATION] ==================================================
+// [ASYNC I/O UC FUNCTIONS VALIDATION] ========================================
 // ============================================================================
 
-describe("ASYNC I/O UC VALIDATION", () => {
+describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
   test("async_sleep() Test", async () => {
     const start = Date.now();
     await async_sleep(500);
@@ -150,9 +160,53 @@ describe("ASYNC I/O UC VALIDATION", () => {
     expect(() => async_task({task: "duh"})).toThrow<SyntaxError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => async_task({task: task, delay: "duh"})).toThrow();
-    let future: CFutureResult = async_task({task: task, data: 22, delay: 500});
+    let future: CFuture = async_task({task: task, data: 22, delay: 500});
     expect(future.has_completed()).toBe(false);
     let result = (await future.result()).value();
     expect(result === 42).toBe(true);
+  });
+});
+
+// ============================================================================
+// [LOGGER UC FUNCTIONS VALIDATION] ===========================================
+// ============================================================================
+
+// ============================================================================
+// [JSON UC FUNCTIONS VALIDATION] =============================================
+// ============================================================================
+
+// ============================================================================
+// [RUNTIME UC FUNCTIONS VALIDATION] ==========================================
+// ============================================================================
+
+describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
+  test("runtime_defined() Test", () => {
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => runtime_defined()).toThrow();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => runtime_defined({request: 42})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => runtime_defined({property: 42})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => runtime_defined({property: "duh", obj: 42})).toThrow<SyntaxError>();
+
+    expect(runtime_defined({request: DEFINED_REQUEST.Audio})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.Bluetooth})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.Browser})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.Bun})).toBe(true);
+    expect(runtime_defined({request: DEFINED_REQUEST.Deno})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.MIDI})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.Node})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.Orientation})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.PWA})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.SecureContext})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.SerialPort})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.Share})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.TextToSpeech})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.TouchEnabled})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.USB})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.WorkerRT})).toBe(false);
+    expect(runtime_defined({property: "navigator"})).toBe(true);
+    expect(runtime_defined({property: "navigator", obj: {}})).toBe(false);
   });
 });
