@@ -730,6 +730,121 @@ export function async_task({task, data, delay = 0}) {
 }
 
 // ============================================================================
+// [DB UC FUNCTIONS] ==========================================================
+// ============================================================================
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function db_exists() {
+  // TODO: IndexDB for browser / worker
+  throw API_NOT_IMPLEMENTED;
+}
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function db_manage() {
+  // TODO: IndexDB for browser / worker
+  throw API_NOT_IMPLEMENTED;
+}
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function db_query() {
+  // TODO: IndexDB for browser / worker
+  throw API_NOT_IMPLEMENTED;
+}
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function db_update() {
+  // TODO: IndexDB for browser / worker
+  throw API_NOT_IMPLEMENTED;
+}
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function db_version() {
+  // TODO: IndexDB for browser / worker
+  throw API_NOT_IMPLEMENTED;
+}
+
+// ============================================================================
+// [Disk UC FUNCTIONS] ========================================================
+// ============================================================================
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function disk_read_file() {
+  // TODO: Be able to prompt for a filename via various methods and read
+  //       entire file to disk.
+  throw API_NOT_IMPLEMENTED;
+}
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function disk_write_file() {
+  // TODO: Be able to prompt for a filename via various methods and write
+  //       entire file to disk.
+  throw API_NOT_IMPLEMENTED;
+}
+
+// ============================================================================
 // [JSON UC FUNCTIONS] ========================================================
 // ============================================================================
 
@@ -1491,94 +1606,6 @@ export function runtime_defined({
 //   throw API_NOT_IMPLEMENTED;
 // }
 
-// // ============================================================================
-// // [DB UC IMPLEMENTATION] =====================================================
-// // ============================================================================
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function db_exists() {
-//   // TODO: IndexDB for browser / worker
-//   //       DenoKV for Deno
-//   //       Possibly Sqlite for NodeJS. If no third party items involved.
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function db_manage() {
-//   // TODO: IndexDB for browser / worker
-//   //       DenoKV for Deno
-//   //       Possibly Sqlite for NodeJS. If no third party items involved.
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function db_query() {
-//   // TODO: IndexDB for browser / worker
-//   //       DenoKV for Deno
-//   //       Possibly Sqlite for NodeJS. If no third party items involved.
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function db_update() {
-//   // TODO: IndexDB for browser / worker
-//   //       DenoKV for Deno
-//   //       Possibly Sqlite for NodeJS. If no third party items involved.
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function db_version() {
-//   // TODO: IndexDB for browser / worker
-//   //       DenoKV for Deno
-//   //       Possibly Sqlite for NodeJS. If no third party items involved.
-//   throw API_NOT_IMPLEMENTED;
-// }
 
 // // ============================================================================
 // // [HW UC IMPLEMENTATION] =====================================================
