@@ -44,12 +44,14 @@ import {
   async_sleep,
   async_task,
   // LOGGER UC FUNCTIONS
+  logger_handler,
   logger_level,
+  logger_log,
   // RUNTIME UC FUNCTIONS
   runtime_defined,
 } from "./codemelted.js";
 
-logger_level(LOGGER.off);
+logger_level(LOGGER.Off);
 mocha.setup('bdd');
 
 // ============================================================================
@@ -180,6 +182,22 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
 // [LOGGER UC FUNCTIONS VALIDATION] ===========================================
 // ============================================================================
 
+describe ("LOGGER UC FUNCTIONS VALIDATION", () => {
+  it("logger_handler() Test", () => {
+    assert.throws(() => logger_handler(42));
+    assert.throws(() => logger_handler(() => {}));
+    assert.doesNotThrow(() => logger_handler((record) => {}));
+    assert.doesNotThrow(() => logger_handler());
+  });
+
+  it("logger_level() Test", () => {
+    assert.throws(() => logger_level({}));
+    assert.throws(() => logger_level(42));
+    assert.isTrue(LOGGER.Info.label === logger_level(LOGGER.Info));
+    assert.isFalse(LOGGER.Debug.label === logger_level());
+  });
+});
+
 // ============================================================================
 // [JSON UC FUNCTIONS VALIDATION] =============================================
 // ============================================================================
@@ -213,6 +231,7 @@ describe ("RUNTIME UC FUNCTIONS VALIDATION", () => {
     assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.TextToSpeech})));
     assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.TouchEnabled})));
     assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.USB})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.WorkerAvailable})));
     assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.WorkerRT})));
     assert.isTrue(runtime_defined({property: "navigator"}));
     assert.isFalse(runtime_defined({property: "navigator", obj: {}}));

@@ -43,12 +43,14 @@ import {
   async_sleep,
   async_task,
   // LOGGER UC FUNCTIONS
+  logger_handler,
   logger_level,
+  logger_log,
   // RUNTIME UC FUNCTIONS
   runtime_defined,
 } from "./codemelted.js";
 
-logger_level(LOGGER.off);
+logger_level(LOGGER.Off);
 
 // ============================================================================
 // [MODULE SYNTAX ERROR VIOLATIONS] ===========================================
@@ -171,6 +173,24 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
 // [LOGGER UC FUNCTIONS VALIDATION] ===========================================
 // ============================================================================
 
+describe ("LOGGER UC FUNCTIONS VALIDATION", () => {
+  test("logger_handler() Test", () => {
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => logger_handler(42)).toThrow<SyntaxError>();
+    expect(() => logger_handler(() => {})).toThrow<SyntaxError>();
+    expect(() => logger_handler((record) => {})).not.toThrow();
+    expect(() => logger_handler()).not.toThrow();
+  });
+
+  test("logger_level() Test", () => {
+    expect(() => logger_level({})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => logger_level(42)).toThrow<SyntaxError>();
+    expect(LOGGER.Info.label === logger_level(LOGGER.Info)).toBe(true);
+    expect(LOGGER.Debug.label === logger_level()).toBe(false);
+  });
+});
+
 // ============================================================================
 // [JSON UC FUNCTIONS VALIDATION] =============================================
 // ============================================================================
@@ -205,6 +225,7 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
     expect(runtime_defined({request: DEFINED_REQUEST.TextToSpeech})).toBe(false);
     expect(runtime_defined({request: DEFINED_REQUEST.TouchEnabled})).toBe(false);
     expect(runtime_defined({request: DEFINED_REQUEST.USB})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.WorkerAvailable})).toBe(true);
     expect(runtime_defined({request: DEFINED_REQUEST.WorkerRT})).toBe(false);
     expect(runtime_defined({property: "navigator"})).toBe(true);
     expect(runtime_defined({property: "navigator", obj: {}})).toBe(false);

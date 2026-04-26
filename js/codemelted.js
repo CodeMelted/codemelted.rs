@@ -175,6 +175,9 @@
  * <tr><td>ui_widget               </td><td>None</td></tr>
  * </tbody>
  * </table><br />
+ * <h3>Design Notes</h3>
+ * <h4>Async I/O Use Cases</h4>
+ * <p><mark>TBD</mark></p>
  * <h3>About Module</h3>
  * @author Mark Shaffer
  * @copyright © 2024-26 Mark Shaffer. All Rights Reserved.
@@ -273,6 +276,8 @@ export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
  * @property {string} TouchEnabled Identifies if the browser is accessible
  * via a touch device.
  * @property {string} USB Determines if USB is available to the runtime.
+ * @property {string} WorkerAvailable Determines if a Worker can be created
+ * with the runtime.
  * @property {string} WorkerRT Determines if the runtime is a Worker.
  */
 export const DEFINED_REQUEST = Object.freeze({
@@ -292,6 +297,7 @@ export const DEFINED_REQUEST = Object.freeze({
   TextToSpeech: "TextToSpeech",
   TouchEnabled: "TouchEnabled",
   USB: "USB",
+  WorkerAvailable: "WorkerAvailable",
   WorkerRT: "WorkerRT",
 });
 
@@ -299,18 +305,18 @@ export const DEFINED_REQUEST = Object.freeze({
  * Holds the logger configuration information for log level and labels.
  * @readonly
  * @enum {object}
- * @property {object} debug   level (0) / label "DEBUG"
- * @property {object} info    level (1) / label "INFO"
- * @property {object} warning level (2) / label "WARNING"
- * @property {object} error   level (3) / label "ERROR"
- * @property {object} off     level (4) / label "OFF"
+ * @property {object} Debug   level (0) / label "DEBUG"
+ * @property {object} Info    level (1) / label "INFO"
+ * @property {object} Warning level (2) / label "WARNING"
+ * @property {object} Error   level (3) / label "ERROR"
+ * @property {object} Off     level (4) / label "OFF"
  */
 export const LOGGER = Object.freeze({
-  debug:   { level: 0, label: "DEBUG"   },
-  info:    { level: 1, label: "INFO"    },
-  warning: { level: 2, label: "WARNING" },
-  error:   { level: 3, label: "ERROR"   },
-  off:     { level: 4, label: "OFF"     },
+  Debug:   { level: 0, label: "DEBUG"   },
+  Info:    { level: 1, label: "INFO"    },
+  Warning: { level: 2, label: "WARNING" },
+  Error:   { level: 3, label: "ERROR"   },
+  Off:     { level: 4, label: "OFF"     },
 });
 
 // ============================================================================
@@ -422,7 +428,7 @@ export class CProtocol {
       this.#rx_handler = rx_handler;
     } catch (err) {
       logger_log({
-        level: LOGGER.error,
+        level: LOGGER.Error,
         data: `CProtocol improperly constructed ${err}`
       });
       throw err;
@@ -477,7 +483,7 @@ export class CLogRecord {
       this.#data = data;
     } catch (err) {
       logger_log({
-        level: LOGGER.error,
+        level: LOGGER.Error,
         data: `CLogRecord construction error ${err}`
       });
       throw err;
@@ -541,7 +547,7 @@ export class CResult {
       this.#error = error;
     } catch (err) {
       logger_log({
-        level: LOGGER.error,
+        level: LOGGER.Error,
         data: `CResult was improperly constructed. ${err}`
       });
       throw err;
@@ -593,7 +599,7 @@ export class CFuture {
           }, delay);
         } catch (err) {
           logger_log({
-            level: LOGGER.error,
+            level: LOGGER.Error,
             data: `CTaskResult error occurred. ${err}`
           });
           this.#has_task_completed = true;
@@ -602,7 +608,7 @@ export class CFuture {
       });
     } catch (err) {
       logger_log({
-        level: LOGGER.error,
+        level: LOGGER.Error,
         data: `CFuture construction failure. ${err}`
       });
       throw err;
@@ -626,7 +632,7 @@ class ModuleUtils {
    * One of the {@link LOGGER} settings.
    * @type {object}
    */
-   static logger_level = LOGGER.error;
+   static logger_level = LOGGER.Error;
 
   /**
    * Holds the logger handler for post logging events.
@@ -678,7 +684,7 @@ export function async_sleep(delay) {
     });
   } catch (err) {
     logger_log({
-      level: LOGGER.error,
+      level: LOGGER.Error,
       data: `async_sleep() error encountered: ${err}`
     });
     throw err;
@@ -716,7 +722,7 @@ export function async_task({task, data, delay = 0}) {
     return future;
   } catch (err) {
     logger_log({
-      level: LOGGER.error,
+      level: LOGGER.Error,
       data: `async_task() execution error. ${err}`
     })
     throw err;
@@ -729,7 +735,7 @@ export function async_task({task, data, delay = 0}) {
 
 /**
  * Sets the logger handler for post logging processing.
- * @param {CLogHandler | null} handler The handler to utilize.
+ * @param {CLogHandler} [handler] The handler to utilize.
  * @returns {void}
  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
@@ -737,7 +743,14 @@ export function async_task({task, data, delay = 0}) {
  * violations. You should not try-catch these as they serve as asserts
  * to the developer.
  * @example
- * // TBD
+ * // To set a logger for post logging processing
+ * function log_handler(record) {
+ *   // Do something with the log record.
+ * }
+ * logger_handler(log_handler);
+ *
+ * // To unset it
+ * logger_handler();
  */
 export function logger_handler(handler) {
   try {
@@ -754,7 +767,7 @@ export function logger_handler(handler) {
     }
   } catch (err) {
     logger_log({
-      level: LOGGER.error,
+      level: LOGGER.Error,
       data: `logger_handler() error ${err}`
     });
     throw err;
@@ -772,7 +785,14 @@ export function logger_handler(handler) {
  * violations. You should not try-catch these as they serve as asserts
  * to the developer.
  * @example
- * // TBD
+ * // To determine the current logger level
+ * let logger_level = logger_level();
+ *
+ * // To set the module logger level
+ * logger_level(LOGGER.info);
+ *
+ * // To turn off all logging
+ * logger_level(LOGGER.Off);
  */
 export function logger_level(level) {
   try {
@@ -786,7 +806,7 @@ export function logger_level(level) {
     return ModuleUtils.logger_level.label;
   } catch (err) {
     logger_log({
-      level: LOGGER.error,
+      level: LOGGER.Error,
       data: `logger_level() execution error ${err}`
     });
     throw err;
@@ -951,6 +971,8 @@ export function runtime_defined({
       case DEFINED_REQUEST.USB:
         return ModuleUtils.is_defined("navigator") &&
           ModuleUtils.is_defined("usb", globalThis["navigator"]);
+      case DEFINED_REQUEST.WorkerAvailable:
+        return ModuleUtils.is_defined("Worker");
       case DEFINED_REQUEST.WorkerRT:
         return ModuleUtils.is_defined("WorkerGlobalScope");
       default:
@@ -958,7 +980,7 @@ export function runtime_defined({
     }
   } catch (err) {
     logger_log({
-      level: LOGGER.error,
+      level: LOGGER.Error,
       data: `runtime_defined() usage error. ${err}`
     });
     throw err;
@@ -1004,7 +1026,7 @@ export function runtime_defined({
 //       this.#id = -1;
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CTimerResult::stop() error occurred. ${err}`
 //       });
 //       throw err;
@@ -1022,7 +1044,7 @@ export function runtime_defined({
 //         task();
 //       } catch (err) {
 //         logger_log({
-//           level: LOGGER.error,
+//           level: LOGGER.Error,
 //           data: `CTimerResult::task() error occurred. ${err}`
 //         });
 //       }
@@ -1057,7 +1079,7 @@ export function runtime_defined({
 //       return new CResult();
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CWorkerProtocol::post_message() error occurred. ${err}`
 //       });
 //       return new CResult({error: err});
@@ -1076,7 +1098,7 @@ export function runtime_defined({
 //       this.#worker.terminate();
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CWorkerProtocol::post_message() error occurred. ${err}`
 //       });
 //     }
@@ -1577,7 +1599,7 @@ export function runtime_defined({
 //       return new CResult({value: data});
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CSerialPortProtocol::get_message() error occurred. ${err}`
 //       });
 //       return new CResult({error: err});
@@ -1647,7 +1669,7 @@ export function runtime_defined({
 //       return new CResult();
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CSerialPortProtocol::post_message() error occurred. ${err}`
 //       });
 //       return new CResult({error: err});
@@ -2027,7 +2049,7 @@ export function json_check_type({
     return valid;
   } catch (err) {
     logger_log({
-      level: LOGGER.error,
+      level: LOGGER.Error,
       data: `json_check_type() execution error ${err}`
     });
     throw err;
@@ -2061,7 +2083,7 @@ export function json_has_key({data, key, should_throw = false}) {
     return hasKey;
   } catch (err) {
     logger_log({
-      level: LOGGER.error,
+      level: LOGGER.Error,
       data: `json_has_key() execution error ${err}`
     });
     throw err;
@@ -2219,7 +2241,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       return new CResult();
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CBroadcastChannelProtocol::post_message() error ` +
 //           `occurred. ${err}`
 //       })
@@ -2234,7 +2256,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //   terminate() {
 //     if (!this.is_running()) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CBroadcastChannelProtocol::terminate() error. ${API_MISUSE}`
 //       });
 //       throw API_MISUSE;
@@ -3587,14 +3609,14 @@ export function json_has_key({data, key, should_throw = false}) {
 //         throw "loop property not supported by 'tts' type"
 //       } else {
 //         logger_log({
-//           level: LOGGER.error,
+//           level: LOGGER.Error,
 //           data: this.#not_loaded_err
 //         })
 //         throw API_MISUSE;
 //       }
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::loop - ${err}`
 //       })
 //       throw API_MISUSE;
@@ -3612,7 +3634,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       }
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::loop - ${err}`
 //       });
 //       throw API_MISUSE;
@@ -3634,7 +3656,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       }
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::rate - ${err}`
 //       });
 //       throw API_MISUSE;
@@ -3657,7 +3679,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       }
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::rate - ${err}`
 //       });
 //       throw API_MISUSE;
@@ -3702,7 +3724,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       }
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::volume - ${err}`
 //       })
 //       throw API_MISUSE;
@@ -3725,7 +3747,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       }
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::volume - ${err}`
 //       })
 //       throw API_MISUSE;
@@ -3774,7 +3796,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       globalThis.speechSynthesis.cancel();
 //     } else {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: "CAudioPlayer::load() - valid types are 'audio' / 'tts'"
 //       });
 //       throw API_MISUSE;
@@ -3802,7 +3824,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       return new CResult();
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::pause() - ${err}`
 //       });
 //       return new CResult({error: err});
@@ -3830,7 +3852,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       return new CResult();
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::play() - ${err}`
 //       });
 //       return new CResult({error: err});
@@ -3858,7 +3880,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       return new CResult();
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::resume() - ${err}`
 //       });
 //       return new CResult({error: err});
@@ -3873,7 +3895,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //   stop() {
 //     if (this.#state === "stopped") {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: "CAudioPlayer::stop() already in a stop stopped state"
 //       });
 //       throw API_MISUSE;
@@ -3892,7 +3914,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //       return new CResult();
 //     } catch (err) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `CAudioPlayer::stop() - ${err}`
 //       });
 //       return new CResult({error: err});
@@ -4364,7 +4386,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //         await globalThis.navigator.share(data);
 //       } catch (err) {
 //         logger_log({
-//           level: LOGGER.error,
+//           level: LOGGER.Error,
 //           data: `ui_action() share failed. ${err}`
 //         });
 //         return new CResult({error: err});
@@ -4376,7 +4398,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //         globalThis.navigator.vibrate(pattern);
 //       } catch (err) {
 //         logger_log({
-//           level: LOGGER.error,
+//           level: LOGGER.Error,
 //           data: `ui_action() vibrate failed. ${err}`
 //         });
 //         return new CResult({error: err});
@@ -4983,7 +5005,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //             this.style.bottom = "0";
 //           } else {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-app-bar requires cm_type attribute"
 //             });
 //             throw API_MISUSE;
@@ -5005,7 +5027,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //             let attr = this.getAttribute(attr_val)
 //             if (!attr) {
 //               logger_log({
-//                 level: LOGGER.error,
+//                 level: LOGGER.Error,
 //                 data: `codemelted-ui-app-bar requires ${attr_val}`
 //               });
 //               throw API_MISUSE;
@@ -5047,7 +5069,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //                 break;
 //               default:
 //                 logger_log({
-//                   level: LOGGER.error,
+//                   level: LOGGER.Error,
 //                   data: `codemelted-ui-app-bar unknown ${attr_val}`
 //                 });
 //                 throw API_NOT_IMPLEMENTED;
@@ -5084,13 +5106,13 @@ export function json_has_key({data, key, should_throw = false}) {
 //           // Do validity and setup of items
 //           if (!cm_title) {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-app-sheet cm_title attribute is required"
 //             });
 //             throw API_MISUSE;
 //           } else if (!cm_img_src) {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-app-sheet cm_img_src attribute is required"
 //             });
 //             throw API_MISUSE;
@@ -5100,7 +5122,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //             img_src = `<img style="height: 49px;" src="${cm_img_src} />"`;
 //           } else {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-app-sheet cm_img_type attribute valid " +
 //                 "values are 'emoji' / 'img'"
 //             });
@@ -5121,7 +5143,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //             let btn = globalThis.document.getElementById(btn_id);
 //             if (!btn) {
 //               logger_log({
-//                 level: LOGGER.error,
+//                 level: LOGGER.Error,
 //                 data: "codemelted-ui-app-sheet close button could " +
 //                   "not be setup."
 //               })
@@ -5156,7 +5178,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //             let attr_val = this.getAttribute(attr);
 //             if (!attr_val) {
 //               logger_log({
-//                 level: LOGGER.error,
+//                 level: LOGGER.Error,
 //                 data: `codemelted-ui-app-sheet ${attr} required`
 //               });
 //               throw API_MISUSE;
@@ -5234,13 +5256,13 @@ export function json_has_key({data, key, should_throw = false}) {
 //           let grid_template = this.getAttribute("cm_grid_template");
 //           if (!type) {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-grid-layout expects cm_type attribute"
 //             });
 //             throw API_MISUSE;
 //           } else if (!grid_template) {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-grid-layout expects cm_grid_template " +
 //                 "attribute"
 //             });
@@ -5288,7 +5310,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //           let img_src = this.getAttribute("cm_img_src");
 //           if (!label && !img_src) {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-button expects at least one of the " +
 //               "cm_label / cm_img attribute"
 //             });
@@ -5326,7 +5348,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //           let cm_size = parseInt(this.getAttribute("cm_size") ?? "0");
 //           if (cm_size === 0) {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-combobox requires cm_size attribute"
 //             });
 //             throw API_MISUSE;
@@ -5336,7 +5358,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //             let options = cm_option.split(",");
 //             if (!options || options.length != 2) {
 //               logger_log({
-//                 level: LOGGER.error,
+//                 level: LOGGER.Error,
 //                 data: `codemelted-ui-combobox cm_option${i+1} not `  +
 //                   "valid 'option,value' format"
 //               });
@@ -5370,7 +5392,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //           let cm_label = this.getAttribute("cm_label");
 //           if (!cm_label) {
 //             logger_log({
-//               level: LOGGER.error,
+//               level: LOGGER.Error,
 //               data: "codemelted-ui-expansion-tile requires cm_label attribute"
 //             });
 //             throw API_MISUSE;
@@ -5424,7 +5446,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //     let widget = globalThis.document.getElementById(data);
 //     if (!widget) {
 //       logger_log({
-//         level: LOGGER.error,
+//         level: LOGGER.Error,
 //         data: `codemelted::ui_widget() did not find ${data} element by id`
 //       });
 //       throw API_MISUSE;
@@ -5432,7 +5454,7 @@ export function json_has_key({data, key, should_throw = false}) {
 //     return widget;
 //   } else {
 //     logger_log({
-//       level: LOGGER.error,
+//       level: LOGGER.Error,
 //       data: `codemelted::ui_widget() unknown ${request}`
 //     });
 //     throw API_MISUSE;

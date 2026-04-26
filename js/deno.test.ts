@@ -49,12 +49,14 @@ import {
   async_sleep,
   async_task,
   // LOGGER UC FUNCTIONS
+  logger_handler,
   logger_level,
+  logger_log,
   // RUNTIME UC FUNCTIONS
   runtime_defined,
 } from "./codemelted.js";
 
-logger_level(LOGGER.off);
+logger_level(LOGGER.Off);
 
 // ===============================================================================
 // [HELPER TEST FUNCTIONS] =======================================================
@@ -192,6 +194,24 @@ Deno.test("async_task() Test", async () => {
 // [LOGGER UC FUNCTIONS VALIDATION] ===========================================
 // ============================================================================
 
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("logger_handler() Test", () => {
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => logger_handler(42));
+  assertThrows(() => logger_handler(() => {}));
+  logger_handler((record) => {});
+  logger_handler();
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("logger_level() Test", () => {
+  assertThrows(() => logger_level({}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => logger_level(42));
+  assertEquals(true, LOGGER.Info.label === logger_level(LOGGER.Info));
+  assertEquals(false, LOGGER.Debug.label === logger_level());
+});
+
 // ============================================================================
 // [JSON UC FUNCTIONS VALIDATION] =============================================
 // ============================================================================
@@ -226,6 +246,7 @@ Deno.test("runtime_defined() Test", () => {
   assertEquals(false, runtime_defined({request: DEFINED_REQUEST.TextToSpeech}));
   assertEquals(false, runtime_defined({request: DEFINED_REQUEST.TouchEnabled}));
   assertEquals(false, runtime_defined({request: DEFINED_REQUEST.USB}));
+  assertEquals(true, runtime_defined({request: DEFINED_REQUEST.WorkerAvailable}));
   assertEquals(false, runtime_defined({request: DEFINED_REQUEST.WorkerRT}));
   assertEquals(true, runtime_defined({property: "navigator"}));
   assertEquals(false, runtime_defined({property: "navigator", obj: {}}));
