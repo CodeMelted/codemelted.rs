@@ -42,6 +42,16 @@ import {
   // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
+  // JSON UC FUNCTIONS
+  json_atob,
+  json_btoa,
+  json_check_type,
+  json_create_array,
+  json_create_object,
+  json_has_key,
+  json_parse,
+  json_stringify,
+  json_valid_url,
   // LOGGER UC FUNCTIONS
   logger_handler,
   logger_level,
@@ -258,6 +268,147 @@ describe ("LOGGER UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 // [JSON UC FUNCTIONS VALIDATION] =============================================
 // ============================================================================
+
+describe ("JSON UC FUNCTIONS VALIDATION", () => {
+  test("json_atob() / json_btoa() Test", () => {
+    // API violations
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_atob()).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_atob(42)).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_btoa()).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_btoa(42)).toThrow<SyntaxError>();
+
+    // Invalid encoding / decoding, returns null
+    let encoded = json_btoa("Hello 🌍");
+    expect(encoded).toBe(null);
+    let decoded = json_atob("Hello");
+    expect(decoded).toBe(null);
+
+    // Valid encoding / decoding.
+    const hello = "Hello World!";
+    encoded = json_btoa(hello) ?? "";
+    expect(encoded != hello).toBe(true);
+    decoded = json_atob(encoded);
+    expect(decoded).toBe(hello);
+  });
+
+  test("json_check_type() Test", () => {
+    // Invalid API setup
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_check_type()).toThrow<SyntaxError>();
+
+    // Now throws because it was not an expected type
+    expect(() => json_check_type({type: "string", data: 42, should_throw: true})).toThrow<SyntaxError>();
+    expect(() => json_check_type({type: Uint8Array, data: 42, should_throw: true})).toThrow<SyntaxError>();
+    expect(() => json_check_type({type: "function", data: () => {}, count: 2, should_throw: true})).toThrow<SyntaxError>();
+
+    // Now checks with no throws
+    expect(json_check_type({type: "string", data: 42})).toBe(false);
+    expect(json_check_type({type: "number", data: 42})).toBe(true);
+    expect(json_check_type({type: Uint8Array, data: 42})).toBe(false);
+    expect(json_check_type({type: Uint8Array, data: new Uint8Array()})).toBe(true);
+    expect(json_check_type({type: "function", data: () => {}, count: 2})).toBe(false);
+    expect(json_check_type({type: "function", data: (a: any, b: any) => {}, count: 2})).toBe(true);
+  });
+
+  test("json_create_array() / json_create_object() Test", () => {
+    // Create empty array / objects based on no parameters or invalid ones
+    let array = json_create_array();
+    expect(array.length).toBe(0);
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    array = json_create_array("duh");
+    expect(array.length).toBe(0);
+
+    let obj = json_create_object();
+    expect(Object.keys(obj).length).toBe(0);
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    obj = json_create_object("duh");
+    expect(Object.keys(obj).length).toBe(0);
+
+    // Now create valid copies of data
+    array = json_create_array([
+      "dog", 1, true, null, { id: 1 }, [1, 2, 4]
+    ]);
+    expect(array.length).toBe(6);
+    obj = json_create_object({
+      id: 1,
+      name: "Awesome",
+      valid: false,
+      stuff: [0, 1, 2, 3],
+      another_obj: { id: null},
+      comment: null,
+    });
+    expect(Object.keys(obj).length).toBe(6);
+  });
+
+  test("json_has_key() Test", () => {
+    // API violations
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_has_key()).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_has_key({data: "duh"})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_has_key({data: {}, key: 42})).toThrow<SyntaxError>();
+
+    // Now throws because we instruct it to
+    expect(() => json_has_key({data: {}, key: "field_name", should_throw: true})).toThrow<SyntaxError>();
+
+    // Now valid check returns
+    expect(json_has_key({data: {id: ""}, key: "field_name"})).toBe(false);
+    expect(json_has_key({data: {id: ""}, key: "id"})).toBe(true);
+  });
+
+  test("json_parse() / json_stringify() Test", () => {
+    // First invalid parse and stringify items
+    let test_func = (a: any, b: any) => { return a + b; }
+    expect(json_stringify(test_func)).toBe(null);
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(json_parse(test_func)).toBe(null);
+
+    // Now some valid items
+    let obj = {
+      id: 1,
+      name: "Awesome",
+      valid: false,
+      stuff: [0, 1, 2, 3],
+      another_obj: { id: null},
+      comment: null,
+    };
+    let array = [
+      "dog",
+      1,
+      true,
+      null,
+      { id: 1 },
+      [1, 2, 4]
+    ];
+    let stringified = json_stringify(obj) ?? "";
+    let parsed = json_parse(stringified);
+    expect(json_stringify(parsed)).toBe(stringified);
+
+    stringified = json_stringify(array) ?? "";
+    parsed = json_parse(stringified);
+    expect(json_stringify(parsed)).toBe(stringified);
+  });
+
+  test("json_valid_url() Test", () => {
+    // API violations
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_valid_url()).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => json_valid_url({data: 42})).toThrow<SyntaxError>();
+
+    // Thrown because told to
+    expect(() => json_valid_url({data: "http://<>.com", should_throw: true})).toThrow<SyntaxError>();
+
+    // Now tests
+    expect(json_valid_url({data: "http://<>.com"})).toBe(false);
+    expect(json_valid_url({data: "http://google.com"})).toBe(true);
+  });
+});
 
 // ============================================================================
 // [RUNTIME UC FUNCTIONS VALIDATION] ==========================================

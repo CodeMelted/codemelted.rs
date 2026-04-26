@@ -48,6 +48,16 @@ import {
   // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
+  // JSON UC FUNCTIONS
+  json_atob,
+  json_btoa,
+  json_check_type,
+  json_create_array,
+  json_create_object,
+  json_has_key,
+  json_parse,
+  json_stringify,
+  json_valid_url,
   // LOGGER UC FUNCTIONS
   logger_handler,
   logger_level,
@@ -281,6 +291,151 @@ Deno.test("logger_log() Test", () => {
 // [JSON UC FUNCTIONS VALIDATION] =============================================
 // ============================================================================
 
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("json_atob() / json_btoa() Test", () => {
+  // API violations
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_atob());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_atob(42));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_btoa());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_btoa(42));
+
+  // Invalid encoding / decoding, returns null
+  let encoded = json_btoa("Hello 🌍");
+  assertEquals(null, encoded);
+  let decoded = json_atob("Hello");
+  assertEquals(null, decoded);
+
+  // Valid encoding / decoding.
+  const hello = "Hello World!";
+  encoded = json_btoa(hello) ?? "";
+  assertEquals(true, encoded != hello);
+  decoded = json_atob(encoded);
+  assertEquals(hello, decoded);
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("json_check_type() Test", () => {
+  // Invalid API setup
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_check_type());
+
+  // Now throws because it was not an expected type
+  assertThrows(() => json_check_type({type: "string", data: 42, should_throw: true}));
+  assertThrows(() => json_check_type({type: Uint8Array, data: 42, should_throw: true}));
+  assertThrows(() => json_check_type({type: "function", data: () => {}, count: 2, should_throw: true}))
+
+  // Now checks with no throws
+  assertEquals(false, json_check_type({type: "string", data: 42}));
+  assertEquals(true, json_check_type({type: "number", data: 42}));
+  assertEquals(false, json_check_type({type: Uint8Array, data: 42}));
+  assertEquals(true, json_check_type({type: Uint8Array, data: new Uint8Array()}));
+  assertEquals(false, json_check_type({type: "function", data: () => {}, count: 2}));
+  assertEquals(true, json_check_type({type: "function", data: (a: any, b: any) => {}, count: 2}));
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("json_create_array() / json_create_object() Test", () => {
+  // Create empty array / objects based on no parameters or invalid ones
+  let array = json_create_array();
+  assertEquals(0, array.length);
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  array = json_create_array("duh");
+  assertEquals(0, array.length);
+
+  let obj = json_create_object();
+  assertEquals(0, Object.keys(obj).length);
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  obj = json_create_object("duh");
+  assertEquals(0, Object.keys(obj).length);
+
+  // Now create valid copies of data
+  array = json_create_array([
+    "dog", 1, true, null, { id: 1 }, [1, 2, 4]
+  ]);
+  assertEquals(6, array.length);
+  obj = json_create_object({
+    id: 1,
+    name: "Awesome",
+    valid: false,
+    stuff: [0, 1, 2, 3],
+    another_obj: { id: null},
+    comment: null,
+  });
+  assertEquals(6, Object.keys(obj).length);
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("json_has_key() Test", () => {
+  // API violations
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_has_key());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_has_key({data: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_has_key({data: {}, key: 42}));
+
+  // Now throws because we instruct it to
+  assertThrows(() => json_has_key({data: {}, key: "field_name", should_throw: true}));
+
+  // Now valid check returns
+  assertEquals(false, json_has_key({data: {id: ""}, key: "field_name"}));
+  assertEquals(true, json_has_key({data: {id: ""}, key: "id"}));
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("json_parse() / json_stringify() Test", () => {
+  // First invalid parse and stringify items
+  let test_func = (a: any, b: any) => { return a + b; }
+  assertEquals(null, json_stringify(test_func));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertEquals(null, json_parse(test_func));
+
+  // Now some valid items
+  let obj = {
+    id: 1,
+    name: "Awesome",
+    valid: false,
+    stuff: [0, 1, 2, 3],
+    another_obj: { id: null},
+    comment: null,
+  };
+  let array = [
+    "dog",
+    1,
+    true,
+    null,
+    { id: 1 },
+    [1, 2, 4]
+  ];
+  let stringified = json_stringify(obj) ?? "";
+  let parsed = json_parse(stringified);
+  assertEquals(stringified, json_stringify(parsed));
+
+  stringified = json_stringify(array) ?? "";
+  parsed = json_parse(stringified);
+  assertEquals(stringified, json_stringify(parsed));
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("json_valid_url() Test", () => {
+  // API violations
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_valid_url());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => json_valid_url({data: 42}));
+
+  // Thrown because told to
+  assertThrows(() => json_valid_url({data: "http://<>.com", should_throw: true}));
+
+  // Now tests
+  assertEquals(false, json_valid_url({data: "http://<>.com"}));
+  assertEquals(true, json_valid_url({data: "http://google.com"}));
+});
+
 // ============================================================================
 // [RUNTIME UC FUNCTIONS VALIDATION] ==========================================
 // ============================================================================
@@ -316,108 +471,3 @@ Deno.test("runtime_defined() Test", () => {
   assertEquals(true, runtime_defined({property: "navigator"}));
   assertEquals(false, runtime_defined({property: "navigator", obj: {}}));
 });
-
-
-// // ----------------------------------------------------------------------------
-// // [json use case] ------------------------------------------------------------
-// // ----------------------------------------------------------------------------
-
-// Deno.test("codemelted.json API Violations", () => {
-//   // Functions that throw if you completely ignore thigns.
-//   assertThrows(() => codemelted.json.checkHasProperty(), SyntaxError);
-//   assertThrows(() => codemelted.json.checkType(), SyntaxError);
-// });
-
-// Deno.test("codemelted.json Conversion Tests", () => {
-//   // Test data
-//   const testObj = {
-//     field1: "field1",
-//     field2: 2,
-//     field3: true,
-//     field4: [ "1", 2, null, false ],
-//     field5: null,
-//   };
-//   const testArray = ["1", 2, null, false ];
-//   const testFunc = (a, b) => {};
-
-//   // asXXX Validation
-//   assert(codemelted.json.asBool({data: "yes"}) === true);
-//   assert(codemelted.json.asBool({data: "no"}) === false);
-//   assert(codemelted.json.asDouble({data: "6.85"}) === 6.85);
-//   assert(codemelted.json.asDouble({data: "-6.85"}) === -6.85);
-//   assert(codemelted.json.asDouble({data: "no"}) === null);
-//   assert(codemelted.json.asInt({data: "6"}) === 6);
-//   assert(codemelted.json.asInt({data: "-6"}) === -6);
-//   assert(codemelted.json.asInt({data: "no"}) === null);
-
-//   // checkHasProperty Validation
-//   let success = codemelted.json.checkHasProperty({
-//     obj: testObj,
-//     key: "field6",
-//   });
-//   assert(success === false);
-//   assertThrows(() => codemelted.json.tryHasProperty({
-//     obj: testObj,
-//     key: "field6",
-//   }));
-
-//   success = codemelted.json.checkHasProperty({
-//     obj: testObj,
-//     key: "field5",
-//   });
-//   assert(success === true);
-
-//   // checkXXXX / tryXXX Validation
-//   success = codemelted.json.checkType({type: "object", data: testObj});
-//   assert(success === true);
-//   success = codemelted.json.checkType({type: "string", data: testObj});
-//   assert(success === false);
-//   assertThrows(() => codemelted.json.tryType({type: "string", data: testObj}));
-
-//   success = codemelted.json.checkType({type: Array, data: testArray});
-//   assert(success === true);
-//   success = codemelted.json.checkType({type: "string", data: testArray});
-//   assert(success === false);
-//   assertThrows(() => codemelted.json.tryType({type: "string", data: testArray}));
-
-//   success = codemelted.json.checkType({type: "function", data: testFunc, count: 2});
-//   assert(success === true);
-//   success = codemelted.json.checkType({type: "function", data: testFunc, count: 1});
-//   assert(success === false);
-//   assertThrows(() => codemelted.json.tryType({type: "function", data: testFunc, count: 1}));
-
-//   success = codemelted.json.checkValidUrl({data: "https://codemelted.com"});
-//   assert(success === true);
-//   success = codemelted.json.checkValidUrl({data: ":::: garbage::::"});
-//   assert(success === false);
-//   assertThrows(() => codemelted.json.tryValidUrl({data: ":::: garbage::::"}));
-
-//   // createXXXX validation
-//   let newObj = codemelted.json.createObject({data: testObj});
-//   assert(Object.keys(newObj).length > 0);
-//   newObj = codemelted.json.createObject({data: 42});
-//   assert(Object.keys(newObj).length === 0);
-
-//   let newArray = codemelted.json.createArray({data: testArray});
-//   assert(newArray.length > 0);
-//   newArray = codemelted.json.createArray({data: "hello"});
-//   assert(newArray.length === 0);
-
-//   // stringify / parse validation
-//   let url = new URL("https://codemelted.com");
-//   let data = codemelted.json.parse({data: url});
-//   assert(data === null);
-//   data = codemelted.json.stringify({data: 9007199254740991n});
-//   assert(data === null);
-
-//   data = codemelted.json.stringify({data: testObj});
-//   assert(data != null);
-//   data = codemelted.json.parse({data: data});
-//   assert(data != null);
-
-//   data = null;
-//   data = codemelted.json.stringify({data: testArray});
-//   assert(data != null);
-//   data = codemelted.json.parse({data: data});
-//   assert(data != null);
-// });

@@ -42,6 +42,16 @@ import {
   // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
+  // JSON UC FUNCTIONS
+  json_atob,
+  json_btoa,
+  json_check_type,
+  json_create_array,
+  json_create_object,
+  json_has_key,
+  json_parse,
+  json_stringify,
+  json_valid_url,
   // LOGGER UC FUNCTIONS
   logger_handler,
   logger_level,
@@ -261,6 +271,134 @@ describe("LOGGER UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 // [JSON UC FUNCTIONS VALIDATION] =============================================
 // ============================================================================
+
+describe ("JSON UC FUNCTIONS VALIDATION", () => {
+  test("json_atob() / json_btoa() Test", () => {
+    // API violations
+    assert.throws(() => json_atob());
+    assert.throws(() => json_atob(42));
+    assert.throws(() => json_btoa());
+    assert.throws(() => json_btoa(42));
+
+    // Invalid encoding / decoding, returns null
+    let encoded = json_btoa("Hello 🌍");
+    assert.equal(null, encoded);
+    let decoded = json_atob("Hello");
+    assert.equal(null, decoded);
+
+    // Valid encoding / decoding.
+    const hello = "Hello World!";
+    encoded = json_btoa(hello);
+    assert.equal(true, encoded != hello);
+    decoded = json_atob(encoded);
+    assert.equal(hello, decoded);
+  });
+
+  test("json_check_type() Test", () => {
+    // Invalid API setup
+    assert.throws(() => json_check_type());
+
+    // Now throws because it was not an expected type
+    assert.throws(() => json_check_type({type: "string", data: 42, should_throw: true}));
+    assert.throws(() => json_check_type({type: Uint8Array, data: 42, should_throw: true}));
+    assert.throws(() => json_check_type({type: "function", data: () => {}, count: 2, should_throw: true}))
+
+    // Now checks with no throws
+    assert.equal(false, json_check_type({type: "string", data: 42}));
+    assert.equal(true, json_check_type({type: "number", data: 42}));
+    assert.equal(false, json_check_type({type: Uint8Array, data: 42}));
+    assert.equal(true, json_check_type({type: Uint8Array, data: new Uint8Array()}));
+    assert.equal(false, json_check_type({type: "function", data: () => {}, count: 2}));
+    assert.equal(true, json_check_type({type: "function", data: (a, b) => {}, count: 2}));
+  });
+
+  test("json_create_array() / json_create_object() Test", () => {
+    // Create empty array / objects based on no parameters or invalid ones
+    let array = json_create_array();
+    assert.equal(0, array.length);
+    array = json_create_array("duh");
+    assert.equal(0, array.length);
+
+    let obj = json_create_object();
+    assert.equal(0, Object.keys(obj).length);
+    obj = json_create_object("duh");
+    assert.equal(0, Object.keys(obj).length);
+
+    // Now create valid copies of data
+    array = json_create_array([
+      "dog", 1, true, null, { id: 1 }, [1, 2, 4]
+    ]);
+    assert.equal(6, array.length);
+    obj = json_create_object({
+      id: 1,
+      name: "Awesome",
+      valid: false,
+      stuff: [0, 1, 2, 3],
+      another_obj: { id: null},
+      comment: null,
+    });
+    assert.equal(6, Object.keys(obj).length);
+  });
+
+  test("json_has_key() Test", () => {
+    // API violations
+    assert.throws(() => json_has_key());
+    assert.throws(() => json_has_key({data: "duh"}));
+    assert.throws(() => json_has_key({data: {}, key: 42}));
+
+    // Now throws because we instruct it to
+    assert.throws(() => json_has_key({data: {}, key: "field_name", should_throw: true}));
+
+    // Now valid check returns
+    assert.equal(false, json_has_key({data: {id: ""}, key: "field_name"}));
+    assert.equal(true, json_has_key({data: {id: ""}, key: "id"}));
+  });
+
+  test("json_parse() / json_stringify() Test", () => {
+    // First invalid parse and stringify items
+    let test_func = (a, b) => { return a + b; }
+    assert.equal(null, json_stringify(test_func));
+    assert.equal(null, json_parse(test_func));
+
+    // Now some valid items
+    let obj = {
+      id: 1,
+      name: "Awesome",
+      valid: false,
+      stuff: [0, 1, 2, 3],
+      another_obj: { id: null},
+      comment: null,
+    };
+    let array = [
+      "dog",
+      1,
+      true,
+      null,
+      { id: 1 },
+      [1, 2, 4]
+    ];
+    let stringified = json_stringify(obj);
+    let parsed = json_parse(stringified);
+    assert.equal(stringified, json_stringify(parsed));
+
+    stringified = json_stringify(array);
+    parsed = json_parse(stringified);
+    assert.equal(stringified, json_stringify(parsed));
+  });
+
+  test("json_valid_url() Test", () => {
+    // API violations
+    assert.throws(() => json_valid_url());
+    assert.throws(() => json_valid_url({data: 42}));
+
+    // Thrown because told to
+    assert.throws(() => json_valid_url({data: "http://<>.com", should_throw: true}));
+
+    // Now tests
+    assert.equal(false, json_valid_url({data: "http://<>.com"}));
+    assert.equal(true, json_valid_url({data: "http://google.com"}));
+  });
+});
 
 // ============================================================================
 // [RUNTIME UC FUNCTIONS VALIDATION] ==========================================

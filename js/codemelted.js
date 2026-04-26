@@ -730,6 +730,313 @@ export function async_task({task, data, delay = 0}) {
 }
 
 // ============================================================================
+// [JSON UC FUNCTIONS] ========================================================
+// ============================================================================
+
+/**
+ * Decodes a string of data which has been encoded using Base64 encoding.
+ * @param {string} data Base64 encoded string.
+ * @returns {string | null} The decoded string or null if the encoding
+ * failed.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Encode base64
+ * let encoded = json_btoa("Hello World!");
+ * // Decode base64
+ * let decoded = json_atob(encoded);
+ */
+export function json_atob(data) {
+  try {
+    json_check_type({type: "string", data: data, should_throw: true});
+    return globalThis.atob(data);
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `json_atob() encountered an error. ${err}`
+    });
+    if (err instanceof SyntaxError) {
+      throw err;
+    }
+    return null;
+  }
+}
+
+/**
+ * Creates a Base64-encoded ASCII string from a binary string (i.e. a
+ * string in which each character in the string is treated as a byte of
+ * binary data).
+ * @param {string} data The binary string.
+ * @returns {string | null} The base64 encoded string or null if the
+ * encoding failed.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Encode base64
+ * let encoded = json_btoa("Hello World!");
+ * // Decode base64
+ * let decoded = json_atob(encoded);
+ */
+export function json_btoa(data) {
+  try {
+    json_check_type({type: "string", data: data, should_throw: true});
+    return globalThis.btoa(data);
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `json_btoa() encountered an error. ${err}`
+    });
+    if (err instanceof SyntaxError) {
+      throw err;
+    }
+    return null;
+  }
+}
+
+/**
+ * Utility to check parameters of a function to ensure they are of an
+ * expected type.
+ * @param {object} params The named parameters
+ * @param {string | any} params.type
+ * @param {any} params.data The parameter to be checked.
+ * @param {number} [params.count] Checks the v parameter function
+ * signature to ensure the appropriate number of parameters are specified.
+ * @param {boolean} [params.should_throw=false] Whether to throw instead of
+ * returning a value upon failure.
+ * @returns {boolean} true if it meets the expectations, false otherwise.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Check if data is an expected type
+ * let is_expected = json_check_type({type: "string", data: some_data});
+ * if (is_expected) {
+ *   // Do your processing
+ * }
+ *
+ * // Throw if not an expected type
+ * json_check_type({type: "string", data: some_data, should_throw: true});
+ *
+ * // Check complex data type
+ * let is_expected = json_check_type({
+ *   type: Uint8Array,
+ *   data: some_data,
+ * });
+ *
+ * // Check callback function follows expectations of 2 parameters.
+ * json_check_type({
+ *   type: "function",
+ *   data: some_callback,
+ *   count: 2,
+ *   should_throw: true,
+ * });
+ */
+export function json_check_type({
+  type,
+  data,
+  count = undefined,
+  should_throw = false
+}) {
+  try {
+    const isExpectedType = typeof type !== "string"
+      ? (data instanceof type)
+      : typeof data === type;
+    let valid = typeof count === "number"
+      ? isExpectedType && data.length === count
+      : isExpectedType;
+    if (should_throw && !valid) {
+      throw API_TYPE_VIOLATION;
+    }
+    return valid;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `json_check_type() execution error ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Creates a JavaScript compliant JSON array with ability to copy data
+ * from a previous array.
+ * @param {any[]} [data] An optional array of data to copy
+ * @returns {any[]} The newly created array with optional data.
+ * @example
+ * // To create an empty array
+ * let array = json_create_array();
+ *
+ * // To make a copy of an array
+ * let array_copy = json_create_array(array);
+ */
+export function json_create_array(data) {
+  if (json_check_type({type: Array, data: data})) {
+    let stringified = json_stringify(data);
+    if (stringified) {
+      return json_parse(stringified) ?? [];
+    }
+  }
+  return [];
+}
+
+/**
+ * Creates a JavaScript compliant JSON object with ability to copy data
+ * from a previous array.
+ * @param {object} [data] An optional object of data to copy
+ * @returns {object} The newly created object with optional data.
+ * @example
+ * // To create an empty object
+ * let obj = json_create_array();
+ *
+ * // To make a copy of an object
+ * let obj_copy = json_create_array(obj);
+ */
+export function json_create_object(data) {
+  if (json_check_type({type: "object", data})) {
+    return Object.assign({}, data);
+  }
+  return {};
+}
+
+/**
+ * Determines if the specified object has the specified property.
+ * @param {object} params
+ * @param {object} params.data The object to check.
+ * @param {string} params.key The property to find.
+ * @param {boolean} [params.should_throw=false] Whether to throw instead
+ * of returning a value upon failure.
+ * @returns {boolean} true if property was found, false otherwise.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Check if object has field
+ * if (json_has_key({data: obj, key: "id"})) {
+ *   // Do your processing
+ * }
+ *
+ * // Throw if not expected
+ * json_has_key({data: obj, key: "id", should_throw: true});
+ */
+export function json_has_key({data, key, should_throw = false}) {
+  try {
+    json_check_type({type: "object", data: data, should_throw: true});
+    json_check_type({type: "string", data: key, should_throw: true});
+    var hasKey = Object.hasOwn(data, key);
+    if (should_throw && !hasKey) {
+      throw API_TYPE_VIOLATION;
+    }
+    return hasKey;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `json_has_key() execution error ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Converts a string to a supported JSON data type.
+ * @param {string} data The data to parse.
+ * @returns {any | null} The JSON data type or null if the parsing fails.
+ * @example
+ * // To parse and stringify JSON data or types supported by JSON
+ * // Where data is an object, array, boolean, string, number, or null
+ * // Invalid data will return as null.
+ * let stringified = json_stringify(data);
+ * let parsed = json_parse(stringified);
+ */
+export function json_parse(data) {
+  try {
+    let parsed = JSON.parse(data);
+    return parsed
+      ? parsed
+      : null;
+  } catch (ex) {
+    return null;
+  }
+}
+
+/**
+ * Converts a JSON supported data type into a string.
+ * @param {any} data The data to convert.
+ * @returns {string | null} The string representation or null if the
+ * stringify failed.
+ * @example
+ * // To parse and stringify JSON data or types supported by JSON
+ * // Where data is an object, array, boolean, string, number, or null
+ * // Invalid data will return as null.
+ * let stringified = json_stringify(data);
+ * let parsed = json_parse(stringified);
+ */
+export function json_stringify(data) {
+  try {
+    let stringified = JSON.stringify(data);
+    return stringified
+      ? stringified
+      : null;
+  } catch (ex) {
+    return null;
+  }
+}
+
+/**
+ * Checks for a valid URL.
+ * @param {object} params
+ * @param {string} params.data String to parse to see if it is a valid
+ * URL.
+ * @param {boolean} [params.should_throw=false] Whether to throw instead
+ * of returning a value upon failure.
+ * @returns {boolean} true if valid, false otherwise.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Test to see if it is a valid URL
+ * if (json_valid_url({data: "https://google.com"})) {
+ *   // Do the thing
+ * }
+ *
+ * // Throw if an invalid URL is encountered
+ * json_valid_url({data: "https://<>.com", should_throw: true});
+ */
+export function json_valid_url({data, should_throw = false}) {
+  try {
+    json_check_type({type: "string", data: data, should_throw: true});
+    let url = undefined;
+    try {
+      url = new URL(data);
+    } catch (_err) {
+      url = undefined;
+    }
+    let valid = json_check_type({type: URL, data: url});
+    if (should_throw && !valid) {
+      throw API_TYPE_VIOLATION;
+    }
+    return valid;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `json_valid_url encountered an error. ${err}`
+    });
+    throw err;
+  }
+}
+
+// ============================================================================
 // [LOGGER UC FUNCTIONS] ======================================================
 // ============================================================================
 
@@ -1923,249 +2230,6 @@ export function runtime_defined({
 //   throw API_NOT_IMPLEMENTED;
 // }
 
-// // ============================================================================
-// // [JSON UC IMPLEMENTATION] ===================================================
-// // ============================================================================
-
-// /**
-//  * Decodes a string of data which has been encoded using Base64 encoding.
-//  * @param {string} data Base64 encoded string.
-//  * @returns {string | null} The decoded string or null if the encoding
-//  * failed.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_atob(data) {
-//   json_check_type({type: "string", data: data, should_throw: true});
-//   try {
-//     return globalThis.atob(data);
-//   } catch (err) {
-//     return null;
-//   }
-// }
-
-// /**
-//  * Creates a Base64-encoded ASCII string from a binary string (i.e. a
-//  * string in which each character in the string is treated as a byte of
-//  * binary data).
-//  * @param {string} data The binary string.
-//  * @returns {string | null} The base64 encoded string or null if the
-//  * encoding failed.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_btoa(data) {
-//   json_check_type({type: "string", data: data, should_throw: true});
-//   try {
-//     return globalThis.btoa(data);
-//   } catch (err) {
-//     return null;
-//   }
-// }
-
-// /**
-//  * Creates a JavaScript compliant JSON array with ability to copy data
-//  * from a previous array.
-//  * @param {any[]} [data] An optional array of data to copy
-//  * @returns {any[]} The newly created array with optional data.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_create_array(data) {
-//   if (json_check_type({type: Array, data: data})) {
-//     let stringified = json_stringify(data);
-//     if (stringified) {
-//       return json_parse(stringified) ?? [];
-//     }
-//   }
-//   return [];
-// }
-
-// /**
-//  * Creates a JavaScript compliant JSON object with ability to copy data
-//  * from a previous array.
-//  * @param {object} [data] An optional object of data to copy
-//  * @returns {object} The newly created object with optional data.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_create_object(data) {
-//   if (json_check_type({type: "object", data})) {
-//     return Object.assign({}, data);
-//   }
-//   return {};
-// }
-
-/**
- * Utility to check parameters of a function to ensure they are of an
- * expected type.
- * @param {object} params The named parameters
- * @param {string | any} params.type
- * @param {any} params.data The parameter to be checked.
- * @param {number} [params.count] Checks the v parameter function
- * signature to ensure the appropriate number of parameters are specified.
- * @param {boolean} [params.should_throw=false] Whether to throw instead of
- * returning a value upon failure.
- * @returns {boolean} true if it meets the expectations, false otherwise.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function json_check_type({
-  type,
-  data,
-  count = undefined,
-  should_throw = false
-}) {
-  try {
-    const isExpectedType = typeof type !== "string"
-      ? (data instanceof type)
-      : typeof data === type;
-    let valid = typeof count === "number"
-      ? isExpectedType && data.length === count
-      : isExpectedType;
-    if (should_throw && !valid) {
-      throw API_TYPE_VIOLATION;
-    }
-    return valid;
-  } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `json_check_type() execution error ${err}`
-    });
-    throw err;
-  }
-}
-
-/**
- * Determines if the specified object has the specified property.
- * @param {object} params
- * @param {object} params.data The object to check.
- * @param {string} params.key The property to find.
- * @param {boolean} [params.should_throw=false] Whether to throw instead
- * of returning a value upon failure.
- * @returns {boolean} true if property was found, false otherwise.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
- * @example
- * // TBD
- */
-export function json_has_key({data, key, should_throw = false}) {
-  try {
-    json_check_type({type: "object", data: data, should_throw: true});
-    json_check_type({type: "string", data: key, should_throw: true});
-    var hasKey = Object.hasOwn(data, key);
-    if (should_throw && !hasKey) {
-      throw API_TYPE_VIOLATION;
-    }
-    return hasKey;
-  } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `json_has_key() execution error ${err}`
-    });
-    throw err;
-  }
-}
-
-// /**
-//  * Converts a string to a supported JSON data type.
-//  * @param {string} data The data to parse.
-//  * @returns {any | null} The JSON data type or null if the parsing fails.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_parse(data) {
-//   try {
-//     return JSON.parse(data);
-//   } catch (ex) {
-//     return null;
-//   }
-// }
-
-// /**
-//  * Converts a JSON supported data type into a string.
-//  * @param {any} data The data to convert.
-//  * @returns {string | null} The string representation or null if the
-//  * stringify failed.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_stringify(data) {
-//   try {
-//     return JSON.stringify(data);
-//   } catch (ex) {
-//     return null;
-//   }
-// }
-
-// /**
-//  * Checks for a valid URL.
-//  * @param {object} params
-//  * @param {string} params.data String to parse to see if it is a valid
-//  * URL.
-//  * @param {boolean} [params.should_throw=false] Whether to throw instead
-//  * of returning a value upon failure.
-//  * @returns {boolean} true if valid, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function json_valid_url({data, should_throw = false}) {
-//   json_check_type({type: "string", data: data, should_throw: true});
-//   let url = undefined;
-//   try {
-//     url = new URL(data);
-//   } catch (_err) {
-//     url = undefined;
-//   }
-//   let valid = json_check_type({type: URL, data: url});
-//   if (should_throw && !valid) {
-//     throw API_TYPE_VIOLATION;
-//   }
-//   return valid;
-// }
 
 // // ============================================================================
 // // [NETWORK UC IMPLEMENTATION] ================================================
