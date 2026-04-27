@@ -32,6 +32,7 @@ import {
   API_UNSUPPORTED_RUNTIME,
   // MODULE TYPEDEFS
   DEFINED_REQUEST,
+  EVENT_REQUEST,
   LOGGER,
   // MODULE PROTOCOL CLASSES
   CProtocol,
@@ -57,7 +58,13 @@ import {
   logger_level,
   logger_log,
   // RUNTIME UC FUNCTIONS
+  runtime_cpu_count,
   runtime_defined,
+  runtime_environment,
+  runtime_event,
+  runtime_hostname,
+  runtime_name,
+  runtime_online,
 } from "./codemelted.js";
 
 logger_level(LOGGER.Off);
@@ -431,6 +438,10 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 
 describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
+  test("runtime_cpu_count() Test", () => {
+    expect(runtime_cpu_count() >= 1).toBe(true);
+  });
+
   test("runtime_defined() Test", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => runtime_defined()).toThrow();
@@ -460,5 +471,43 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
     expect(runtime_defined({request: DEFINED_REQUEST.WorkerRT})).toBe(false);
     expect(runtime_defined({property: "navigator"})).toBe(true);
     expect(runtime_defined({property: "navigator", obj: {}})).toBe(false);
+  });
+
+  test("runtime_environment() Test", () => {
+    // Non-supported runtime
+    expect(() => runtime_environment("search")).toThrow<SyntaxError>();
+  });
+
+  test("runtime_event() Test", () => {
+    // API violations
+    let listener = (evt: Event) => { };
+
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => {runtime_event()}).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: 42})}).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: 42})}).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener, target: 42})}).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => {runtime_event({request: 42, type: "message", listener: listener})}).toThrow<SyntaxError>();
+
+    // Now to a valid listener
+    runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener});
+    runtime_event({request: EVENT_REQUEST.Remove, type: "message", listener: listener});
+  });
+
+  test("runtime_hostname() Test", () => {
+    expect(() => runtime_hostname()).toThrow<SyntaxError>();
+  });
+
+  test("runtime_name() Test", () => {
+    expect(runtime_name()).toBe("bun");
+  });
+
+  test("runtime_online() Test", () => {
+    // Unsupported runtime.
+    expect(() => runtime_online()).toThrow<SyntaxError>();
   });
 });

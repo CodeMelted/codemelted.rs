@@ -38,6 +38,7 @@ import {
   API_UNSUPPORTED_RUNTIME,
   // MODULE TYPEDEFS
   DEFINED_REQUEST,
+  EVENT_REQUEST,
   LOGGER,
   // MODULE PROTOCOL CLASSES
   CProtocol,
@@ -63,7 +64,13 @@ import {
   logger_level,
   logger_log,
   // RUNTIME UC FUNCTIONS
+  runtime_cpu_count,
   runtime_defined,
+  runtime_environment,
+  runtime_event,
+  runtime_hostname,
+  runtime_name,
+  runtime_online,
 } from "./codemelted.js";
 
 logger_level(LOGGER.Off);
@@ -459,6 +466,11 @@ Deno.test("json_valid_url() Test", () => {
 // ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("runtime_cpu_count() Test", () => {
+  assertEquals(true, runtime_cpu_count() >= 1);
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("runtime_defined() Test", () => {
   // @ts-ignore TypeScript won't let this happen, JavaScript would
   assertThrows(() => runtime_defined());
@@ -488,4 +500,48 @@ Deno.test("runtime_defined() Test", () => {
   assertEquals(false, runtime_defined({request: DEFINED_REQUEST.WorkerRT}));
   assertEquals(true, runtime_defined({property: "navigator"}));
   assertEquals(false, runtime_defined({property: "navigator", obj: {}}));
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("runtime_environment() Test", () => {
+  // Unsupported Platform
+  assertThrows(() => runtime_environment("search"));
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("runtime_event() Test", () => {
+  // API violations
+  let listener = (evt: Event) => { };
+
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => {runtime_event()});
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => {runtime_event({request: EVENT_REQUEST.Add, type: 42})});
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: 42})});
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener, target: 42})});
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => {runtime_event({request: 42, type: "message", listener: listener})});
+
+  // Now to a valid listener
+  runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener});
+  runtime_event({request: EVENT_REQUEST.Remove, type: "message", listener: listener});
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("runtime_hostname() Test", () => {
+  // Unsupported Platform
+  assertThrows(() => runtime_hostname());
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("runtime_name() Test", () => {
+  assertEquals("deno", runtime_name());
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("runtime_online() Test", () => {
+  // Unsupported Platform
+  assertThrows(() => runtime_online());
 });

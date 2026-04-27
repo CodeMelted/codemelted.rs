@@ -32,6 +32,7 @@ import {
   API_UNSUPPORTED_RUNTIME,
   // MODULE TYPEDEFS
   DEFINED_REQUEST,
+  EVENT_REQUEST,
   LOGGER,
   // MODULE PROTOCOL CLASSES
   CProtocol,
@@ -57,7 +58,13 @@ import {
   logger_level,
   logger_log,
   // RUNTIME UC FUNCTIONS
+  runtime_cpu_count,
   runtime_defined,
+  runtime_environment,
+  runtime_event,
+  runtime_hostname,
+  runtime_name,
+  runtime_online,
 } from "./codemelted.js";
 
 logger_level(LOGGER.Off);
@@ -421,6 +428,10 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 
 describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
+  test("runtime_cpu_count() Test", () => {
+    assert.equal(true, runtime_cpu_count() >= 1);
+  });
+
   test("runtime_defined() Test", () => {
     assert.throws(() => runtime_defined());
     assert.throws(() => runtime_defined({request: "duh"}));
@@ -446,5 +457,38 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
     assert.equal(false, runtime_defined({request: DEFINED_REQUEST.WorkerRT}));
     assert.equal(true, runtime_defined({property: "navigator"}));
     assert.equal(false, runtime_defined({property: "navigator", obj: {}}));
+  });
+
+  test("runtime_environment() Test", () => {
+    // Non supported platform.
+    assert.throws(() => runtime_environment("search"));
+  });
+
+  test("runtime_event() Test", () => {
+    // API violations
+    let listener = (evt) => { };
+    assert.throws(() => {runtime_event()});
+    assert.throws(() => {runtime_event({request: EVENT_REQUEST.Add, type: 42})});
+    assert.throws(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: 42})});
+    assert.throws(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener, target: 42})});
+    assert.throws(() => {runtime_event({request: 42, type: "message", listener: listener})});
+
+    // Nodes globalThis does not have EventTarget
+    assert.throws(() => runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener}));
+    assert.throws(() => runtime_event({request: EVENT_REQUEST.Remove, type: "message", listener: listener}));
+  });
+
+  test("runtime_hostname() Test", () => {
+    // Unsupported platform
+    assert.throws(() => runtime_hostname());
+  });
+
+  test("runtime_name() Test", () => {
+    assert.equal("node", runtime_name());
+  });
+
+  ("runtime_online() Test", () => {
+    // Unsupported platform.
+    assert.throws(() => runtime_online());
   });
 });

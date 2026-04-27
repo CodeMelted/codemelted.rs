@@ -302,6 +302,19 @@ export const DEFINED_REQUEST = Object.freeze({
 });
 
 /**
+ * Provides the request actions of the {@link runtime_event} function.
+ * @readonly
+ * @enum {string}
+ * @property {string} Add Will provide ability to add event listeners.
+ * @property {string} Remove Will provide the ability to remove event
+ * listeners.
+ */
+export const EVENT_REQUEST = Object.freeze({
+  Add: "add",
+  Remove: "remove",
+});
+
+/**
  * Holds the logger configuration information for log level and labels.
  * @readonly
  * @enum {object}
@@ -1313,6 +1326,27 @@ export function logger_log({level, data}) {
 // ============================================================================
 
 /**
+ * Determines the available CPU processors for background workers.
+ * @returns {number} The available hardware processors or 1 if it can't
+ * be determined.
+ * @example
+ * // To get the number of CPUs
+ * let cpu_count = runtime_cpu_count();
+ * if (cpu_count > 1) {
+ *   // Do what you will with it.
+ * }
+ */
+export function runtime_cpu_count() {
+  if (runtime_defined({property: "navigator"}) &&
+      runtime_defined({property: "hardwareConcurrency",
+                        obj: globalThis["navigator"]})) {
+    return globalThis.navigator.hardwareConcurrency;
+  } else {
+    return 1;
+  }
+}
+
+/**
  * Utility function to determine what is available to the module within a
  * given JavaScript runtime environment.
  * @param {object} params The named parameters.
@@ -1413,6 +1447,209 @@ export function runtime_defined({
     throw err;
   }
 }
+
+/**
+ * Searches for a URL parameter specified in the host URL.
+ * @param {string} name The name of the operating system variable to
+ * lookup.
+ * @returns {string?} The value associated with the name or null if not
+ * found.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Find a search parameter based on a search redirect
+ * let search_param = runtime_environment("search");
+ * if (search_param) {
+ *   // Go do your search based on the value.
+ * }
+ */
+export function runtime_environment(name) {
+  try {
+    json_check_type({type: "string", data: name, should_throw: true});
+    if (runtime_defined({request: DEFINED_REQUEST.Browser})) {
+      let params = new URLSearchParams(globalThis.location.search);
+      return params.get(name);
+    }
+    throw API_UNSUPPORTED_RUNTIME;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `runtime_environment() encountered error. ${err}`
+    })
+    throw err;
+  }
+}
+
+/**
+ * Adds or removes an event listener to the JavaScript runtime or
+ * individual element.
+ * @param {object} params The named parameters.
+ * @param {EVENT_REQUEST} params.request The request to carry out.
+ * @param {string} params.type The event listener identifier.
+ * @param {CEventHandler} params.listener The listener called
+ * when the identified event is triggered or being removed.
+ * @param {EventTarget} [params.target=globalThis] The element to attach an
+ * event handler to if it supports it.
+ * @returns {void}
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Listen for browser messages.
+ * let message_handler = (evt) => {
+ *   // Does something
+ * };
+ * runtime_event({
+ *   request: EVENT_REQUEST.Add,
+ *   type: "message",
+ *   listener: message_handler,
+ * });
+ *
+ * // Then on app cleanup, remove the listener
+ * runtime_event({
+ *   request: EVENT_REQUEST.Remove,
+ *   type: "message",
+ *   listener: message_handler,
+ * });
+ */
+export function runtime_event({
+  request,
+  type,
+  listener,
+  target = globalThis,
+}) {
+  try {
+    json_check_type({type: "string", data: type, should_throw: true});
+    json_check_type({
+      type: "function",
+      data: listener,
+      count: 1,
+      should_throw: true
+    });
+    if (request === "add") {
+      target.addEventListener(type, listener);
+    } else if (request === "remove") {
+      target.removeEventListener(type, listener);
+    } else {
+      throw API_MISUSE;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `runtime_event() encountered an error. ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Determines the hostname of the host operating system.
+ * @returns {string} The hostname of the computer.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // To get the hostname of the browser platform
+ * let hostname = runtime_hostname();
+ */
+export function runtime_hostname() {
+  try {
+    if (runtime_defined({request: DEFINED_REQUEST.Browser})) {
+      // @ts-ignore Property exists in a browser runtime.
+      return globalThis.location.hostname;
+    }
+    throw API_UNSUPPORTED_RUNTIME;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `runtime_hostname() encountered an error. ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Determines what JavaScript runtime the app is running.
+ * @returns {string} The name of JavaScript runtime or "UNKNOWN BROWSER" for
+ * an identified browser runtime or "UNKNOWN V8 RUNTIME" for an unidentified
+ * V8 runtime.
+ * @example
+ * // To get the name of the JavaScript runtime.
+ * let runtime = runtime_name();
+ * if (runtime.includes("UNKNOWN")) {
+ *   // Handle running in an unknown JavaScript runtime...
+ * }
+ */
+export function runtime_name() {
+  if (runtime_defined({request: DEFINED_REQUEST.Browser})) {
+    const userAgent = globalThis.navigator.userAgent.toLowerCase();
+    if (userAgent.includes("firefox/")) {
+      return "firefox";
+    } else if (userAgent.includes("opr/")
+        || userAgent.includes("presto/")) {
+      return "opera";
+    } else if (userAgent.includes("mobile/")
+        || userAgent.includes("version/")) {
+      return "safari";
+    } else if (userAgent.includes("edg/")) {
+      return "edge";
+    } else if (userAgent.includes("chrome/")) {
+      return "chrome";
+    } else {
+      return "UNKNOWN BROwSER";
+    }
+  } else if (runtime_defined({request: DEFINED_REQUEST.Bun})) {
+    return "bun";
+  } else if (runtime_defined({request: DEFINED_REQUEST.Deno})) {
+    return "deno";
+  } else if (runtime_defined({request: DEFINED_REQUEST.Node})) {
+    return "node";
+  } else if (runtime_defined({request: DEFINED_REQUEST.WorkerRT})) {
+    return "worker";
+  } else {
+    return "UNKNOWN V8 RUNTIME";
+  }
+}
+
+/**
+ * Determines if the web app has access to the Internet.
+ * @returns {boolean} true if path to Internet available, false otherwise.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Determine if the web page has Internet access (useful for PWAs)
+ * if (!runtime_online()) {
+ *   // Do something when you don't have Internet access.
+ * }
+ */
+export function runtime_online() {
+  try {
+    if (runtime_defined({property: "navigator"}) &&
+        runtime_defined({property: "onLine",
+                         obj: globalThis["navigator"]})) {
+      // @ts-ignore Property exists in a browser runtime.
+      return globalThis.navigator.onLine;
+    }
+    throw API_UNSUPPORTED_RUNTIME;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `runtime_online() encountered an error. ${err}`
+    });
+    throw err;
+  }
+}
+
 
 // ============================================================================
 // [ASYNC I/O UC IMPLEMENTATION] ==============================================
@@ -3093,192 +3330,6 @@ export function runtime_defined({
 //     throw API_MISUSE;
 //   }
 //   throw API_NOT_IMPLEMENTED;
-// }
-
-// // ============================================================================
-// // [RUNTIME UC IMPLEMENTATION] ================================================
-// // ============================================================================
-
-// /**
-//  * Provides the request actions of the {@link runtime_event} function.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} Add Will provide ability to add event listeners.
-//  * @property {string} Remove Will provide the ability to remove event
-//  * listeners.
-//  */
-// export const EVENT_REQUEST = Object.freeze({
-//   Add: "add",
-//   Remove: "remove",
-// });
-
-// /**
-//  * Determines the available CPU processors for background workers.
-//  * @returns {number} The available hardware processors.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_cpu_count() {
-//   if (runtime_is_browser() || runtime_is_deno() ||
-//       runtime_is_worker()) {
-//     return globalThis.navigator.hardwareConcurrency;
-//   }
-//   throw API_UNSUPPORTED_RUNTIME;
-// }
-
-// /**
-//  * Searches the host operating system / JavaScript runtime for a variable
-//  * value.
-//  * @param {string} name The name of the operating system variable to
-//  * lookup.
-//  * @returns {string?} The value associated with the name or null if not
-//  * found.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_environment(name) {
-//   if (runtime_is_browser()) {
-//     let params = new URLSearchParams(globalThis.location.search);
-//     return params.get(name);
-//   }
-//   throw API_UNSUPPORTED_RUNTIME;
-// }
-
-// /**
-//  * Adds or removes an event listener to the JavaScript runtime or
-//  * individual element.
-//  * @param {object} params The named parameters.
-//  * @param {EVENT_REQUEST} params.action The request to carry out.
-//  * @param {string} params.type The event listener identifier.
-//  * @param {CEventHandler} params.listener The listener called
-//  * when the identified event is triggered or being removed.
-//  * @param {EventSource} [params.obj] An optional element to attach an
-//  * event handler to if it supports it.
-//  * @returns {void}
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_event({
-//   action,
-//   type,
-//   listener,
-//   obj = undefined,
-// }) {
-//   json_check_type({type: "string", data: type, should_throw: true});
-//   json_check_type({
-//     type: "function",
-//     data: listener,
-//     count: 1,
-//     should_throw: true
-//   });
-//   if (action === "add") {
-//     if (obj) {
-//       obj.addEventListener(type, listener);
-//     } else {
-//       globalThis.addEventListener(type, listener);
-//     }
-//   } else if (action === "remove") {
-//     if (obj) {
-//       obj.removeEventListener(type, listener);
-//     } else {
-//       globalThis.removeEventListener(type, listener);
-//     }
-//   } else {
-//     throw API_MISUSE;
-//   }
-// }
-
-// /**
-//  * Determines the hostname of the host operating system.
-//  * @returns {string} The hostname of the computer.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_hostname() {
-//   if (runtime_is_browser()) {
-//     return globalThis.location.hostname;
-//   }
-//   throw API_UNSUPPORTED_RUNTIME;
-// }
-
-// /**
-//  * Determines what JavaScript runtime the app is running.
-//  * @returns {string} Either "deno" / "nodejs" for backend or
-//  * the name of the actual browser. Or "UNDETERMINED" if it could not
-//  * be determined.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_name() {
-//   if (runtime_is_browser()) {
-//     const userAgent = globalThis.navigator.userAgent.toLowerCase();
-//     if (userAgent.includes("firefox/")) {
-//       return "firefox";
-//     } else if (userAgent.includes("opr/")
-//         || userAgent.includes("presto/")) {
-//       return "opera";
-//     } else if (userAgent.includes("mobile/")
-//         || userAgent.includes("version/")) {
-//       return "safari";
-//     } else if (userAgent.includes("edg/")) {
-//       return "edge";
-//     } else if (userAgent.includes("chrome/")) {
-//       return "chrome";
-//     } else {
-//       return "UNKNOWN BROwSER";
-//     }
-//   } else if (runtime_is_deno()) {
-//     return "deno";
-//   } else if (runtime_is_nodejs()) {
-//     return "nodejs";
-//   } else if (runtime_is_worker()) {
-//     return "worker";
-//   }
-//   return "UNDETERMINED";
-// }
-
-// /**
-//  * Determines if the web app has access to the Internet.
-//  * @returns {boolean} true if path to Internet available, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function runtime_online() {
-//   if (runtime_is_browser()) {
-//     // @ts-ignore Property exists in a browser runtime.
-//     return globalThis.navigator.onLine;
-//   }
-//   throw API_UNSUPPORTED_RUNTIME;
 // }
 
 // // ============================================================================
@@ -5070,472 +5121,6 @@ export function runtime_defined({
 //     );
 //     // @ts-ignore json_check_type will throw if not set properly
 //     return cs.getPropertyValue(data);
-//   } else if (request === WIDGET_REQUEST.Define) {
-//     // @ts-ignore Helper function for all defined widgets.
-//     const get_css_var = (v) => {
-//       let css_var = ui_widget({
-//         request: WIDGET_REQUEST.CssVariable,
-//         data: v
-//       }) ?? "";
-//       // @ts-ignore Will be a string is this context.
-//       return css_var.length > 0 ? css_var : v;
-//     }
-
-//     // ------------------------------------------------------------------------
-//     // [APP WIDGETS] ----------------------------------------------------------
-//     // ------------------------------------------------------------------------
-
-//     // Sets up the "codemelted-ui-app-bar" to define a header / footer
-//     // container for a UI.
-//     // @ts-ignore Exists in a browser context.
-//     globalThis.customElements.define("codemelted-ui-app-bar",
-//       // @ts-ignore exists in a browser
-//       class extends globalThis.HTMLElement {
-//         // Build the component
-//         connectedCallback() {
-//           // Setup if we are a header / footer location.
-//           let type = this.getAttribute("cm_type");
-//           if (type === "header") {
-//             this.style.top = "0";
-//           } else if (type === "footer") {
-//             this.style.bottom = "0";
-//           } else {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-app-bar requires cm_type attribute"
-//             });
-//             throw API_MISUSE;
-//           }
-//           this.style.left = "0";
-//           this.style.right = "0";
-//           this.style.position = "fixed";
-
-//           // Now setup whether other required initial properties
-//           let attributes = [
-//             "cm_bg_color",
-//             "cm_border",
-//             "cm_fg_color",
-//             "cm_height",
-//             "cm_z_index",
-//           ];
-//           attributes.forEach((attr_val, index) => {
-//             // Ensure style was specified.
-//             let attr = this.getAttribute(attr_val)
-//             if (!attr) {
-//               logger_log({
-//                 level: LOGGER.Error,
-//                 data: `codemelted-ui-app-bar requires ${attr_val}`
-//               });
-//               throw API_MISUSE;
-//             }
-
-//             let css_value = get_css_var(attr);
-//             switch (index) {
-//               case 0:
-//                 this.style.backgroundColor = css_value.length > 0
-//                   ? css_value : attr;
-//                 break;
-//               case 1:
-//                 this.style.border = css_value.length > 0
-//                   ? css_value : attr;
-//                 break;
-//               case 2:
-//                 this.style.color = css_value.length > 0
-//                   ? css_value : attr;
-//                 break;
-//               case 3:
-//                 this.style.height = css_value.length > 0
-//                   ? css_value : attr;
-//                 let height_margin = parseInt(
-//                   this.style.height.replaceAll("px", "")
-//                 ) + 1;
-//                 if (type === "header") {
-//                   // @ts-ignore exists in a browser context
-//                   globalThis.document.body.style.marginTop =
-//                     `${height_margin}px`;
-//                 } else {
-//                   // @ts-ignore exists in a browser context
-//                   globalThis.document.body.style.marginBottom =
-//                     `${height_margin}px`;
-//                 }
-//                 break;
-//               case 4:
-//                 this.style.zIndex = css_value.length > 0
-//                   ? css_value : attr;
-//                 break;
-//               default:
-//                 logger_log({
-//                   level: LOGGER.Error,
-//                   data: `codemelted-ui-app-bar unknown ${attr_val}`
-//                 });
-//                 throw API_NOT_IMPLEMENTED;
-//             }
-//           });
-//         }
-//         // Register the wrapped component
-//         constructor() { super(); }
-//       }
-//     );
-
-//     // Sets up a full-page sheet to display and be closed once action is done.
-//     // Allows for adding multiple SPA views allowing for staying on a single
-//     // web page.
-//     // @ts-ignore Exists in a browser context.
-//     globalThis.customElements.define("codemelted-ui-app-sheet",
-//       // @ts-ignore exists in a browser
-//       class extends globalThis.HTMLElement {
-//         static observedAttributes = [
-//           "cm_title",
-//           "cm_img_src",
-//           "cm_img_type"
-//         ];
-
-//         #header;
-
-//         #render_header() {
-//           // Setup our worker variables
-//           let cm_title = this.getAttribute("cm_title");
-//           let cm_img_type = this.getAttribute("cm_img_type");
-//           let cm_img_src = this.getAttribute("cm_img_src");
-//           let img_src = "";
-
-//           // Do validity and setup of items
-//           if (!cm_title) {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-app-sheet cm_title attribute is required"
-//             });
-//             throw API_MISUSE;
-//           } else if (!cm_img_src) {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-app-sheet cm_img_src attribute is required"
-//             });
-//             throw API_MISUSE;
-//           } else if (cm_img_type === "emoji") {
-//             img_src = `<h2>${cm_img_src}</h2>`;
-//           } else if (cm_img_type === "img") {
-//             img_src = `<img style="height: 49px;" src="${cm_img_src} />"`;
-//           } else {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-app-sheet cm_img_type attribute valid " +
-//                 "values are 'emoji' / 'img'"
-//             });
-//             throw API_MISUSE;
-//           }
-
-//           // Now go render the header for the app-sheet
-//           let btn_id = `id${globalThis.window.crypto.randomUUID()}`;
-//           let btn_style = "border: none; cursor: pointer; " +
-//             "background-color: transparent;"
-//           this.#header.innerHTML=`
-//             ${img_src}
-//             <h2>${cm_title}</h2>
-//             <button id=${btn_id} style="${btn_style}">❌</button>
-//           `;
-//           setTimeout(() => {
-//             // @ts-ignore exists in a browser context
-//             let btn = globalThis.document.getElementById(btn_id);
-//             if (!btn) {
-//               logger_log({
-//                 level: LOGGER.Error,
-//                 data: "codemelted-ui-app-sheet close button could " +
-//                   "not be setup."
-//               })
-//               throw API_NOT_IMPLEMENTED;
-//             }
-//             // @ts-ignore exists in a browser context
-//             btn.onclick = (evt) => {
-//               this.hide();
-//             };
-//           });
-//         }
-
-//         // Build the component
-//         connectedCallback() {
-//           // Setup our sheet wrapper styles
-//           this.style.position = "fixed";
-//           this.style.flexDirection = "column";
-//           this.style.top = "0";
-//           this.style.left = "0";
-//           this.style.right = "0";
-//           this.style.bottom = "0";
-//           this.style.display = "none";
-
-//           // Now setup our configurable attributes
-//           let attributes = [
-//             "cm_bg_color",
-//             "cm_fg_color",
-//             "cm_border",
-//             "cm_z_index",
-//           ];
-//           attributes.forEach((attr, i) => {
-//             let attr_val = this.getAttribute(attr);
-//             if (!attr_val) {
-//               logger_log({
-//                 level: LOGGER.Error,
-//                 data: `codemelted-ui-app-sheet ${attr} required`
-//               });
-//               throw API_MISUSE;
-//             }
-//             let css_val = get_css_var(attr_val);
-//             let css = css_val.length > 0 ? css_val : attr_val;
-//             switch (i) {
-//               case 0:
-//                 this.style.backgroundColor = css;
-//                 break;
-//               case 1:
-//                 this.style.color = css;
-//                 break;
-//               case 2:
-//                 this.#header.style.border = css;
-//                 break;
-//               case 3:
-//                 this.style.zIndex = css;
-//                 break;
-//               default:
-//                 console.error(
-//                   `codemelted-ui-app-sheet ${attr} not implemented.`
-//                 );
-//                 throw API_NOT_IMPLEMENTED;
-//             }
-//           });
-//           // @ts-ignore exists in a browser context
-//           if (this.firstChild?.nextSibling instanceof globalThis.HTMLElement) {
-//             this.firstChild.nextSibling.style.flexGrow = "1";
-//           }
-//           this.#render_header();
-//           this.insertBefore(this.#header, this.firstChild);
-//         }
-//         // Register the wrapped component
-//         constructor() {
-//           super();
-//           // @ts-ignore exists in a browser context
-//           this.#header = globalThis.document.createElement("header");
-//           this.#header.style.display = "grid";
-//           this.#header.style.height = "50px";
-//           this.#header.style.display = "grid";
-//           this.#header.style.alignSelf = "center";
-//           this.#header.style.alignContent = "center";
-//           this.#header.style.alignItems = "center";
-//           this.#header.style.textAlign = "center";
-//           this.#header.style.width = "100%";
-//           this.#header.style.gridTemplateColumns = "75px auto 75px";
-//         }
-
-//         show() {
-//           this.#render_header();
-//           this.style.display = "flex";
-//         }
-//         hide() { this.style.display = "none"; }
-//       }
-//     );
-
-//     // ------------------------------------------------------------------------
-//     // [LAYOUT WIDGETS] -------------------------------------------------------
-//     // ------------------------------------------------------------------------
-
-//     // Sets up the "codemelted-ui-grid-layout" to define row / column layout
-//     // container.
-//     // @ts-ignore Exists in a browser context.
-//     globalThis.customElements.define("codemelted-ui-grid-layout",
-//       // @ts-ignore exists in a browser
-//       class extends globalThis.HTMLElement {
-//         // Build the component
-//         connectedCallback() {
-//           // Setup our basic grid
-//           this.style.display = "grid";
-
-//           // Now get our required controls
-//           let type = this.getAttribute("cm_type");
-//           let grid_template = this.getAttribute("cm_grid_template");
-//           if (!type) {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-grid-layout expects cm_type attribute"
-//             });
-//             throw API_MISUSE;
-//           } else if (!grid_template) {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-grid-layout expects cm_grid_template " +
-//                 "attribute"
-//             });
-//             throw API_MISUSE;
-//           }
-
-//           if (type === "columns") {
-//             let css_value = get_css_var(grid_template);
-//             this.style.gridTemplateColumns = css_value.length > 0
-//               ? css_value : grid_template;
-//           } else if (type === "rows") {
-//             let css_value = get_css_var(grid_template);
-//             this.style.gridTemplateRows = css_value.length > 0
-//               ? css_value : grid_template;
-//           } else {
-//             console.error(
-//               "codemelted-ui-grid-layout cm_type must be 'rows' / 'columns'"
-//             );
-//             throw API_MISUSE;
-//           }
-//         }
-//         // Register the wrapped component
-//         constructor() {
-//           super();
-//         }
-//       }
-//     );
-
-//     // ------------------------------------------------------------------------
-//     // [COMPONENT WIDGETS] ----------------------------------------------------
-//     // ------------------------------------------------------------------------
-
-//     // Defines a basic button control ensuring the proper layout of controls
-//     // and setting of tooltips.
-//     // @ts-ignore exists in a browser
-//     globalThis.customElements.define("codemelted-ui-button",
-//       // @ts-ignore exists in a browser
-//       class extends globalThis.HTMLElement {
-//         // Build the component
-//         connectedCallback() {
-//           // @ts-ignore exists in a browser context
-//           let btn = globalThis.document.createElement("button");
-//           this.title = this.getAttribute("cm_tooltip") ?? "";
-//           let label = this.getAttribute("cm_label");
-//           let img_src = this.getAttribute("cm_img_src");
-//           if (!label && !img_src) {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-button expects at least one of the " +
-//               "cm_label / cm_img attribute"
-//             });
-//             throw API_MISUSE;
-//           } else if (label && !img_src) {
-//             btn.innerHTML = label;
-//           } else if (!label && img_src) {
-//             btn.innerHTML = `<img src=${img_src} />`
-//           } else {
-//             btn.innerHTML = `<img src=${img_src} /> ${label}`;
-//           }
-//           btn.style.display = "block";
-//           btn.style.cursor = "pointer";
-//           this.appendChild(btn);
-//         }
-//         // Register the wrapped component
-//         constructor() { super(); }
-//       }
-//     );
-
-//     // Defines a combobox control setting up their values and what to do
-//     // upon selecting a value.
-//     // @ts-ignore exists in a browser
-//     globalThis.customElements.define("codemelted-ui-combobox",
-//       // @ts-ignore exists in a browser
-//       class extends globalThis.HTMLElement {
-//         // Build the component
-//         connectedCallback() {
-//           // Create our select control.
-//           // @ts-ignore exists in a browser context
-//           let select = globalThis.document.createElement("select");
-//           select.style.cursor = "pointer";
-
-//           // Grab our necessary attributes
-//           let cm_size = parseInt(this.getAttribute("cm_size") ?? "0");
-//           if (cm_size === 0) {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-combobox requires cm_size attribute"
-//             });
-//             throw API_MISUSE;
-//           }
-//           for (let i = 0; i < cm_size; i++) {
-//             let cm_option = this.getAttribute(`cm_option${i+1}`) ?? "";
-//             let options = cm_option.split(",");
-//             if (!options || options.length != 2) {
-//               logger_log({
-//                 level: LOGGER.Error,
-//                 data: `codemelted-ui-combobox cm_option${i+1} not `  +
-//                   "valid 'option,value' format"
-//               });
-//               throw API_MISUSE;
-//             }
-
-//             // Go build the option control for the combo box.
-//             // @ts-ignore exists in a browser context
-//             let option = globalThis.document.createElement("option");
-//             option.text = options[0];
-//             option.value = options[1];
-//             select.appendChild(option);
-//           }
-
-//           // Append it to our component
-//           this.appendChild(select);
-//         }
-//         // Register the wrapped component
-//         constructor() { super(); }
-//       }
-//     );
-
-//     // Defines a collapsible expansion tile displaying additional children
-//     // when expanded.
-//     // @ts-ignore exists in a browser
-//     globalThis.customElements.define("codemelted-ui-expansion-tile",
-//       // @ts-ignore exists in a browser
-//       class extends globalThis.HTMLElement {
-//         // Build the component
-//         connectedCallback() {
-//           let cm_label = this.getAttribute("cm_label");
-//           if (!cm_label) {
-//             logger_log({
-//               level: LOGGER.Error,
-//               data: "codemelted-ui-expansion-tile requires cm_label attribute"
-//             });
-//             throw API_MISUSE;
-//           }
-
-//           // For any custom tags that create elements underneath, remove
-//           // the rendered data so they render properly when re-added.
-//           let child_nodes = Array.from(this.children);
-//           child_nodes.forEach((el) => {
-//             if (el.tagName.toLowerCase() === "codemelted-ui-button") {
-//               el.innerHTML = "";
-//             } else if (el.tagName.toLowerCase() === "codemelted-ui-combobox") {
-//               el.innerHTML = "";
-//             }
-//           });
-//           this.innerHTML = `
-//             <style>
-//               .cm_exp_tile_summary {
-//                 user-select: none;
-//                 text-align: left;
-//                 font-weight: bold;
-//                 cursor: pointer;
-//                 padding: 5px;
-//               }
-//               .cm_exp_tile_summary::before {
-//                 content: '+';
-//                 margin-right: 10px;
-//                 display: inline-block;
-//                 transition: transform 0.3s;
-//               }
-//               .cm_exp_tile_details[open] summary::before {
-//                 content: '-';
-//                 transform: rotate(0deg);
-//               }
-//             </style>
-//             <details class="cm_exp_tile_details">
-//               <summary class="cm_exp_tile_summary">${cm_label}</summary>
-//             </details>
-//           `;
-//           child_nodes.forEach((el) => {
-//             this.children[1].appendChild(el);
-//           });
-//         }
-//         // Register the wrapped component
-//         constructor() { super(); }
-//       }
-//     );
 //   } else if (request === WIDGET_REQUEST.ElementById) {
 //     json_check_type({type: "string", data: data, should_throw: true});
 //     // @ts-ignore type checked above
@@ -5555,77 +5140,4 @@ export function runtime_defined({
 //     });
 //     throw API_MISUSE;
 //   }
-// }
-
-// ============================================================================
-// [UI UC CUSTOM HTML ELEMENTS] ===============================================
-// ============================================================================
-
-// TODO: Prototyping
-
-// /**
-//  * Flag to determine if the module has been imported or not as to not define
-//  * the custom elements multiple times. That would cause an issue.
-//  * @private
-//  * @type {boolean}
-//  */
-// let _has_custom_elements_been_initialized = false;
-
-// /**
-//  * Test Test Test
-//  * @class
-//  */
-// let CBaseHtmlElement = ModuleUtils.is_defined("HTMLElement")
-//   // @ts-ignore HTMLElement will exist in the Browser runtime.
-//   ? class extends HTMLElement {
-//     /**
-//      * Utility method to support CSS variables for custom components or utilize
-//      * the specified v parameter.
-//      * @param {string} v The CSS variable to query.
-//      * @returns {string} value of the CSS variable or the original value of v.
-//      */
-//     get_css_var(v) {
-//       // let css_var = ui_widget({
-//       //   request: WIDGET_REQUEST.CssVariable,
-//       //   data: v
-//       // }) ?? "";
-//       // // @ts-ignore Will be a string is this context.
-//       // return css_var.length > 0 ? css_var : v;
-//       return "";
-//     }
-//     constructor() { super(); }
-//   }
-//   : class {
-//     /**
-//      * Utility method to support CSS variables for custom components or utilize
-//      * the specified v parameter.
-//      * @param {string} v The CSS variable to query.
-//      * @returns {string} value of the CSS variable or the original value of v.
-//      */
-//     get_css_var(v) {
-//       // let css_var = ui_widget({
-//       //   request: WIDGET_REQUEST.CssVariable,
-//       //   data: v
-//       // }) ?? "";
-//       // // @ts-ignore Will be a string is this context.
-//       // return css_var.length > 0 ? css_var : v;
-//       return "";
-//     }
-//     constructor() {}
-//   };
-
-// /**
-//  * We trying something here.
-//  * @extends {CBaseHtmlElement}
-//  */
-// export class CTestHtmlElement extends CBaseHtmlElement {
-//   constructor() {
-//     super();
-//   }
-// }
-
-// if (ModuleUtils.is_defined("HTMLElement") && !_has_custom_elements_been_initialized) {
-//   // @ts-ignore This will exist in a browser context
-//   globalThis.customElements.define('codemelted-ui-test-element', CTestHtmlElement);
-//   _has_custom_elements_been_initialized = true;
 // }

@@ -33,6 +33,7 @@ import {
   API_UNSUPPORTED_RUNTIME,
   // MODULE TYPEDEFS
   DEFINED_REQUEST,
+  EVENT_REQUEST,
   LOGGER,
   // MODULE PROTOCOL CLASSES
   CProtocol,
@@ -58,7 +59,13 @@ import {
   logger_level,
   logger_log,
   // RUNTIME UC FUNCTIONS
+  runtime_cpu_count,
   runtime_defined,
+  runtime_environment,
+  runtime_event,
+  runtime_hostname,
+  runtime_name,
+  runtime_online,
 } from "./codemelted.js";
 
 logger_level(LOGGER.Off);
@@ -424,6 +431,10 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 
 describe ("RUNTIME UC FUNCTIONS VALIDATION", () => {
+  it("runtime_cpu_count() Test", () => {
+    assert.isTrue(runtime_cpu_count() >= 1);
+  });
+
   it("runtime_defined() Test", () => {
     let is_true_or_false = (v) => {
       return typeof v === "boolean";
@@ -453,8 +464,42 @@ describe ("RUNTIME UC FUNCTIONS VALIDATION", () => {
     assert.isTrue(runtime_defined({property: "navigator"}));
     assert.isFalse(runtime_defined({property: "navigator", obj: {}}));
   });
-});
 
+  it("runtime_environment() Test", () => {
+    // API violations
+    assert.throws(() => {runtime_environment()});
+    assert.throws(() => {runtime_environment(42)});
+
+    // Now run it.
+    assert.equal(null, runtime_environment("search"));
+  });
+
+  it("runtime_event() Test", () => {
+    // API violations
+    let listener = (evt) => { };
+    assert.throws(() => {runtime_event()});
+    assert.throws(() => {runtime_event({request: EVENT_REQUEST.Add, type: 42})});
+    assert.throws(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: 42})});
+    assert.throws(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener, target: 42})});
+    assert.throws(() => {runtime_event({request: 42, type: "message", listener: listener})});
+
+    // Now to a valid listener
+    runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener});
+    runtime_event({request: EVENT_REQUEST.Remove, type: "message", listener: listener});
+  });
+
+  it("runtime_hostname() Test", () => {
+    assert.isTrue(runtime_hostname().length > 0);
+  });
+
+  it("runtime_name() Test", () => {
+    assert.isTrue(!runtime_name().includes("UNKNOWN"));
+  });
+
+  it("runtime_online() Test", () => {
+    assert.isTrue(runtime_online());
+  });
+});
 
 // ============================================================================
 // [RUN THE TESTS] ============================================================
