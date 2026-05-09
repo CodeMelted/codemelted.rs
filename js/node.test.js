@@ -34,6 +34,8 @@ import {
   DEFINED_REQUEST,
   EVENT_REQUEST,
   LOGGER,
+  MATH_FORMULA,
+  STORAGE_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
   // MODULE CLASSES
@@ -57,6 +59,9 @@ import {
   logger_handler,
   logger_level,
   logger_log,
+  // NPU UC FUNCTIONS
+  npu_compute,
+  npu_math,
   // RUNTIME UC FUNCTIONS
   runtime_cpu_count,
   runtime_defined,
@@ -65,6 +70,13 @@ import {
   runtime_hostname,
   runtime_name,
   runtime_online,
+  // STORAGE UC FUNCTIONS
+  storage_clear,
+  storage_get,
+  storage_key,
+  storage_length,
+  storage_remove,
+  storage_set,
 } from "./codemelted.js";
 
 logger_level(LOGGER.Off);
@@ -198,7 +210,25 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 
 describe("DB UC FUNCTIONS VALIDATION", () => {
+  test.skip("db_exist() Test", () => {
+    // TBD
+  });
 
+  test.skip("db_manage() Test", () => {
+    // TBD
+  });
+
+  test.skip("db_query() Test", () => {
+    // TBD
+  });
+
+  test.skip("db_update() Test", () => {
+    // TBD
+  });
+
+  test.skip("db_version() Test", () => {
+    // TBD
+  });
 });
 
 // ============================================================================
@@ -206,7 +236,13 @@ describe("DB UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 
 describe("DISK UC FUNCTIONS VALIDATION", () => {
+  test.skip("disk_read_file() Test", () => {
+    // TBD
+  });
 
+  test.skip("disk_write_file() Test", () => {
+    // TBD
+  });
 });
 
 // ============================================================================
@@ -424,6 +460,35 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
 });
 
 // ============================================================================
+// [NPU UC FUNCTIONS VALIDATION] ==============================================
+// ============================================================================
+
+describe("NPU UC FUNCTIONS VALIDATION", () => {
+  test.skip("npu_compute() Test", () => {
+    // TBD
+  });
+
+  test("npu_math() Test", () => {
+    // API Violations
+    assert.throws(() => npu_math());
+    assert.throws(() => npu_math({formula: 42}));
+    assert.throws(() => npu_math({formula: "duh", args: 42}));
+    assert.throws(() => npu_math({formula: "duh", args: []}));
+    assert.throws(() => npu_math({formula: "duh", args: ["duh"]}));
+    assert.throws(() => npu_math({formula: "duh", args: [42]}));
+
+    // Now formula verifications
+    assert.equal(true, isNaN(npu_math({formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit, args: []})));
+    assert.equal(32, npu_math({formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit, args: [0]}));
+    assert.equal(273.15, npu_math({formula: MATH_FORMULA.TemperatureCelsiusToKelvin, args: [0]}));
+    assert.equal(0, npu_math({formula: MATH_FORMULA.TemperatureFahrenheitToCelsius, args: [32]}));
+    assert.equal(273.15, npu_math({formula: MATH_FORMULA.TemperatureFahrenheitToKelvin, args: [32]}));
+    assert.equal(0, npu_math({formula: MATH_FORMULA.TemperatureKelvinToCelsius, args: [273.15]}));
+    assert.equal(32, npu_math({formula: MATH_FORMULA.TemperatureKelvinToFahrenheit, args: [273.15]}));
+  });
+});
+
+// ============================================================================
 // [RUNTIME UC FUNCTIONS VALIDATION] ==========================================
 // ============================================================================
 
@@ -487,8 +552,103 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
     assert.equal("node", runtime_name());
   });
 
-  ("runtime_online() Test", () => {
+  test("runtime_online() Test", () => {
     // Unsupported platform.
     assert.throws(() => runtime_online());
+  });
+});
+
+// ============================================================================
+// [STORAGE UC FUNCTIONS VALIDATION] ==========================================
+// ============================================================================
+
+// Right now this is experimental in Node. So localStorage and sessionStorage
+// exist but they throw when you try to use them. This is as of v25+
+describe("STORAGE UC FUNCTIONS VALIDATION", () => {
+  test.skip("storage_clear() / storage_length() Test", () => {
+    // API Violations
+    assert.throws(() => storage_clean("duh"));
+    assert.throws(() => storage_length("duh"));
+
+    // Now do each type of storage
+    storage_set({type: STORAGE_TYPE.Local, key: "key", value: "value"});
+    assert.isTrue(storage_length(STORAGE_TYPE.Local) > 0);
+    storage_clear(STORAGE_TYPE.Local);
+    assert.equal(storage_length(STORAGE_TYPE.Local), 0);
+
+    storage_set({type: STORAGE_TYPE.Session, key: "key", value: "value"});
+    assert.equal(storage_length(STORAGE_TYPE.Session) > 0, true);
+    storage_clear(STORAGE_TYPE.Session);
+    assert.equal(storage_length(STORAGE_TYPE.Session), 0);
+
+    storage_set({type: STORAGE_TYPE.Cookie, key: "key", value: "value"});
+    assert.equal(storage_length(STORAGE_TYPE.Cookie) > 0, true);
+    storage_clear(STORAGE_TYPE.Cookie);
+    assert.equal(storage_length(STORAGE_TYPE.Cookie), 0);
+  });
+
+  test.skip("storage_get() / storage_key() / storage_remove() / storage_set() Test", () => {
+    // API Violations
+    assert.throws(() => storage_get());
+    assert.throws(() => storage_get({type: 42, key: 42}));
+    assert.throws(() => storage_get({type: 42, key: "duh"}));
+    assert.throws(() => storage_key());
+    assert.throws(() => storage_key({type: 42, index: "duh"}));
+    assert.throws(() => storage_key({type: 42, index: 0}));
+    assert.throws(() => storage_remove());
+    assert.throws(() => storage_remove({type: 42, key: 42}));
+    assert.throws(() => storage_remove({type: 42, key: "duh"}));
+    assert.throws(() => storage_set());
+    assert.throws(() => storage_set({type: 42, key: 42, value: 42}));
+    assert.throws(() => storage_set({type: 42, key: "duh", value: 42}));
+    assert.throws(() => storage_set({type: 42, key: "duh", value: "duh"}));
+
+    // First let's do local storage
+    storage_clear();
+    assert.equal(storage_length(), 0);
+    assert.equal(storage_get({key: "cool"}), null);
+    assert.equal(storage_key({index: 0}), null);
+
+    storage_set({key: "cool", value: "guy"});
+    assert.equal(storage_length(), 1);
+    assert.equal(storage_get({key: "cool"}), "guy");
+    assert.equal(storage_key({index: 0}), "cool");
+
+    storage_remove({key: "cool"});
+    assert.equal(storage_length(), 0);
+    assert.equal(storage_get({key: "cool"}), null);
+    assert.equal(storage_key({index: 0}), null);
+
+    // Now session storage
+    storage_clear(STORAGE_TYPE.Session);
+    assert.equal(storage_length(STORAGE_TYPE.Session), 0);
+    assert.equal(storage_get({type: STORAGE_TYPE.Session, key: "cool"}), null);
+    assert.equal(storage_key({type: STORAGE_TYPE.Session, index: 0}), null);
+
+    storage_set({type: STORAGE_TYPE.Session, key: "cool", value: "guy"});
+    assert.equal(storage_length(STORAGE_TYPE.Session), 1);
+    assert.equal(storage_get({type: STORAGE_TYPE.Session, key: "cool"}), "guy");
+    assert.equal(storage_key({type: STORAGE_TYPE.Session, index: 0}), "cool");
+
+    storage_remove({type: STORAGE_TYPE.Session, key: "cool"});
+    assert.equal(storage_length(STORAGE_TYPE.Session), 0);
+    assert.equal(storage_get({type: STORAGE_TYPE.Session, key: "cool"}), null);
+    assert.equal(storage_key({type: STORAGE_TYPE.Session, index: 0}), null);
+
+    // Finally cookie storage
+    storage_clear(STORAGE_TYPE.Cookie);
+    assert.equal(storage_length(STORAGE_TYPE.Cookie), 0);
+    assert.equal(storage_get({type: STORAGE_TYPE.Cookie, key: "cool"}), null);
+    assert.equal(storage_key({type: STORAGE_TYPE.Cookie, index: 0}), null);
+
+    storage_set({type: STORAGE_TYPE.Cookie, key: "cool", value: "guy"});
+    assert.equal(storage_length(STORAGE_TYPE.Cookie), 1);
+    assert.equal(storage_get({type: STORAGE_TYPE.Cookie, key: "cool"}), "guy");
+    assert.equal(storage_key({type: STORAGE_TYPE.Cookie, index: 0}), "cool");
+
+    storage_remove({type: STORAGE_TYPE.Cookie, key: "cool"});
+    assert.equal(storage_length(STORAGE_TYPE.Cookie), 0);
+    assert.equal(storage_get({type: STORAGE_TYPE.Cookie, key: "cool"}), null);
+    assert.equal(storage_key({type: STORAGE_TYPE.Cookie, index: 0}), null);
   });
 });

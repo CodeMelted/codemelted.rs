@@ -40,6 +40,8 @@ import {
   DEFINED_REQUEST,
   EVENT_REQUEST,
   LOGGER,
+  MATH_FORMULA,
+  STORAGE_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
   // MODULE CLASSES
@@ -63,6 +65,9 @@ import {
   logger_handler,
   logger_level,
   logger_log,
+  // NPU UC FUNCTIONS
+  npu_compute,
+  npu_math,
   // RUNTIME UC FUNCTIONS
   runtime_cpu_count,
   runtime_defined,
@@ -71,6 +76,13 @@ import {
   runtime_hostname,
   runtime_name,
   runtime_online,
+  // STORAGE UC FUNCTIONS
+  storage_clear,
+  storage_get,
+  storage_key,
+  storage_length,
+  storage_remove,
+  storage_set,
 } from "./codemelted.js";
 
 logger_level(LOGGER.Off);
@@ -462,6 +474,40 @@ Deno.test("json_valid_url() Test", () => {
 });
 
 // ============================================================================
+// [NPU UC FUNCTIONS VALIDATION] ==============================================
+// ============================================================================
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("npu_compute() Test", () => {
+
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("npu_math() Test", () => {
+  // API Violations
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => npu_math());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => npu_math({formula: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => npu_math({formula: "duh", args: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => npu_math({formula: "duh", args: []}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => npu_math({formula: "duh", args: ["duh"]}));
+  assertThrows(() => npu_math({formula: "duh", args: [42]}));
+
+  // Now formula verifications
+  assertEquals(true, isNaN(npu_math({formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit, args: []})));
+  assertEquals(32, npu_math({formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit, args: [0]}));
+  assertEquals(273.15, npu_math({formula: MATH_FORMULA.TemperatureCelsiusToKelvin, args: [0]}));
+  assertEquals(0, npu_math({formula: MATH_FORMULA.TemperatureFahrenheitToCelsius, args: [32]}));
+  assertEquals(273.15, npu_math({formula: MATH_FORMULA.TemperatureFahrenheitToKelvin, args: [32]}));
+  assertEquals(0, npu_math({formula: MATH_FORMULA.TemperatureKelvinToCelsius, args: [273.15]}));
+  assertEquals(32, npu_math({formula: MATH_FORMULA.TemperatureKelvinToFahrenheit, args: [273.15]}));
+});
+
+// ============================================================================
 // [RUNTIME UC FUNCTIONS VALIDATION] ==========================================
 // ============================================================================
 
@@ -544,4 +590,99 @@ Deno.test("runtime_name() Test", () => {
 Deno.test("runtime_online() Test", () => {
   // Unsupported Platform
   assertThrows(() => runtime_online());
+});
+
+// ============================================================================
+// [STORAGE UC FUNCTIONS VALIDATION] ==========================================
+// ============================================================================
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("storage_clear() / storage_length() Test", () => {
+  // API Violations
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_clean("duh"));
+  assertThrows(() => storage_length("duh"));
+
+  // Now do each type of storage
+  storage_set({type: STORAGE_TYPE.Local, key: "key", value: "value"});
+  assertEquals(storage_length(STORAGE_TYPE.Local) > 0, true);
+  storage_clear(STORAGE_TYPE.Local);
+  assertEquals(storage_length(STORAGE_TYPE.Local), 0);
+
+  storage_set({type: STORAGE_TYPE.Session, key: "key", value: "value"});
+  assertEquals(storage_length(STORAGE_TYPE.Session) > 0, true);
+  storage_clear(STORAGE_TYPE.Session);
+  assertEquals(storage_length(STORAGE_TYPE.Session), 0);
+
+  assertThrows(() => storage_set({type: STORAGE_TYPE.Cookie, key: "key", value: "value"}));
+  assertThrows(() => storage_clear(STORAGE_TYPE.Cookie));
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("storage_get() / storage_key() / storage_remove() / storage_set() Test", () => {
+  // API Violations
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_get());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_get({type: 42, key: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_get({type: 42, key: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_key());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_key({type: 42, index: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_key({type: 42, index: 0}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_remove());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_remove({type: 42, key: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_remove({type: 42, key: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_set());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_set({type: 42, key: 42, value: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_set({type: 42, key: "duh", value: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => storage_set({type: 42, key: "duh", value: "duh"}));
+
+  // First let's do local storage
+  storage_clear();
+  assertEquals(storage_length(), 0);
+  assertEquals(storage_get({key: "cool"}), null);
+  assertEquals(storage_key({index: 0}), null);
+
+  storage_set({key: "cool", value: "guy"});
+  assertEquals(storage_length(), 1);
+  assertEquals(storage_get({key: "cool"}), "guy");
+  assertEquals(storage_key({index: 0}), "cool");
+
+  storage_remove({key: "cool"});
+  assertEquals(storage_length(), 0);
+  assertEquals(storage_get({key: "cool"}), null);
+  assertEquals(storage_key({index: 0}), null);
+
+  // Now session storage
+  storage_clear(STORAGE_TYPE.Session);
+  assertEquals(storage_length(STORAGE_TYPE.Session), 0);
+  assertEquals(storage_get({type: STORAGE_TYPE.Session, key: "cool"}), null);
+  assertEquals(storage_key({type: STORAGE_TYPE.Session, index: 0}), null);
+
+  storage_set({type: STORAGE_TYPE.Session, key: "cool", value: "guy"});
+  assertEquals(storage_length(STORAGE_TYPE.Session), 1);
+  assertEquals(storage_get({type: STORAGE_TYPE.Session, key: "cool"}), "guy");
+  assertEquals(storage_key({type: STORAGE_TYPE.Session, index: 0}), "cool");
+
+  storage_remove({type: STORAGE_TYPE.Session, key: "cool"});
+  assertEquals(storage_length(STORAGE_TYPE.Session), 0);
+  assertEquals(storage_get({type: STORAGE_TYPE.Session, key: "cool"}), null);
+  assertEquals(storage_key({type: STORAGE_TYPE.Session, index: 0}), null);
+
+  // Finally cookie storage
+  assertThrows(() => storage_clear(STORAGE_TYPE.Cookie));
+  assertThrows(() => storage_set({type: STORAGE_TYPE.Cookie, key: "cool", value: "guy"}));
+  assertThrows(() => storage_get({type: STORAGE_TYPE.Cookie, key: "cool"}));
+  assertThrows(() => storage_remove({type: STORAGE_TYPE.Cookie, key: "cool"}));
 });

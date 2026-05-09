@@ -1,8 +1,6 @@
 // @ts-check
 // TODO 1: Implement snackbar ui_action.
 // TODO 2: Implement copy of text.
-// TODO 3: Spread logging throughout this module for API_VIOLATIONs to explain
-//         what is happening.
 // ============================================================================
 /**
  * @file <br />
@@ -249,6 +247,24 @@ export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
 // ============================================================================
 
 /**
+ * Provides the {@link storage_clear}, {@link storage_get},
+ * {@link storage_key}, {@link storage_length}, {@link storage_remove}, and
+ * {@link storage_set} calls.
+ * @readonly
+ * @enum {string}
+ * @property {string} Cookie To utilize cookies as the storage method.
+ * @property {string} Local To utilize local storage which lives once a
+ * session is closed.
+ * @property {string} Session To utilize session storage which clears once
+ * a session is closed.
+ */
+export const STORAGE_TYPE = Object.freeze({
+  Cookie: "cookie",
+  Local: "local",
+  Session: "session",
+});
+
+/**
  * Provides the request actions of the {@link runtime_defined} function call.
  * @readonly
  * @enum {string}
@@ -330,6 +346,45 @@ export const LOGGER = Object.freeze({
   Warning: { level: 2, label: "WARNING" },
   Error:   { level: 3, label: "ERROR"   },
   Off:     { level: 4, label: "OFF"     },
+});
+
+/**
+ * The math formula to execute with the {@link npu_math} call.
+ * @readonly
+ * @enum {string}
+ * @property {string} GeodeticDistance
+ * Distance in meters between two WGS84 points. The parameters for the
+ * formula are start_latitude / start_longitude / end_latitude / end_longitude
+ * @property {string} GeodeticHeading
+ * Heading in °N true North 0 - 359. The parameters for the
+ * formula are start_latitude / start_longitude / end_latitude / end_longitude
+ * @property {string} GeodeticSpeed
+ * Speed in meters per second between two WGS84 points. The parameters for the
+ * formula are start_milliseconds / start_latitude / start_longitude /
+ * end_milliseconds / end_latitude / end_longitude
+ * @property {string} TemperatureCelsiusToFahrenheit
+ * °F = (°C x 9/5) + 32
+ * @property {string} TemperatureCelsiusToKelvin
+ * °K = °C + 273.15
+ * @property {string} TemperatureFahrenheitToCelsius
+ * °C = (°F − 32) × 5/9
+ * @property {string} TemperatureFahrenheitToKelvin
+ * °K = (°F − 32) × 5/9 + 273.15
+ * @property {string} TemperatureKelvinToCelsius
+ * °C = °K − 273.15
+ * @property {string} TemperatureKelvinToFahrenheit
+ * °F = (°K − 273.15) × 9/5 + 32
+ */
+export const MATH_FORMULA = Object.freeze({
+  GeodeticDistance: "GeodeticDistance",
+  GeodeticHeading: "GeodeticHeading",
+  GeodeticSpeed: "GeodeticSpeed",
+  TemperatureCelsiusToFahrenheit: "TemperatureCelsiusToFahrenheit",
+  TemperatureCelsiusToKelvin: "TemperatureCelsiusToKelvin",
+  TemperatureFahrenheitToCelsius: "TemperatureFahrenheitToCelsius",
+  TemperatureFahrenheitToKelvin: "TemperatureFahrenheitToKelvin",
+  TemperatureKelvinToCelsius: "TemperatureKelvinToCelsius",
+  TemperatureKelvinToFahrenheit: "TemperatureKelvinToFahrenheit"
 });
 
 // ============================================================================
@@ -630,7 +685,7 @@ export class CFuture {
 }
 
 // ============================================================================
-// [MODULE PUBLIC API FUNCTIONS] ==============================================
+// [MODULE UTILS API HELPER] ==================================================
 // ============================================================================
 
 /**
@@ -652,6 +707,237 @@ class ModuleUtils {
    * @type {CLogHandler?}
    */
   static logger_handler = null;
+
+  /**
+   * Days a cookie will live
+   * @type {number}
+   */
+  static expire_days = 365;
+
+  /**
+   * List to hold keys from cookies.
+   * @type {string[]}
+   */
+  static key_list = [];
+
+  /**
+   * Clears the cookie storage entries.
+   */
+  static cookie_clear() {
+    // @ts-ignore "document" will exist in browser context
+    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    // @ts-ignore Will exist in the browser context
+    let cookies = globalThis.document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      // @ts-ignore Will exist in the browser context
+      globalThis.document.cookie =
+        `${cookies[i]}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+    }
+    ModuleUtils.key_list = [];
+  }
+
+  /**
+   * Retrieves an entry from cookie storage.
+   * @param {string} key The key to lookup.
+   * @returns {string?} The found entry or null if not found.
+   */
+  static cookie_get_item(key) {
+    // @ts-ignore "document" will exist in browser context
+    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    let name = `${key}=`;
+    // @ts-ignore Will exist in a browser context.
+    let decoded_cookie = decodeURIComponent(globalThis.document.cookie);
+    let ca = decoded_cookie.split(";");
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == " ") {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Retrieves the number of entries in cookie storage.
+   * @returns {number}
+   */
+  static cookie_length() {
+    // @ts-ignore "document" will exist in browser context
+    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    return ModuleUtils.key_list.length;
+  }
+
+  /**
+   * Retrieves the key name at the specified index.
+   * @param {number} index The key to retrieve from the given index
+   * @returns {string | null} The key entry or null if index went beyond
+   * length.
+   */
+  static cookie_key(index) {
+    // @ts-ignore "document" will exist in browser context
+    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    return index < ModuleUtils.key_list.length
+      ? ModuleUtils.key_list[index]
+      : null;
+  }
+
+  /**
+   * Removes an item from cookie storage.
+   * @param {string} key The key to remove
+   * @returns {void}
+   */
+  static cookie_remove_item(key) {
+    // @ts-ignore "document" will exist in browser context
+    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    // @ts-ignore Will exist in the browser context
+    globalThis.document.cookie =
+      `${key}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+    const index = ModuleUtils.key_list.indexOf(key);
+    if (index > -1) {
+      ModuleUtils.key_list.splice(index, 1);
+    }
+  }
+
+  /**
+   * Sets an item within cookie storage.
+   * @param {string} key The key entry in the cooke storage.
+   * @param {string} value The value to set with the cookie.
+   * @returns {void}
+   */
+  static cookie_set_item(key, value) {
+    // @ts-ignore "document" will exist in browser context
+    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    const d = new Date();
+    d.setTime(d.getTime() + (ModuleUtils.expire_days * 24 * 60 * 60 * 1000));
+    let expires = `expires=${d.toUTCString()}`;
+    // @ts-ignore Will exist in the browser context
+    globalThis.document.cookie = `${key}=${value};${expires};path=/`;
+    ModuleUtils.cookie_init_key_list();
+  }
+
+  /**
+   * Provides the ability to get a list of keys to support the length
+   * property and key method of the Storage interface.
+   * @returns {void}
+   */
+  static cookie_init_key_list() {
+    // @ts-ignore "document" will exist in browser context
+    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    ModuleUtils.key_list = [];
+    // @ts-ignore Will exist in the browser context
+    let decoded_cookie = decodeURIComponent(globalThis.document.cookie);
+    let ca = decoded_cookie.split(";");
+    for (let i = 0; i < ca.length; i++) {
+      let key = ca[i].split("=");
+      if (!key[0].includes("expires") && !key[0].includes("path")) {
+        ModuleUtils.key_list.push((key[0]));
+      }
+    }
+  }
+
+  /**
+   * Calculate the geodetic distance. Supports the {@link npu_math} function.
+   * @param {number} start_latitude The starting latitude geographic position.
+   * @param {number} start_longitude The starting longitude geography position.
+   * @param {number} end_latitude The ending latitude geographic position.
+   * @param {number} end_longitude The ending latitude geographic position.
+   * @returns {number} The distance in meters.
+   */
+  static geodetic_distance(start_latitude, start_longitude,
+      end_latitude, end_longitude) {
+    // Convert degrees to radians
+    let lat1 = start_latitude * Math.PI / 180.0;
+    let lon1 = start_longitude * Math.PI / 180.0;
+
+    let lat2 = end_latitude * Math.PI / 180.0;
+    let lon2 = end_longitude * Math.PI / 180.0;
+
+    // radius of earth in metres
+    let r = 6378100.0;
+
+    // P
+    let rho1 = r * Math.cos(lat1);
+    let z1 = r * Math.sin(lat1);
+    let x1 = rho1 * Math.cos(lon1);
+    let y1 = rho1 * Math.sin(lon1);
+
+    // Q
+    let rho2 = r * Math.cos(lat2);
+    let z2 = r * Math.sin(lat2);
+    let x2 = rho2 * Math.cos(lon2);
+    let y2 = rho2 * Math.sin(lon2);
+
+    // Dot product
+    let dot = x1 * x2 + y1 * y2 + z1 * z2;
+    let cos_theta = dot / (r * r);
+    let theta = Math.acos(cos_theta);
+
+    // Distance in meters
+    return r * theta;
+  }
+
+  /**
+   * Calculates the geodetic heading. Supports the {@link npu_math} function.
+   * @param {number} start_latitude The starting latitude geographic position.
+   * @param {number} start_longitude The starting longitude geography position.
+   * @param {number} end_latitude The ending latitude geographic position.
+   * @param {number} end_longitude The ending latitude geographic position.
+   * @returns {number} Heading in °N true North 0 - 359
+   */
+  static geodetic_heading(start_latitude, start_longitude,
+      end_latitude, end_longitude) {
+    // Get the initial data from our variables:
+    let lat1 = start_latitude * (Math.PI / 180.0);
+    let lon1 = start_longitude * (Math.PI / 180.0);
+    let lat2 = end_latitude * (Math.PI  / 180.0);
+    let lon2 = end_longitude * (Math.PI  / 180.0);
+
+    // Set up our calculations
+    let y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+    let x = (Math.cos(lat1) * Math.sin(lat2)) -
+      (Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1));
+    let rtnval = Math.atan2(y, x) * (180.0 / Math.PI);
+    return (rtnval + 360.0) % 360.0;
+  }
+
+  /**
+   * Calculates the geodetic speed. Supports the {@link npu_math} function.
+   * @param {number} start_milliseconds The timestamp of the starting
+   * position.
+   * @param {number} start_latitude The starting latitude geographic position.
+   * @param {number} start_longitude The starting longitude geography
+   * position.
+   * @param {number} end_milliseconds The timestamp of the ending position.
+   * @param {number} end_latitude The ending latitude geographic position.
+   * @param {number} end_longitude The ending latitude geographic position.
+   * @returns {number} The speed in meters per second.
+   */
+  static geodetic_speed(start_latitude, start_longitude,
+      start_milliseconds, end_latitude, end_longitude, end_milliseconds) {
+    let dist_meters = ModuleUtils.geodetic_distance(
+      start_latitude, start_longitude,
+      end_latitude, end_longitude
+    );
+    let time_s = (end_milliseconds - start_milliseconds) / 1000.0;
+    return dist_meters / time_s;
+  }
 
   /**
    * Helper function for the {@link runtime_defined} to search for properties
@@ -758,7 +1044,15 @@ export function async_task({task, data, delay = 0}) {
  */
 export function db_exists() {
   // TODO: IndexDB for browser / worker
-  throw API_NOT_IMPLEMENTED;
+  try {
+    throw API_NOT_IMPLEMENTED;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `db_exists() encountered an error. ${err}`
+    });
+    throw err;
+  }
 }
 
 /**
@@ -773,7 +1067,15 @@ export function db_exists() {
  */
 export function db_manage() {
   // TODO: IndexDB for browser / worker
-  throw API_NOT_IMPLEMENTED;
+  try {
+    throw API_NOT_IMPLEMENTED;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `db_manage() encountered an error. ${err}`
+    });
+    throw err;
+  }
 }
 
 /**
@@ -788,7 +1090,15 @@ export function db_manage() {
  */
 export function db_query() {
   // TODO: IndexDB for browser / worker
-  throw API_NOT_IMPLEMENTED;
+  try {
+    throw API_NOT_IMPLEMENTED;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `db_query() encountered an error. ${err}`
+    });
+    throw err;
+  }
 }
 
 /**
@@ -803,7 +1113,15 @@ export function db_query() {
  */
 export function db_update() {
   // TODO: IndexDB for browser / worker
-  throw API_NOT_IMPLEMENTED;
+  try {
+    throw API_NOT_IMPLEMENTED;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `db_update() encountered an error. ${err}`
+    });
+    throw err;
+  }
 }
 
 /**
@@ -818,7 +1136,15 @@ export function db_update() {
  */
 export function db_version() {
   // TODO: IndexDB for browser / worker
-  throw API_NOT_IMPLEMENTED;
+  try {
+    throw API_NOT_IMPLEMENTED;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `db_version() encountered an error. ${err}`
+    });
+    throw err;
+  }
 }
 
 // ============================================================================
@@ -838,7 +1164,15 @@ export function db_version() {
 export function disk_read_file() {
   // TODO: Be able to prompt for a filename via various methods and read
   //       entire file to disk.
-  throw API_NOT_IMPLEMENTED;
+  try {
+    throw API_NOT_IMPLEMENTED;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `disk_read_file() encountered an error. ${err}`
+    });
+    throw err;
+  }
 }
 
 /**
@@ -854,7 +1188,15 @@ export function disk_read_file() {
 export function disk_write_file() {
   // TODO: Be able to prompt for a filename via various methods and write
   //       entire file to disk.
-  throw API_NOT_IMPLEMENTED;
+  try {
+    throw API_NOT_IMPLEMENTED;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `disk_write_file() encountered an error. ${err}`
+    });
+    throw err;
+  }
 }
 
 // ============================================================================
@@ -1322,6 +1664,95 @@ export function logger_log({level, data}) {
 }
 
 // ============================================================================
+// [NPU UC IMPLEMENTATION] ====================================================
+// ============================================================================
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // TBD
+ */
+export function npu_compute() {
+  // TBD: This will implement complicated items and utilize JSON for the API
+  //      to setup requests.
+  try {
+    throw API_NOT_IMPLEMENTED;
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `npu_compute() encountered an error. ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Function to execute the {@link MATH_FORMULA} specified within the named
+ * parameters to get the calculated answer.
+ * @param {object} params The named parameters.
+ * @param {MATH_FORMULA} params.formula The formula to run.
+ * @param {number[]} params.args The arguments to use with the formula.
+ * @returns {number} The calculated answer or NaN if division by 0 or sqrt of
+ * a negative number.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Convert from Celsius to Fahrenheit
+ * let f = npu_math({
+ *   formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit
+ *   args: [ 0.0 ]
+ * });
+ */
+export function npu_math({formula, args}) {
+  try {
+    json_check_type({type: "string", data: formula, should_throw: true});
+    json_check_type({type: Array, data: args, should_throw: true});
+    args.forEach((v) => {
+      json_check_type({type: "number", data: v, should_throw: true});
+    });
+    switch (formula) {
+      case MATH_FORMULA.GeodeticDistance:
+        return ModuleUtils.geodetic_distance(args[0], args[1], args[2],
+          args[3]);
+      case MATH_FORMULA.GeodeticHeading:
+        return ModuleUtils.geodetic_heading(args[0], args[1], args[2],
+          args[3]);
+      case MATH_FORMULA.GeodeticSpeed:
+        return ModuleUtils.geodetic_speed(args[0], args[1], args[2],
+          args[3], args[4], args[5]);
+      case MATH_FORMULA.TemperatureCelsiusToFahrenheit:
+        return (args[0] * 9.0 / 5.0) + 32.0;
+      case MATH_FORMULA.TemperatureCelsiusToKelvin:
+        return args[0] + 273.15;
+      case MATH_FORMULA.TemperatureFahrenheitToCelsius:
+        return (args[0] - 32.0) * (5.0 / 9.0);
+      case MATH_FORMULA.TemperatureFahrenheitToKelvin:
+        return (args[0] - 32.0) * (5.0 / 9.0) + 273.15;
+      case MATH_FORMULA.TemperatureKelvinToCelsius:
+        return args[0] - 273.15;
+      case MATH_FORMULA.TemperatureKelvinToFahrenheit:
+        return (args[0] - 273.15) * (9.0 / 5.0) + 32.0;
+      default:
+        throw API_NOT_IMPLEMENTED;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `npu_math() encountered an error. ${err}`
+    });
+    throw err;
+  }
+}
+
+// ============================================================================
 // [RUNTIME UC FUNCTIONS] =====================================================
 // ============================================================================
 
@@ -1650,6 +2081,284 @@ export function runtime_online() {
   }
 }
 
+// ============================================================================
+// [STORAGE UC IMPLEMENTATION] ================================================
+// ============================================================================
+
+/**
+ * Clears the local storage of the module.
+ * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act upon.
+ * @returns {void}
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // To clear all elements in the specified storage type
+ * // Defaults to STORAGE_TYPE.Local
+ * storage_clear();
+ * // To specify type
+ * storage_clear(STORAGE_TYPE.Session);
+ */
+export function storage_clear(type = STORAGE_TYPE.Local) {
+  try {
+    if (!ModuleUtils.is_defined("localStorage")) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    switch (type) {
+      case STORAGE_TYPE.Cookie:
+        ModuleUtils.cookie_clear();
+        break;
+      case STORAGE_TYPE.Local:
+        globalThis.localStorage.clear();
+        break;
+      case STORAGE_TYPE.Session:
+        globalThis.sessionStorage.clear();
+        break;
+      default:
+        throw API_MISUSE;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `storage_clear() error encountered. ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Gets the value associated with the key from the module's local storage.
+ * @param {object} params The named parameters.
+ * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
+ * upon.
+ * @param {string} params.key The key to search.
+ * @returns {string?} The value associated with the key if found.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // To get an element from storage. Either string or null if not found
+ * // Defaults to STORAGE_TYPE.Local
+ * let value = storage_get({key: "cool"});
+ * // To specify type
+ * let value = storage_get({type: STORAGE_TYPE.Session, key: "cool"});
+ */
+export function storage_get({type = STORAGE_TYPE.Local, key}) {
+  try {
+    if (!ModuleUtils.is_defined("localStorage")) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    json_check_type({type: "string", data: key, should_throw: true});
+    switch (type) {
+      case STORAGE_TYPE.Cookie:
+        return ModuleUtils.cookie_get_item(key);
+      case STORAGE_TYPE.Local:
+        return globalThis.localStorage.getItem(key);
+      case STORAGE_TYPE.Session:
+        return globalThis.sessionStorage.getItem(key);
+      default:
+        throw API_MISUSE;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `storage_get() error encountered. ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Retrieves the key at the specified index.
+ * @param {object} params The named parameters
+ * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
+ * upon.
+ * @param {number} params.index The key entry to look up.
+ * @returns {string?} The key at the specified index or null if beyond the
+ * storage capacity.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // To get a key at an index. Either string or null if not found
+ * // Defaults to STORAGE_TYPE.Local
+ * let value = storage_key({index: 0});
+ * // To specify type
+ * let value = storage_key({type: STORAGE_TYPE.Session, index: 0});
+ */
+export function storage_key({type = STORAGE_TYPE.Local, index}) {
+  try {
+    if (!ModuleUtils.is_defined("localStorage")) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    json_check_type({type: "number", data: index, should_throw: true});
+    switch (type) {
+      case STORAGE_TYPE.Cookie:
+        return ModuleUtils.cookie_key(index);
+      case STORAGE_TYPE.Local:
+        return index < globalThis.localStorage.length
+          ? globalThis.localStorage.key(index)
+          : null;
+      case STORAGE_TYPE.Session:
+        return index < globalThis.sessionStorage.length
+          ? globalThis.sessionStorage.key(index)
+          : null;
+      default:
+        throw API_MISUSE;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `storage_key() error encountered. ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Retrieves the number of entries within the module's local storage.
+ * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act
+ * upon.
+ * @returns {number} The number of entries.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // To get the number of elements in storage
+ * // Defaults to STORAGE_TYPE.Local
+ * let length = storage_length();
+ * // To specify type
+ * let length = storage_length(type: STORAGE_TYPE.Session);
+ */
+export function storage_length(type = STORAGE_TYPE.Local) {
+  try {
+    if (!ModuleUtils.is_defined("localStorage")) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    switch (type) {
+      case STORAGE_TYPE.Cookie:
+        return ModuleUtils.cookie_length();
+      case STORAGE_TYPE.Local:
+        return globalThis.localStorage.length;
+      case STORAGE_TYPE.Session:
+        return globalThis.sessionStorage.length;
+      default:
+        throw API_MISUSE;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `storage_length() error encountered. ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Removes a given entry from the module's local storage.
+ * @param {object} params The named parameters.
+ * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
+ * upon.
+ * @param {string} params.key The key to remove.
+ * @returns {void}
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // To remove an element from storage.
+ * // Defaults to STORAGE_TYPE.Local
+ * storage_remove({key: "cool"});
+ * // To specify type
+ * storage_remove({type: STORAGE_TYPE.Session, key: "cool"});
+ */
+export function storage_remove({type = STORAGE_TYPE.Local, key}) {
+  try {
+    if (!ModuleUtils.is_defined("localStorage")) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    json_check_type({type: "string", data: key, should_throw: true});
+    switch (type) {
+      case STORAGE_TYPE.Cookie:
+        ModuleUtils.cookie_remove_item(key);
+        break;
+      case STORAGE_TYPE.Local:
+        globalThis.localStorage.removeItem(key);
+        break;
+      case STORAGE_TYPE.Session:
+        globalThis.sessionStorage.removeItem(key);
+        break;
+      default:
+        throw API_MISUSE;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `storage_remove() error encountered. ${err}`
+    });
+    throw err;
+  }
+}
+
+/**
+ * Sets a key/value pair within the module's local storage.
+ * @param {object} params The named parameters
+ * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
+ * upon.
+ * @param {string} params.value The storage entry.
+ * @param {string} params.key The key to store.
+ * @returns {void}
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // To add an element to storage.
+ * // Defaults to STORAGE_TYPE.Local
+ * storage_set({key: "cool", value: "guy"});
+ * // To specify type
+ * storage_set({type: STORAGE_TYPE.Session, key: "cool", value: "guy"});
+ */
+export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
+  try {
+    if (!ModuleUtils.is_defined("localStorage")) {
+      throw API_UNSUPPORTED_RUNTIME;
+    }
+    json_check_type({type: "string", data: key, should_throw: true});
+    json_check_type({type: "string", data: value, should_throw: true});
+    switch (type) {
+      case STORAGE_TYPE.Cookie:
+        ModuleUtils.cookie_set_item(key, value);
+        break;
+      case STORAGE_TYPE.Local:
+        globalThis.localStorage.setItem(key, value);
+        break;
+      case STORAGE_TYPE.Session:
+        globalThis.sessionStorage.setItem(key, value);
+        break;
+      default:
+        throw API_MISUSE;
+    }
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `storage_set() error encountered. ${err}`
+    });
+    throw err;
+  }
+}
+
+// ===== REFACTOR BELOW ======
 
 // ============================================================================
 // [ASYNC I/O UC IMPLEMENTATION] ==============================================
@@ -1791,8 +2500,6 @@ export function runtime_online() {
 //     }
 //   }
 // }
-
-
 
 // /**
 //  * Creates an asynchronous repeating task on the main thread.
@@ -3137,533 +3844,6 @@ export function runtime_online() {
 //       return new CFetchResult({status: status, data: data});
 //   } catch (err) {
 //     return new CFetchResult({status: 418, error: err});
-//   }
-// }
-
-// // ============================================================================
-// // [NPU UC IMPLEMENTATION] ====================================================
-// // ============================================================================
-
-// /**
-//  * The math formula to execute with the {@link npu_math} call.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} GeodeticDistance
-//  * Distance in meters between two WGS84 points.
-//  * @property {string} GeodeticHeading
-//  * Heading in °N true North 0 - 359.
-//  * @property {string} GeodeticSpeed
-//  * Speed in meters per second between two WGS84 points.
-//  * @property {string} TemperatureCelsiusToFahrenheit
-//  * °F = (°C x 9/5) + 32
-//  * @property {string} TemperatureCelsiusToKelvin
-//  * °K = °C + 273.15
-//  * @property {string} TemperatureFahrenheitToCelsius
-//  * °C = (°F − 32) × 5/9
-//  * @property {string} TemperatureFahrenheitToKelvin
-//  * °K = (°F − 32) × 5/9 + 273.15
-//  * @property {string} TemperatureKelvinToCelsius
-//  * °C = °K − 273.15
-//  * @property {string} TemperatureKelvinToFahrenheit
-//  * °F = (°K − 273.15) × 9/5 + 32
-//  */
-// export const MATH_FORMULA = Object.freeze({
-//   GeodeticDistance: "GeodeticDistance",
-//   GeodeticHeading: "GeodeticHeading",
-//   GeodeticSpeed: "GeodeticSpeed",
-//   TemperatureCelsiusToFahrenheit: "TemperatureCelsiusToFahrenheit",
-//   TemperatureCelsiusToKelvin: "TemperatureCelsiusToKelvin",
-//   TemperatureFahrenheitToCelsius: "TemperatureFahrenheitToCelsius",
-//   TemperatureFahrenheitToKelvin: "TemperatureFahrenheitToKelvin",
-//   TemperatureKelvinToCelsius: "TemperatureKelvinToCelsius",
-//   TemperatureKelvinToFahrenheit: "TemperatureKelvinToFahrenheit"
-// });
-
-// /**
-//  * Calculate the geodetic distance.
-//  * @private
-//  * @param {number} start_latitude
-//  * @param {number} start_longitude
-//  * @param {number} end_latitude
-//  * @param {number} end_longitude
-//  * @returns {number}
-//  */
-// function _geodetic_distance(start_latitude, start_longitude,
-//     end_latitude, end_longitude) {
-//   // Convert degrees to radians
-//   let lat1 = start_latitude * Math.PI / 180.0;
-//   let lon1 = start_longitude * Math.PI / 180.0;
-
-//   let lat2 = end_latitude * Math.PI / 180.0;
-//   let lon2 = end_longitude * Math.PI / 180.0;
-
-//   // radius of earth in metres
-//   let r = 6378100.0;
-
-//   // P
-//   let rho1 = r * Math.cos(lat1);
-//   let z1 = r * Math.sin(lat1);
-//   let x1 = rho1 * Math.cos(lon1);
-//   let y1 = rho1 * Math.sin(lon1);
-
-//   // Q
-//   let rho2 = r * Math.cos(lat2);
-//   let z2 = r * Math.sin(lat2);
-//   let x2 = rho2 * Math.cos(lon2);
-//   let y2 = rho2 * Math.sin(lon2);
-
-//   // Dot product
-//   let dot = x1 * x2 + y1 * y2 + z1 * z2;
-//   let cos_theta = dot / (r * r);
-//   let theta = Math.acos(cos_theta);
-
-//   // Distance in meters
-//   return r * theta;
-// }
-
-// /**
-//  * Calculates the geodetic heading.
-//  * @private
-//  * @param {number} start_latitude
-//  * @param {number} start_longitude
-//  * @param {number} end_latitude
-//  * @param {number} end_longitude
-//  * @returns {number}
-//  */
-// function _geodetic_heading(start_latitude, start_longitude,
-//     end_latitude, end_longitude) {
-//   // Get the initial data from our variables:
-//   let lat1 = start_latitude * (Math.PI / 180.0);
-//   let lon1 = start_longitude * (Math.PI / 180.0);
-//   let lat2 = end_latitude * (Math.PI  / 180.0);
-//   let lon2 = end_longitude * (Math.PI  / 180.0);
-
-//   // Set up our calculations
-//   let y = Math.sin(lon2 - lon1) * Math.cos(lat2);
-//   let x = (Math.cos(lat1) * Math.sin(lat2)) -
-//     (Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1));
-//   let rtnval = Math.atan2(y, x) * (180.0 / Math.PI);
-//   return (rtnval + 360.0) % 360.0;
-// }
-
-// /**
-//  * Calculates the geodetic speed.
-//  * @private
-//  * @param {number} start_milliseconds
-//  * @param {number} start_latitude
-//  * @param {number} start_longitude
-//  * @param {number} end_milliseconds
-//  * @param {number} end_latitude
-//  * @param {number} end_longitude
-//  * @returns {number}
-//  */
-// function _geodetic_speed(start_latitude, start_longitude,
-//     start_milliseconds, end_latitude, end_longitude, end_milliseconds) {
-//   let dist_meters = _geodetic_distance(
-//     start_latitude, start_longitude,
-//     end_latitude, end_longitude
-//   );
-//   let time_s = (end_milliseconds - start_milliseconds) / 1000.0;
-//   return dist_meters / time_s;
-// }
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function npu_compute() {
-//   // TBD: This will hook into rust wasm
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-// /**
-//  * Function to execute the {@link MATH_FORMULA} specified within the named
-//  * parameters to get the calculated answer.
-//  * @param {object} params The named parameters.
-//  * @param {MATH_FORMULA} params.formula The formula to run.
-//  * @param {number[]} params.args The arguments to use with the formula.
-//  * @returns {number} The calculated answer or NaN if division by 0 or sqrt of
-//  * a negative number.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function npu_math({formula, args}) {
-//   json_check_type({type: "string", data: formula, should_throw: true});
-//   json_check_type({type: Array, data: args, should_throw: true});
-//   args.forEach((v) => {
-//     json_check_type({type: "number", data: v, should_throw: true});
-//   });
-//   try {
-//     switch (formula) {
-//       case MATH_FORMULA.GeodeticDistance:
-//         return _geodetic_distance(args[0], args[1], args[2], args[3]);
-//       case MATH_FORMULA.GeodeticHeading:
-//         return _geodetic_heading(args[0], args[1], args[2], args[3]);
-//       case MATH_FORMULA.GeodeticSpeed:
-//         return _geodetic_speed(args[0], args[1], args[2], args[3], args[4],
-//           args[5]);
-//       case MATH_FORMULA.TemperatureCelsiusToFahrenheit:
-//         return (args[0] * 9.0 / 5.0) + 32.0;
-//       case MATH_FORMULA.TemperatureCelsiusToKelvin:
-//         return args[0] + 273.15;
-//       case MATH_FORMULA.TemperatureFahrenheitToCelsius:
-//         return (args[0] - 32.0) * (5.0 / 9.0);
-//       case MATH_FORMULA.TemperatureFahrenheitToKelvin:
-//         return (args[0] - 32.0) * (5.0 / 9.0) + 273.15;
-//       case MATH_FORMULA.TemperatureKelvinToCelsius:
-//         return args[0] - 273.15;
-//       case MATH_FORMULA.TemperatureKelvinToFahrenheit:
-//         return (args[0] - 273.15) * (9.0 / 5.0) + 32.0;
-//     }
-//   } catch (err) {
-//     throw API_MISUSE;
-//   }
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-// // ============================================================================
-// // [STORAGE UC IMPLEMENTATION] ================================================
-// // ============================================================================
-
-// /**
-//  * Static utility class to mirror that of Session / Local storage APIs.
-//  * @private
-//  */
-// class CCookieStorage {
-//   /** @type {number} */
-//   static #expireDays = 365;
-
-//   /** @type {string[]} */
-//   static #keyList = [];
-
-//   /**
-//    * Clears the cookie storage entries.
-//    */
-//   static clear() {
-//     // @ts-ignore Will exist in the browser context
-//     let cookies = globalThis.document.cookie.split(";");
-//     for (let i = 0; i < cookies.length; i++) {
-//       // @ts-ignore Will exist in the browser context
-//       globalThis.document.cookie =
-//         `${cookies[i]}=;expires=Thu, 01 Jan 1970 00:00:00 UTC`;
-//     }
-//     CCookieStorage.initKeyList();
-//   }
-
-//   /**
-//    * Retrieves an entry from cookie storage.
-//    * @param {string} key The key to lookup.
-//    * @returns {string?} The found entry or null if not found.
-//    */
-//   static getItem(key) {
-//     let name = `${key}=`;
-//     // @ts-ignore Will exist in a browser context.
-//     let decodedCookie = decodeURIComponent(globalThis.document.cookie);
-//     let ca = decodedCookie.split(";");
-//     for (let i = 0; i < ca.length; i++) {
-//       let c = ca[i];
-//       while (c.charAt(0) == " ") {
-//         c = c.substring(1);
-//       }
-//       if (c.indexOf(name) == 0) {
-//         return c.substring(name.length, c.length);
-//       }
-//     }
-//     return null;
-//   }
-
-//   /**
-//    * Retrieves the key name at the specified index.
-//    * @param {number} index The key to retrieve from the given index
-//    * @returns {string | null} The key entry or null if index went beyond
-//    * length.
-//    */
-//   static key(index) {
-//     return index < CCookieStorage.#keyList.length
-//       ? CCookieStorage.#keyList[index]
-//       : null;
-//   }
-
-//   /**
-//    * Retrieves the number of entries in cookie storage.
-//    * @readonly
-//    * @type {number}
-//    */
-//   static get length() { return CCookieStorage.#keyList.length; }
-
-//   /**
-//    * Sets an item within cookie storage.
-//    * @param {string} key The key entry in the cooke storage.
-//    * @param {string} value The value to set with the cookie.
-//    * @returns {void}
-//    */
-//   static setItem(key, value) {
-//     const d = new Date();
-//     d.setTime(d.getTime() + (this.#expireDays * 24 * 60 * 60 * 1000));
-//     let expires = `expires=${d.toUTCString()}`;
-//     // @ts-ignore Will exist in the browser context
-//     globalThis.document.cookie = `${key}=${value};${expires};path=/`;
-//     CCookieStorage.initKeyList();
-//   }
-
-//   /**
-//    * Removes an item from cookie storage.
-//    * @param {string} key The key to remove
-//    * @returns {void}
-//    */
-//   static removeItem(key) {
-//     // @ts-ignore Will exist in the browser context
-//     globalThis.document.cookie =
-//       `${key}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
-//     CCookieStorage.initKeyList();
-//   }
-
-//   /**
-//    * Provides the ability to get a list of keys to support the length
-//    * property and key method of the Storage interface.
-//    * @returns {void}
-//    */
-//   static initKeyList() {
-//     CCookieStorage.#keyList = [];
-//     // @ts-ignore Will exist in the browser context
-//     let decodedCookie = decodeURIComponent(globalThis.document.cookie);
-//     let ca = decodedCookie.split(";");
-//     for (let i = 0; i < ca.length; i++) {
-//       let key = ca[i].split("=");
-//       if (!key[0].includes("expires") && !key[0].includes("path")) {
-//         CCookieStorage.#keyList.push((key[0]));
-//       }
-//     }
-//   }
-// }
-
-// /**
-//  * Provides the {@link storage_clear}, {@link storage_get},
-//  * {@link storage_key}, {@link storage_length}, {@link storage_remove}, and
-//  * {@link storage_set} calls.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} Cookie To utilize cookies as the storage method.
-//  * @property {string} Local To utilize local storage which lives once a
-//  * session is closed.
-//  * @property {string} Session To utilize session storage which clears once
-//  * a session is closed.
-//  */
-// export const STORAGE_TYPE = Object.freeze({
-//   Cookie: "cookie",
-//   Local: "local",
-//   Session: "session",
-// });
-
-// /**
-//  * Clears the local storage of the module.
-//  * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act upon.
-//  * @returns {void}
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function storage_clear(type = STORAGE_TYPE.Local) {
-//   if (runtime_is_nodejs() || runtime_is_worker()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   switch (type) {
-//     case STORAGE_TYPE.Cookie:
-//       CCookieStorage.clear();
-//       break;
-//     case STORAGE_TYPE.Local:
-//       globalThis.localStorage.clear();
-//       break;
-//     case STORAGE_TYPE.Session:
-//       globalThis.sessionStorage.clear();
-//       break;
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
-
-// /**
-//  * Gets the value associated with the key from the module's local storage.
-//  * @param {object} params The named parameters.
-//  * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
-//  * upon.
-//  * @param {string} params.key The key to search.
-//  * @returns {string?} The value associated with the key if found.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function storage_get({type = STORAGE_TYPE.Local, key}) {
-//   if (runtime_is_nodejs() || runtime_is_worker()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   json_check_type({type: "string", data: key, should_throw: true});
-//   switch (type) {
-//     case STORAGE_TYPE.Cookie:
-//       return CCookieStorage.getItem(key);
-//     case STORAGE_TYPE.Local:
-//       return globalThis.localStorage.getItem(key);
-//     case STORAGE_TYPE.Session:
-//       return globalThis.sessionStorage.getItem(key);
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
-
-// /**
-//  * Retrieves the key at the specified index.
-//  * @param {object} params The named parameters
-//  * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
-//  * upon.
-//  * @param {number} params.index The key entry to look up.
-//  * @returns {string?} The key at the specified index or null if beyond the
-//  * storage capacity.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function storage_key({type, index}) {
-//   if (runtime_is_nodejs() || runtime_is_worker()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   json_check_type({type: "number", data: index, should_throw: true});
-//   switch (type) {
-//     case STORAGE_TYPE.Cookie:
-//       return CCookieStorage.key(index);
-//     case STORAGE_TYPE.Local:
-//       return index < globalThis.localStorage.length
-//         ? globalThis.localStorage.key(index)
-//         : null;
-//     case STORAGE_TYPE.Session:
-//       return index < globalThis.sessionStorage.length
-//         ? globalThis.sessionStorage.key(index)
-//         : null;
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
-
-// /**
-//  * Retrieves the number of entries within the module's local storage.
-//  * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act
-//  * upon.
-//  * @returns {number} The number of entries.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function storage_length(type = STORAGE_TYPE.Local) {
-//   if (runtime_is_nodejs() || runtime_is_worker()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   switch (type) {
-//     case STORAGE_TYPE.Cookie:
-//       return CCookieStorage.length;
-//     case STORAGE_TYPE.Local:
-//       return globalThis.localStorage.length;
-//     case STORAGE_TYPE.Session:
-//       return globalThis.sessionStorage.length;
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
-
-// /**
-//  * Removes a given entry from the module's local storage.
-//  * @param {object} params The named parameters.
-//  * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
-//  * upon.
-//  * @param {string} params.key The key to remove.
-//  * @returns {void}
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function storage_remove({type = STORAGE_TYPE.Local, key}) {
-//   if (runtime_is_nodejs() || runtime_is_worker()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   json_check_type({type: "string", data: key, should_throw: true});
-//   switch (type) {
-//     case STORAGE_TYPE.Cookie:
-//       CCookieStorage.removeItem(key);
-//       break;
-//     case STORAGE_TYPE.Local:
-//       globalThis.localStorage.removeItem(key);
-//       break;
-//     case STORAGE_TYPE.Session:
-//       globalThis.sessionStorage.removeItem(key);
-//       break;
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
-
-// /**
-//  * Sets a key/value pair within the module's local storage.
-//  * @param {object} params The named parameters
-//  * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
-//  * upon.
-//  * @param {string} params.value The storage entry.
-//  * @param {string} params.key The key to store.
-//  * @returns {void}
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
-//   if (runtime_is_nodejs() || runtime_is_worker()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   json_check_type({type: "string", data: key, should_throw: true});
-//   json_check_type({type: "string", data: value, should_throw: true});
-//   switch (type) {
-//     case STORAGE_TYPE.Cookie:
-//       CCookieStorage.setItem(key, value);
-//       break;
-//     case STORAGE_TYPE.Local:
-//       globalThis.localStorage.setItem(key, value);
-//       break;
-//     case STORAGE_TYPE.Session:
-//       globalThis.sessionStorage.setItem(key, value);
-//       break;
-//     default:
-//       throw API_MISUSE;
 //   }
 // }
 

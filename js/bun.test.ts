@@ -34,6 +34,8 @@ import {
   DEFINED_REQUEST,
   EVENT_REQUEST,
   LOGGER,
+  MATH_FORMULA,
+  STORAGE_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
   // MODULE CLASSES
@@ -57,6 +59,9 @@ import {
   logger_handler,
   logger_level,
   logger_log,
+  // NPU UC FUNCTIONS
+  npu_compute,
+  npu_math,
   // RUNTIME UC FUNCTIONS
   runtime_cpu_count,
   runtime_defined,
@@ -65,6 +70,13 @@ import {
   runtime_hostname,
   runtime_name,
   runtime_online,
+  // STORAGE UC FUNCTIONS
+  storage_clear,
+  storage_get,
+  storage_key,
+  storage_length,
+  storage_remove,
+  storage_set,
 } from "./codemelted.js";
 
 logger_level(LOGGER.Off);
@@ -191,7 +203,25 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 
 describe("DB UC FUNCTIONS VALIDATION", () => {
+  test.skip("db_exist() Test", () => {
+    // TBD
+  });
 
+  test.skip("db_manage() Test", () => {
+    // TBD
+  });
+
+  test.skip("db_query() Test", () => {
+    // TBD
+  });
+
+  test.skip("db_update() Test", () => {
+    // TBD
+  });
+
+  test.skip("db_version() Test", () => {
+    // TBD
+  });
 });
 
 // ============================================================================
@@ -199,7 +229,13 @@ describe("DB UC FUNCTIONS VALIDATION", () => {
 // ============================================================================
 
 describe("DISK UC FUNCTIONS VALIDATION", () => {
+  test.skip("disk_read_file() Test", () => {
+    // TBD
+  });
 
+  test.skip("disk_write_file() Test", () => {
+    // TBD
+  });
 });
 
 // ============================================================================
@@ -434,6 +470,40 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
 });
 
 // ============================================================================
+// [NPU UC FUNCTIONS VALIDATION] ==============================================
+// ============================================================================
+
+describe("NPU UC FUNCTIONS VALIDATION", () => {
+  test.skip("npu_compute() Test", () => {
+    // TBD
+  });
+
+  test("npu_math() Test", () => {
+    // API Violations
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => npu_math()).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => npu_math({formula: 42})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => npu_math({formula: "duh", args: 42})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => npu_math({formula: "duh", args: []})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => npu_math({formula: "duh", args: ["duh"]})).toThrow<SyntaxError>();
+    expect(() => npu_math({formula: "duh", args: [42]})).toThrow<SyntaxError>();
+
+    // Now formula verifications
+    expect(isNaN(npu_math({formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit, args: []}))).toBe(true);
+    expect(npu_math({formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit, args: [0]})).toBe(32);
+    expect(npu_math({formula: MATH_FORMULA.TemperatureCelsiusToKelvin, args: [0]})).toBe(273.15);
+    expect(npu_math({formula: MATH_FORMULA.TemperatureFahrenheitToCelsius, args: [32]})).toBe(0);
+    expect(npu_math({formula: MATH_FORMULA.TemperatureFahrenheitToKelvin, args: [32]})).toBe(273.15);
+    expect(npu_math({formula: MATH_FORMULA.TemperatureKelvinToCelsius, args: [273.15]})).toBe(0);
+    expect(npu_math({formula: MATH_FORMULA.TemperatureKelvinToFahrenheit, args: [273.15]})).toBe(32);
+  });
+});
+
+// ============================================================================
 // [RUNTIME UC FUNCTIONS VALIDATION] ==========================================
 // ============================================================================
 
@@ -509,5 +579,30 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
   test("runtime_online() Test", () => {
     // Unsupported runtime.
     expect(() => runtime_online()).toThrow<SyntaxError>();
+  });
+});
+
+// ============================================================================
+// [STORAGE UC FUNCTIONS VALIDATION] ==========================================
+// ============================================================================
+
+describe("STORAGE UC FUNCTIONS VALIDATION", () => {
+  test("storage_clear() / storage_length() Test", () => {
+    // Storage Use Cases Not Supported on this Runtime
+    expect(() => storage_length(STORAGE_TYPE.Local)).toThrow<SyntaxError>();
+    expect(() => storage_length(STORAGE_TYPE.Session)).toThrow<SyntaxError>();
+    expect(() => storage_length(STORAGE_TYPE.Cookie)).toThrow<SyntaxError>();
+    expect(() => storage_clear(STORAGE_TYPE.Local)).toThrow<SyntaxError>();
+    expect(() => storage_clear(STORAGE_TYPE.Session)).toThrow<SyntaxError>();
+    expect(() => storage_clear(STORAGE_TYPE.Cookie)).toThrow<SyntaxError>();
+  });
+
+  test("storage_get() / storage_key() / storage_remove() / storage_set() Test", () => {
+    // None of these are supported on this runtime.
+    expect(() => storage_set({key: "cool", value: "guy"})).toThrow<SyntaxError>();
+    expect(() => storage_length()).toThrow<SyntaxError>();
+    expect(() => storage_get({key: "cool"})).toThrow<SyntaxError>();
+    expect(() => storage_key({index: 0})).toThrow<SyntaxError>();
+    expect(() => storage_remove({key: "cool"})).toThrow<SyntaxError>();
   });
 });
