@@ -391,12 +391,17 @@ export const MATH_FORMULA = Object.freeze({
  * Provides the current state of the {@link CProtocol.state()} object.
  * @readonly
  * @enum {string}
- * @property {string} Started
- * @property {string} Terminated
+ * @property {string} Started Signifies a {@link CProtocol} object has been
+ * constructed and is running.
+ * @property {string} Terminated Signifies a {@link CProtocol} object has
+ * been terminated and is no longer running.
+ * @property {string} TimerExpired Signifies the {@link CTimerProtocol} has
+ * expired.
  */
 export const PROTOCOL_STATE = Object.freeze({
   Started: "started",
   Terminated: "terminated",
+  TimerExpired: "timer_expired",
 });
 
 /**
@@ -448,7 +453,7 @@ export const PROTOCOL_TYPE = Object.freeze({
  */
 
 // ============================================================================
-// [MODULE PROTOCOL HANDLERS] =================================================
+// [MODULE PROTOCOLS] =========================================================
 // ============================================================================
 
 /**
@@ -471,11 +476,13 @@ export class CProtocol {
    * Helper function to process received data on a protocol.
    * @protected
    * @param {object} params The named parameters for the object.
+   * @param {PROTOCOL_STATE} params.state The current state of the protocol.
    * @param {any} [params.value] The value associated with the result
    * @param {any} [params.error] The error associated with the result
    * @returns {void}
    */
-  on_data_rx({error = null, value = null}) {
+  on_data_rx({state, error = null, value = null}) {
+    this.#state = state;
     this.#rx_handler(this, new CResult({error: error, value: value}));
   }
 
@@ -539,6 +546,60 @@ export class CProtocol {
       });
       throw err;
     }
+  }
+}
+
+/**
+ * Creates an asynchronous timer that fires on the specified interval until
+ * terminated. Created via the {@link async_timer} call.
+ * @extends {CProtocol}
+ */
+export class CTimerProtocol extends CProtocol {
+  /** @type {number} */
+  #timer_id = -1;
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() == PROTOCOL_STATE.Terminated) {
+        throw API_MISUSE;
+      }
+      globalThis.clearInterval(this.#timer_id);
+      this.#timer_id = -1;
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      logger_log({
+        level: LOGGER.Error,
+        data: `CTimerProtocol.terminate() error encountered. ${err}`
+      });
+      throw err;
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {string} id Unique id for the protocol
+   * @param {CProtocolHandler} rx_handler Handler for the protocol.
+   * @param {number} interval How often to fire the timer.
+   */
+  constructor(id, rx_handler, interval) {
+    super(id, rx_handler, PROTOCOL_TYPE.Timer);
+    json_check_type({type: "number", data: interval, should_throw: true});
+    // @ts-ignore node returns an object.
+    this.#timer_id = globalThis.setInterval(() => {
+      try {
+        this.on_data_rx({state: PROTOCOL_STATE.TimerExpired});
+      } catch (err) {
+        logger_log({
+          level: LOGGER.Error,
+          data: `CTimerProtocol received error on CProtocolHandler. ${err}`
+        });
+        throw err;
+      }
+    }, interval);
   }
 }
 
@@ -1062,6 +1123,43 @@ export function async_task({task, data, delay = 0}) {
       level: LOGGER.Error,
       data: `async_task() execution error. ${err}`
     })
+    throw err;
+  }
+}
+
+/**
+ * Creates an asynchronous timer protocol on the main thread.
+ * @param {object} params The named parameters.
+ * @param {string} params.id A unique ID for the timer.
+ * @param {CProtocolHandler} params.task The task to run on the specified
+ * interval.
+ * @param {number} params.interval The interval in milliseconds to repeat
+ * the given task.
+ * @returns {CTimerProtocol} The timer that runs the task on
+ * the specified interval.
+ * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
+ * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
+ * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
+ * violations. You should not try-catch these as they serve as asserts
+ * to the developer.
+ * @example
+ * // Schedule a repeating task on a quarter second interval.
+ * let counter = 0;
+ * let timer = async_timer({
+ *   task: (protocol, result) => { counter += 1; },
+ *   interval: 250,
+ * });
+ * await async_sleep(1000);
+ * console.log("counter = ", counter); // Should be roughly 4
+ */
+export function async_timer({id, task, interval}) {
+  try {
+    return new CTimerProtocol(id, task, interval);
+  } catch (err) {
+    logger_log({
+      level: LOGGER.Error,
+      data: `async_timer() encountered an error. ${err}`
+    });
     throw err;
   }
 }
@@ -2403,67 +2501,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 // ============================================================================
 
 // /**
-//  * The task to run as part of the [asyncTimer] function call.
-//  * @callback CTimerCB
-//  * @returns {void}
-//  */
-
-// /**
-//  * The result object from the {@link async_timer} call to allow for stopping
-//  * the running timer in the future.
-//  */
-// export class CTimerResult {
-//   /** @type {number} */
-//   #id = -1;
-
-//   /**
-//    * Determines if the timer is still running.
-//    * @returns {boolean} true if still running, false otherwise.
-//    */
-//   is_running() { return this.#id !== -1; }
-
-//   /**
-//    * Stops the running timer.
-//    * @returns {void}
-//    * @throws {API_MISUSE} When called on an already terminated
-//    * timer.
-//    */
-//   stop() {
-//     try {
-//       if (!this.is_running()) {
-//         throw API_MISUSE;
-//       }
-//       clearInterval(this.#id);
-//       this.#id = -1;
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CTimerResult::stop() error occurred. ${err}`
-//       });
-//       throw err;
-//     }
-//   }
-
-//   /**
-//    * Constructor for the object.
-//    * @param {CTimerCB} task The task to run.
-//    * @param {number} interval The interval to repeat.
-//    */
-//   constructor(task, interval) {
-//     this.#id = setInterval(() => {
-//       try {
-//         task();
-//       } catch (err) {
-//         logger_log({
-//           level: LOGGER.Error,
-//           data: `CTimerResult::task() error occurred. ${err}`
-//         });
-//       }
-//     }, interval);
-//   }
-// }
-
-// /**
 //  * {@link async_worker}
 //  */
 // class CWorkerProtocol extends CProtocol {
@@ -2537,41 +2574,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //       this.on_data_rx({value: evt});
 //     }
 //   }
-// }
-
-// /**
-//  * Creates an asynchronous repeating task on the main thread.
-//  * @param {object} params The named parameters.
-//  * @param {CTimerCB} params.task The task to run on the specified
-//  * interval.
-//  * @param {number} params.interval The interval in milliseconds to repeat
-//  * the given task.
-//  * @returns {CTimerResult} The timer that runs the task on
-//  * the specified interval.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // Schedule a repeating task on a quarter second interval.
-//  * let counter = 0;
-//  * let timer = async_timer({
-//  *   task: () => { counter += 1; },
-//  *   interval: 250,
-//  * });
-//  * await async_sleep(1000);
-//  * console.log("counter = ", counter); // Should be roughly 4
-//  */
-// export function async_timer({task, interval}) {
-//   json_check_type({
-//     type: "function",
-//     data: task,
-//     count: 0,
-//     should_throw: true
-//   });
-//   json_check_type({type: "number", data: interval, should_throw: true});
-//   return new CTimerResult(task, interval);
 // }
 
 // /**

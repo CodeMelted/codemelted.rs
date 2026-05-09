@@ -40,6 +40,7 @@ import {
   PROTOCOL_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
+  CTimerProtocol,
   // MODULE CLASSES
   CLogRecord,
   CResult,
@@ -47,6 +48,7 @@ import {
   // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
+  async_timer,
   // JSON UC FUNCTIONS
   json_atob,
   json_btoa,
@@ -209,6 +211,33 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
     expect(future.has_completed()).toBe(false);
     let result = (await future.result()).value();
     expect(result === 42).toBe(true);
+  });
+
+  test("async_timer() Test", async () => {
+    // API Violations
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_timer()).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_timer({id: 42, task: 42, interval: "duh"})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_timer({id: "timer", task: 42, interval: "duh"})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_timer({id: "timer", task: () => {}, interval: "duh"})).toThrow<SyntaxError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_timer({id: "timer", task: (p, r) => {}, interval: "duh"})).toThrow<SyntaxError>();
+
+    // Now lets see this thing work
+    let counter = 0;
+    let task = (_protocol: CProtocol, _result: CResult) => {
+      counter += 1;
+    };
+    let timer_protocol = async_timer({id: "timer", task: task, interval: 250});
+    expect(timer_protocol.state()).toBe(PROTOCOL_STATE.Started);
+    await async_sleep(1100);
+    expect(timer_protocol.state()).toBe(PROTOCOL_STATE.TimerExpired);
+    timer_protocol.terminate();
+    expect(timer_protocol.state()).toBe(PROTOCOL_STATE.Terminated);
+    expect(counter >= 4).toBe(true);
   });
 });
 

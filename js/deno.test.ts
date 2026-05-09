@@ -46,6 +46,7 @@ import {
   PROTOCOL_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
+  CTimerProtocol,
   // MODULE CLASSES
   CLogRecord,
   CResult,
@@ -53,6 +54,7 @@ import {
   // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
+  async_timer,
   // JSON UC FUNCTIONS
   json_atob,
   json_btoa,
@@ -233,6 +235,34 @@ Deno.test("async_task() Test", async () => {
   assertEquals(false, future.has_completed());
   let result = (await future.result()).value();
   assertEquals(42, result);
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("async_timer() Test", async () => {
+  // API Violations
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_timer());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_timer({id: 42, task: 42, interval: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_timer({id: "timer", task: 42, interval: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_timer({id: "timer", task: () => {}, interval: "duh"}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_timer({id: "timer", task: (p, r) => {}, interval: "duh"}));
+
+  // Now lets see this thing work
+  let counter = 0;
+  let task = (protocol: CProtocol, result: CResult) => {
+    counter += 1;
+  };
+  let timer_protocol = async_timer({id: "timer", task: task, interval: 250});
+  assertEquals(timer_protocol.state(), PROTOCOL_STATE.Started);
+  await async_sleep(1100);
+  assertEquals(timer_protocol.state(), PROTOCOL_STATE.TimerExpired);
+  timer_protocol.terminate();
+  assertEquals(timer_protocol.state(), PROTOCOL_STATE.Terminated);
+  assertEquals(counter >= 4, true);
 });
 
 // ============================================================================

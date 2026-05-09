@@ -41,6 +41,7 @@ import {
   PROTOCOL_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
+  CTimerProtocol,
   // MODULE CLASSES
   CLogRecord,
   CResult,
@@ -48,6 +49,7 @@ import {
   // ASYNC I/O UC FUNCTIONS
   async_sleep,
   async_task,
+  async_timer,
   // JSON UC FUNCTIONS
   json_atob,
   json_btoa,
@@ -204,6 +206,28 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
     assert.isFalse(future.has_completed());
     let result = (await future.result()).value();
     assert.isTrue(result === 42);
+  });
+
+  it("async_timer() Test", async () => {
+    // API Violations
+    assert.throws(() => async_timer());
+    assert.throws(() => async_timer({id: 42, task: 42, interval: "duh"}));
+    assert.throws(() => async_timer({id: "timer", task: 42, interval: "duh"}));
+    assert.throws(() => async_timer({id: "timer", task: () => {}, interval: "duh"}));
+    assert.throws(() => async_timer({id: "timer", task: (p, r) => {}, interval: "duh"}));
+
+    // Now lets see this thing work
+    let counter = 0;
+    let task = (protocol, result) => {
+      counter += 1;
+    };
+    let timer_protocol = async_timer({id: "timer", task: task, interval: 250});
+    assert.equal(timer_protocol.state(), PROTOCOL_STATE.Started);
+    await async_sleep(1100);
+    assert.equal(timer_protocol.state(), PROTOCOL_STATE.TimerExpired);
+    timer_protocol.terminate();
+    assert.equal(timer_protocol.state(), PROTOCOL_STATE.Terminated);
+    assert.equal(counter >= 4, true);
   });
 });
 
