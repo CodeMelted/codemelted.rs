@@ -36,6 +36,8 @@ import {
   LOGGER,
   MATH_FORMULA,
   STORAGE_TYPE,
+  PROTOCOL_STATE,
+  PROTOCOL_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
   // MODULE CLASSES
@@ -100,38 +102,36 @@ describe("MODULE SYNTAX ERRORS VALIDATION", (t) => {
 
 describe("MODULE PROTOCOL CLASSES VALIDATION", (t) => {
   test("CProtocol Object Test", async () => {
-    let obj = new CProtocol("test_id", (proto, data) => {});
-    assert.equal("test_id", obj.id());
-
+    let obj = null;
+    // Validate failed construction
     try {
-      await obj.is_running();
+      obj = new CProtocol(null, null, null);
       assert.fail("Should Throw SyntaxError");
     } catch (err) {
-      assert.equal(true, err instanceof SyntaxError);
+      assert.equal(err instanceof SyntaxError, true);
     }
 
     try {
-      await obj.post_message();
+      obj = new CProtocol("id", null, null);
       assert.fail("Should Throw SyntaxError");
     } catch (err) {
-      assert.equal(true, err instanceof SyntaxError);
+      assert.equal(err instanceof SyntaxError, true);
     }
 
+    try {
+      obj = new CProtocol("id", (proto, data) => {}, null);
+      assert.fail("Should Throw SyntaxError");
+    } catch (err) {
+      assert.equal(err instanceof SyntaxError, true);
+    }
+
+    // Ensure proper base class construct
+    obj = new CProtocol("test_id", (proto, data) => {}, PROTOCOL_TYPE.Timer);
+    assert.equal(obj.id(), "test_id");
+    assert.equal(obj.state(), PROTOCOL_STATE.Started);
+    assert.equal(obj.type(), PROTOCOL_TYPE.Timer);
+    assert.throws(() => obj.post_message());
     assert.throws(() => obj.terminate(), SyntaxError);
-
-    try {
-      obj = new CProtocol(null, null);
-      assert.fail("Should Throw SyntaxError");
-    } catch (err) {
-      assert.equal(true, err instanceof SyntaxError);
-    }
-
-    try {
-      obj = new CProtocol("id", null);
-      assert.fail("Should Throw SyntaxError");
-    } catch (err) {
-      assert.equal(true, err instanceof SyntaxError);
-    }
   });
 });
 

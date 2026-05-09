@@ -387,6 +387,30 @@ export const MATH_FORMULA = Object.freeze({
   TemperatureKelvinToFahrenheit: "TemperatureKelvinToFahrenheit"
 });
 
+/**
+ * Provides the current state of the {@link CProtocol.state()} object.
+ * @readonly
+ * @enum {string}
+ * @property {string} Started
+ * @property {string} Terminated
+ */
+export const PROTOCOL_STATE = Object.freeze({
+  Started: "started",
+  Terminated: "terminated",
+});
+
+/**
+ * Provides the type of protocol for the {@link CProtocol.type()} object.
+ * @readonly
+ * @enum {string}
+ * @property {string} Timer
+ * @property {string} Worker
+ */
+export const PROTOCOL_TYPE = Object.freeze({
+  Timer: "timer",
+  Worker: "worker",
+});
+
 // ============================================================================
 // [MODULE CALLBACKS] =========================================================
 // ============================================================================
@@ -410,8 +434,8 @@ export const MATH_FORMULA = Object.freeze({
 /**
  * Supports the {@link CProtocol} for data received as part of a
  * protocol.
- * @callback CProtocolDataRxHandler
- * @param {CProtocol} handler Reference to the handler receiving the
+ * @callback CProtocolHandler
+ * @param {CProtocol} protocol Reference to the protocol receiving the
  * data.
  * @param {CResult} data The data received as part of protocol.
  */
@@ -436,8 +460,12 @@ export const MATH_FORMULA = Object.freeze({
 export class CProtocol {
   /** @type {string} */
   #id = "";
-  /** @type {CProtocolDataRxHandler} */
+  /** @type {CProtocolHandler} */
   #rx_handler;
+  /** @type {PROTOCOL_STATE} */
+  #state;
+  /** @type {PROTOCOL_TYPE} */
+  #type;
 
   /**
    * Helper function to process received data on a protocol.
@@ -452,23 +480,29 @@ export class CProtocol {
   }
 
   /**
-   * The identification of the protocol.
+   * A unique ID for the protocol.
    * @returns {string}
    */
   id() { return this.#id; }
 
   /**
-   * Determines if the protocol is running or has been terminated.
-   * @returns {boolean}
+   * Identifies the current state of the protocol.
+   * @returns {PROTOCOL_STATE}
    */
-  is_running() { throw API_NOT_IMPLEMENTED; }
+  state() { return this.#state; }
+
+  /**
+   * Identifies the type of protocol.
+   * @returns {PROTOCOL_TYPE}
+   */
+  type() { return this.#type; }
 
   /**
    * Posts a given message to the given implementing protocol.
-   * @param {any} data
-   * @returns {Promise<CResult>} The result of the request.
+   * @param {any} [data] The data to post for the given protocol.
+   * @returns {void}
    */
-  async post_message(data) { throw API_NOT_IMPLEMENTED; }
+  post_message(data) { throw API_NOT_IMPLEMENTED; }
 
   /**
    * Terminates the given protocol.
@@ -480,10 +514,11 @@ export class CProtocol {
    * Constructor for the class.
    * @param {string} id Identification for the protocol for debugging
    * purposes.
-   * @param {CProtocolDataRxHandler} rx_handler The callback for received
+   * @param {CProtocolHandler} rx_handler The callback for received
    * data.
+   * @param {PROTOCOL_TYPE} type The type of protocol.
    */
-  constructor(id, rx_handler) {
+  constructor(id, rx_handler, type) {
     try {
       json_check_type({type: "string", data: id, should_throw: true});
       json_check_type({
@@ -492,8 +527,11 @@ export class CProtocol {
         count: 2,
         should_throw: true
       });
+      json_check_type({type: "string", data: type, should_throw: true});
       this.#id = id;
       this.#rx_handler = rx_handler;
+      this.#state = PROTOCOL_STATE.Started;
+      this.#type = type;
     } catch (err) {
       logger_log({
         level: LOGGER.Error,

@@ -36,6 +36,8 @@ import {
   LOGGER,
   MATH_FORMULA,
   STORAGE_TYPE,
+  PROTOCOL_STATE,
+  PROTOCOL_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
   // MODULE CLASSES
@@ -99,28 +101,40 @@ describe("MODULE COMMON DATA VALIDATION", () => {
 // ============================================================================
 
 describe("MODULE PROTOCOL CLASSES VALIDATION", () => {
-  test("CProtocol Object Test", async () => {
-    let obj = new CProtocol("test_id", (proto, data) => {});
+  test("CProtocol Object Test", () => {
+    // Validate failed construction
+    let obj = null;
+    try {
+      // @ts-ignore TypeScript won't let this happen, JavaScript would
+      obj = new CProtocol(null, null, null);
+      expect.fail("Should Throw SyntaxError");
+    } catch (err) {
+      expect(err instanceof SyntaxError).toBe(true);
+    }
+
+    try {
+      // @ts-ignore TypeScript won't let this happen, JavaScript would
+      obj = new CProtocol("id", null, null);
+      expect.fail("Should Throw SyntaxError");
+    } catch (err) {
+      expect(err instanceof SyntaxError).toBe(true);
+    }
+
+    try {
+      // @ts-ignore TypeScript won't let this happen, JavaScript would
+      obj = new CProtocol("id", (proto, data) => {}, null);
+      expect.fail("Should Throw SyntaxError");
+    } catch (err) {
+      expect(err instanceof SyntaxError).toBe(true);
+    }
+
+    // Ensure proper base class construct
+    obj = new CProtocol("test_id", (proto, data) => {}, PROTOCOL_TYPE.Timer);
     expect(obj.id()).toBe("test_id");
-    expect(() => obj.is_running()).toThrow<SyntaxError>();
-    await expect(() => obj.post_message("")).toThrow<SyntaxError>();
-    expect(() => obj.terminate()).toThrow<SyntaxError>();
-
-    try {
-      // @ts-ignore JavaScript can fail this. TypeScript type checks :)
-      obj = new CProtocol(null, null);
-      expect.fail("Should throw SyntaxError");
-    } catch (err) {
-      expect(err instanceof SyntaxError).toBe(true);
-    }
-
-    try {
-      // @ts-ignore JavaScript can fail this. TypeScript type checks :)
-      obj = new CProtocol("id", null);
-      expect.fail("Should throw SyntaxError");
-    } catch (err) {
-      expect(err instanceof SyntaxError).toBe(true);
-    }
+    expect(obj.state(), PROTOCOL_STATE.Started);
+    expect(obj.type(), PROTOCOL_TYPE.Timer);
+    expect(() => obj.post_message()).toThrow<SyntaxError>();
+    expect(() => obj.terminate(), SyntaxError).toThrow<SyntaxError>();
   });
 });
 

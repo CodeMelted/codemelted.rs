@@ -42,6 +42,8 @@ import {
   LOGGER,
   MATH_FORMULA,
   STORAGE_TYPE,
+  PROTOCOL_STATE,
+  PROTOCOL_TYPE,
   // MODULE PROTOCOL CLASSES
   CProtocol,
   // MODULE CLASSES
@@ -120,26 +122,40 @@ Deno.test("API_XXX (SyntaxError) Test", () => {
 // ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("CProtocol Object Test", async () => {
-  let obj = new CProtocol("test_id", (proto, data) => {});
-  assertEquals("test_id", obj.id());
-  await asyncAssertThrows(() => obj.is_running(), SyntaxError);
-  await asyncAssertThrows(() => obj.post_message(""), SyntaxError);
-  await asyncAssertThrows(() => obj.terminate(), SyntaxError);
-
+Deno.test("CProtocol Object Test", () => {
+  // Validate failed construction
+  let obj = null;
   try {
     // @ts-ignore JavaScript can fail this. TypeScript type checks :)
-    obj = new CProtocol(null, null);
+    obj = new CProtocol(null, null, null);
+    fail("Should Throw SyntaxError");
   } catch (err) {
-    assert(err != null);
+    assertEquals(err instanceof SyntaxError, true);
   }
 
   try {
     // @ts-ignore JavaScript can fail this. TypeScript type checks :)
-    obj = new CProtocol("id", null);
+    obj = new CProtocol("id", null, null);
+    fail("Should Throw SyntaxError");
   } catch (err) {
-    assert(err != null);
+    assertEquals(err instanceof SyntaxError, true);
   }
+
+  try {
+    // @ts-ignore JavaScript can fail this. TypeScript type checks :)
+    obj = new CProtocol("id", (proto, data) => {}, null);
+    fail("Should Throw SyntaxError");
+  } catch (err) {
+    assertEquals(err instanceof SyntaxError, true);
+  }
+
+  // Ensure proper base class construct
+  obj = new CProtocol("test_id", (proto, data) => {}, PROTOCOL_TYPE.Timer);
+  assertEquals(obj.id(), "test_id");
+  assertEquals(obj.state(), PROTOCOL_STATE.Started);
+  assertEquals(obj.type(), PROTOCOL_TYPE.Timer);
+  assertThrows(() => obj.post_message());
+  assertThrows(() => obj.terminate(), SyntaxError);
 });
 
 // ============================================================================
