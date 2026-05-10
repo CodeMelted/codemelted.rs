@@ -201,46 +201,79 @@
  */
 
 // ============================================================================
-// [MODULE SYNTAX ERRORS] =====================================================
+// [MODULE ERROR] =============================================================
 // ============================================================================
 
 /**
- * Error thrown when the module is not used as intended providing the
- * error for a developer to fix their code.
- * @constant {SyntaxError} API_MISUSE
+ *
  */
-export const API_MISUSE = new SyntaxError(
-  "codemelted.js module logic was not used properly!"
-);
+export class CModuleError extends Error {
+  /**
+   * Identifies a misuse of the module API.
+   * @readonly
+   * @type {string}
+   */
+  static MISUSE = "codemelted.js module logic was not used properly!";
 
-/**
- * Identifies a piece of logic that is not implemented within the
- * codemelted.js module. This identifies future implementation logic or
- * represents a base class element not utilized in a child.
- * @constant {SyntaxError} API_NOT_IMPLEMENTED
- */
-export const API_NOT_IMPLEMENTED = new SyntaxError(
-  "NOT IMPLEMENTED LOGIC. DO NOT CALL!"
-);
+  /**
+   * Identifies a not implemented feature of the module.
+   * @readonly
+   * @type {string}
+   */
+  static NOT_IMPLEMENTED = "NOT IMPLEMENTED LOGIC. DO NOT CALL!";
 
-/**
- * Error thrown when the parameters specified to a codemelted.js module
- * function are not of an expected type.
- * @constant {SyntaxError} API_TYPE_VIOLATION
- */
-export const API_TYPE_VIOLATION = new SyntaxError(
-  "codemelted.js module encountered a parameter of an unexpected type!"
-);
+  /**
+   * Identifies an unexpected parameter type with a module function call.
+   * @readonly
+   * @type {string}
+   */
+  static TYPE_VIOLATION = "codemelted.js module encountered a parameter " +
+    "of an unexpected type!";
 
-/**
- * Error thrown when the codemelted.js module function is called on an
- * unsupported runtime.
- * @constant {SyntaxError} API_UNSUPPORTED_RUNTIME
- */
-export const API_UNSUPPORTED_RUNTIME = new SyntaxError(
-  "codemelted.js module function called on an unsupported " +
-  "JavaScript runtime!"
-);
+  /**
+   * Identifies an unsupported JavaScript runtime was called with a public
+   * function.
+   * @readonly
+   * @type {string}
+   */
+  static UNSUPPORTED_RUNTIME =  "codemelted.js module function called " +
+    "on an unsupported JavaScript runtime!";
+
+  /**
+   * Utility function to chain together a stack trace of module API failures.
+   * @param {any} err The error caught to log and rethrow.
+   */
+  static handle_error(err) {
+    console.error("codemelted.js module error encountered.", err);
+  }
+
+  /**
+   * Provides custom printout of the module error providing the name, message,
+   * and stack_trace to chain together the call failure sequence.
+   * @override
+   * @returns {string}
+   */
+  toString() {
+    let name = this.name ? this.name : "UnknownError";
+    let msg = this.message ? this.message : "unknown message";
+    let stack_trace = this.stack ? this.stack : "no stack trace";
+    return `${name}: ${msg}\n${stack_trace}`;
+  }
+
+  /**
+   * Constructor for the module error.
+   * @param {string} message The module API violation.
+   * @param {any} [cause] Capture a chaining of failure detections to create
+   * a stack trace for debugging.
+   */
+  constructor(message, cause) {
+    super(message, cause ? {cause: cause} : undefined);
+    if ("captureStackTrace" in Error) {
+      // @ts-ignore IF statement above protects us from this.
+      Error.captureStackTrace(this, CModuleError);
+    }
+  }
+}
 
 // ============================================================================
 // [MODULE TYPEDEFS] ==========================================================
@@ -391,6 +424,13 @@ export const MATH_FORMULA = Object.freeze({
  * Provides the current state of the {@link CProtocol.state()} object.
  * @readonly
  * @enum {string}
+ * @property {string} Error Signifies an onerror listener received an
+ * ErrorEvent.
+ * @property {string} Message Signifies a onmessage listener received a
+ * MessageEvent that contains received data via its data property
+ * @property {string} MessageError Signifies a onmessageerror listener
+ * received MessageEvent containing an error accessible via its data
+ * property.
  * @property {string} Started Signifies a {@link CProtocol} object has been
  * constructed and is running.
  * @property {string} Terminated Signifies a {@link CProtocol} object has
@@ -399,6 +439,9 @@ export const MATH_FORMULA = Object.freeze({
  * expired.
  */
 export const PROTOCOL_STATE = Object.freeze({
+  Message: "message",
+  MessageError: "message_error",
+  Error: "error",
   Started: "started",
   Terminated: "terminated",
   TimerExpired: "timer_expired",
@@ -408,8 +451,8 @@ export const PROTOCOL_STATE = Object.freeze({
  * Provides the type of protocol for the {@link CProtocol.type()} object.
  * @readonly
  * @enum {string}
- * @property {string} Timer
- * @property {string} Worker
+ * @property {string} Timer Identifies a {@link CTimerProtocol} object.
+ * @property {string} Worker Identifies a {@link CWorkerProtocol} object.
  */
 export const PROTOCOL_TYPE = Object.freeze({
   Timer: "timer",
@@ -509,13 +552,17 @@ export class CProtocol {
    * @param {any} [data] The data to post for the given protocol.
    * @returns {void}
    */
-  post_message(data) { throw API_NOT_IMPLEMENTED; }
+  post_message(data) {
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+  }
 
   /**
    * Terminates the given protocol.
    * @returns {void}
    */
-  terminate() { throw API_NOT_IMPLEMENTED; }
+  terminate() {
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+  }
 
   /**
    * Constructor for the class.
@@ -540,11 +587,8 @@ export class CProtocol {
       this.#state = PROTOCOL_STATE.Started;
       this.#type = type;
     } catch (err) {
-      logger_log({
-        level: LOGGER.Error,
-        data: `CProtocol improperly constructed ${err}`
-      });
-      throw err;
+      CModuleError.handle_error(err);
+      throw new CModuleError("CProtocol construction error.", err);
     }
   }
 }
@@ -565,17 +609,14 @@ export class CTimerProtocol extends CProtocol {
   terminate() {
     try {
       if (this.state() == PROTOCOL_STATE.Terminated) {
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
       }
       globalThis.clearInterval(this.#timer_id);
       this.#timer_id = -1;
       this.on_data_rx({state: PROTOCOL_STATE.Terminated});
     } catch (err) {
-      logger_log({
-        level: LOGGER.Error,
-        data: `CTimerProtocol.terminate() error encountered. ${err}`
-      });
-      throw err;
+      CModuleError.handle_error(err);
+      throw new CModuleError("CTimerProtocol terminate error.", err);
     }
   }
 
@@ -587,19 +628,104 @@ export class CTimerProtocol extends CProtocol {
    */
   constructor(id, rx_handler, interval) {
     super(id, rx_handler, PROTOCOL_TYPE.Timer);
-    json_check_type({type: "number", data: interval, should_throw: true});
-    // @ts-ignore node returns an object.
-    this.#timer_id = globalThis.setInterval(() => {
-      try {
-        this.on_data_rx({state: PROTOCOL_STATE.TimerExpired});
-      } catch (err) {
-        logger_log({
-          level: LOGGER.Error,
-          data: `CTimerProtocol received error on CProtocolHandler. ${err}`
-        });
-        throw err;
+    try {
+      json_check_type({type: "number", data: interval, should_throw: true});
+      // @ts-ignore node returns an object.
+      this.#timer_id = globalThis.setInterval(() => {
+        try {
+          this.on_data_rx({state: PROTOCOL_STATE.TimerExpired});
+        } catch (err) {
+          CModuleError.handle_error(err);
+          throw new CModuleError("CTimerProtocol on_data_rx() error.", err);
+        }
+      }, interval);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CTimerProtocol construction error.", err);
+    }
+  }
+}
+
+/**
+ * Constructs a dedicated background worker off the JavaScript runtime main
+ * thread. Object constructed via the {@link async_worker} call.
+ * @extends {CProtocol}
+ */
+export class CWorkerProtocol extends CProtocol {
+  /** @type {Worker} */
+  #worker;
+
+  /**
+   * Data specific to how you construct your dedicated background worker.
+   * @override
+   * @param {any} data The data to send to the background worker.
+   * @returns {void}
+   */
+  post_message(data) {
+    try {
+      if (this.state() == PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
       }
-    }, interval);
+      this.#worker.postMessage(data);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol.post_message() error.", err);
+    }
+  }
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() == PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#worker.terminate();
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol.terminate() error.", err);
+    }
+  }
+
+  /**
+   * Constructs a worker protocol for asynchronous processing off the main
+   * runtime thread.
+   * @param {string} url A unique ID for the protocol.
+   * @param {CProtocolHandler} rx_handler The receive handler for data and
+   * state changes
+   * @param {object} options Options for further configuration of the worker.
+   */
+  constructor(url, rx_handler, options = {type: "module"}) {
+    super(`Worker-${url}`, rx_handler, PROTOCOL_TYPE.Worker);
+    try {
+      if (!ModuleUtils.is_defined("Worker")) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      json_check_type({type: "string", data: url, should_throw: true});
+      json_check_type({type: "object", data: options, should_throw: true});
+      this.#worker = new globalThis.Worker(
+        new URL(url, import.meta.url).href,
+        options
+      );
+      this.#worker.onerror = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.Error, error: evt});
+        evt.preventDefault();
+      }
+      this.#worker.onmessageerror = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: evt});
+        evt.preventDefault();
+      }
+      this.#worker.onmessage = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+        evt.preventDefault();
+      }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol construction error.", err);
+    }
   }
 }
 
@@ -649,11 +775,8 @@ export class CLogRecord {
       this.#level = level;
       this.#data = data;
     } catch (err) {
-      logger_log({
-        level: LOGGER.Error,
-        data: `CLogRecord construction error ${err}`
-      });
-      throw err;
+      CModuleError.handle_error(err);
+      throw new CModuleError("CLogRecord construction error.", err);
     }
   }
 }
@@ -708,16 +831,13 @@ export class CResult {
   constructor({value = null, error = null} = {}) {
     try {
       if (value && error) {
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
       }
       this.#value = value;
       this.#error = error;
     } catch (err) {
-      logger_log({
-        level: LOGGER.Error,
-        data: `CResult was improperly constructed. ${err}`
-      });
-      throw err;
+      CModuleError.handle_error(err);
+      throw new CModuleError("CLogRecord construction error.", err);
     }
   }
 }
@@ -765,20 +885,13 @@ export class CFuture {
             resolve(new CResult({value: answer}));
           }, delay);
         } catch (err) {
-          logger_log({
-            level: LOGGER.Error,
-            data: `CTaskResult error occurred. ${err}`
-          });
           this.#has_task_completed = true;
           resolve(new CResult({error: err}));
         }
       });
     } catch (err) {
-      logger_log({
-        level: LOGGER.Error,
-        data: `CFuture construction failure. ${err}`
-      });
-      throw err;
+      CModuleError.handle_error(err);
+      throw new CModuleError("CFuture construction error.", err);
     }
   }
 }
@@ -825,7 +938,7 @@ class ModuleUtils {
   static cookie_clear() {
     // @ts-ignore "document" will exist in browser context
     if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     // @ts-ignore Will exist in the browser context
     let cookies = globalThis.document.cookie.split(";");
@@ -845,7 +958,7 @@ class ModuleUtils {
   static cookie_get_item(key) {
     // @ts-ignore "document" will exist in browser context
     if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     let name = `${key}=`;
     // @ts-ignore Will exist in a browser context.
@@ -870,7 +983,7 @@ class ModuleUtils {
   static cookie_length() {
     // @ts-ignore "document" will exist in browser context
     if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     return ModuleUtils.key_list.length;
   }
@@ -884,7 +997,7 @@ class ModuleUtils {
   static cookie_key(index) {
     // @ts-ignore "document" will exist in browser context
     if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     return index < ModuleUtils.key_list.length
       ? ModuleUtils.key_list[index]
@@ -899,7 +1012,7 @@ class ModuleUtils {
   static cookie_remove_item(key) {
     // @ts-ignore "document" will exist in browser context
     if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     // @ts-ignore Will exist in the browser context
     globalThis.document.cookie =
@@ -919,7 +1032,7 @@ class ModuleUtils {
   static cookie_set_item(key, value) {
     // @ts-ignore "document" will exist in browser context
     if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     const d = new Date();
     d.setTime(d.getTime() + (ModuleUtils.expire_days * 24 * 60 * 60 * 1000));
@@ -937,7 +1050,7 @@ class ModuleUtils {
   static cookie_init_key_list() {
     // @ts-ignore "document" will exist in browser context
     if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     ModuleUtils.key_list = [];
     // @ts-ignore Will exist in the browser context
@@ -1063,11 +1176,8 @@ class ModuleUtils {
  * in milliseconds.
  * @param {number} delay Time is milliseconds to delay the task.
  * @returns {Promise<void>} The promise to await on for the delay.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // From within an async function, sleep 2 seconds.
  * await codemelted.async_sleep(2000);
@@ -1081,11 +1191,8 @@ export function async_sleep(delay) {
       }, delay);
     });
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `async_sleep() error encountered: ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("async_sleep() error.", err);
   }
 }
 
@@ -1098,11 +1205,8 @@ export function async_sleep(delay) {
  * future.
  * @returns {CFuture} A future promise with the result of the
  * task.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Schedule a task for getting a future result and write it to the
  * // console.
@@ -1119,11 +1223,8 @@ export function async_task({task, data, delay = 0}) {
     let future = new CFuture(task, data, delay);
     return future;
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `async_task() execution error. ${err}`
-    })
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("async_task() error.", err);
   }
 }
 
@@ -1137,11 +1238,8 @@ export function async_task({task, data, delay = 0}) {
  * the given task.
  * @returns {CTimerProtocol} The timer that runs the task on
  * the specified interval.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Schedule a repeating task on a quarter second interval.
  * let counter = 0;
@@ -1151,16 +1249,50 @@ export function async_task({task, data, delay = 0}) {
  * });
  * await async_sleep(1000);
  * console.log("counter = ", counter); // Should be roughly 4
+ * timer.terminate();
  */
 export function async_timer({id, task, interval}) {
   try {
     return new CTimerProtocol(id, task, interval);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `async_timer() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("async_timer() error.", err);
+  }
+}
+
+/**
+ * Constructs a dedicated background worker off the main JS runtime thread.
+ * @param {object} params The named parameters.
+ * @param {string} params.url The URL of the dedicated worker.
+ * @param {CProtocolHandler} params.rx_handler The receive handler to receive
+ * events back from the dedicated worker.
+ * @param {object} [params.options={type: "module"}] Options to specify with
+ * the construction of the worker. Defaults to ES6 module type worker.
+ * @returns {CWorkerProtocol}
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
+ * @example
+ * // Construct a dedicated background worker
+ * let rx_handler = (protocol, result) => {
+ *   // Do your processing.
+ * };
+ * let protocol = async_worker({
+ *  url: "path/to/worker.js",
+ *  rx_handler: rx_handler,
+ * });
+ *
+ * // During processing
+ * protocol.post_message({data: 42});
+ *
+ * // Terminate it
+ * protocol.terminate();
+ */
+export function async_worker({url, rx_handler, options = {type: "module"}}) {
+  try {
+    return new CWorkerProtocol(url, rx_handler, options);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("async_worker() error.", err);
   }
 }
 
@@ -1170,116 +1302,86 @@ export function async_timer({id, task, interval}) {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
 export function db_exists() {
   // TODO: IndexDB for browser / worker
   try {
-    throw API_NOT_IMPLEMENTED;
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `db_exists() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("db_exists() error.", err);
   }
 }
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
 export function db_manage() {
   // TODO: IndexDB for browser / worker
   try {
-    throw API_NOT_IMPLEMENTED;
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `db_manage() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("db_manage() error.", err);
   }
 }
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
 export function db_query() {
   // TODO: IndexDB for browser / worker
   try {
-    throw API_NOT_IMPLEMENTED;
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `db_query() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("db_query() error.", err);
   }
 }
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
 export function db_update() {
   // TODO: IndexDB for browser / worker
   try {
-    throw API_NOT_IMPLEMENTED;
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `db_update() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("db_update() error.", err);
   }
 }
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
 export function db_version() {
   // TODO: IndexDB for browser / worker
   try {
-    throw API_NOT_IMPLEMENTED;
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `db_version() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("db_version() error.", err);
   }
 }
 
@@ -1289,11 +1391,8 @@ export function db_version() {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1301,23 +1400,17 @@ export function disk_read_file() {
   // TODO: Be able to prompt for a filename via various methods and read
   //       entire file to disk.
   try {
-    throw API_NOT_IMPLEMENTED;
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `disk_read_file() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("disk_read_file() error.", err);
   }
 }
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1325,13 +1418,10 @@ export function disk_write_file() {
   // TODO: Be able to prompt for a filename via various methods and write
   //       entire file to disk.
   try {
-    throw API_NOT_IMPLEMENTED;
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `disk_write_file() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("disk_write_file() error.", err);
   }
 }
 
@@ -1344,11 +1434,8 @@ export function disk_write_file() {
  * @param {string} data Base64 encoded string.
  * @returns {string | null} The decoded string or null if the encoding
  * failed.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Encode base64
  * let encoded = json_btoa("Hello World!");
@@ -1360,12 +1447,9 @@ export function json_atob(data) {
     json_check_type({type: "string", data: data, should_throw: true});
     return globalThis.atob(data);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `json_atob() encountered an error. ${err}`
-    });
-    if (err instanceof SyntaxError) {
-      throw err;
+    if (err instanceof CModuleError) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("json_atob() error.", err);
     }
     return null;
   }
@@ -1378,11 +1462,8 @@ export function json_atob(data) {
  * @param {string} data The binary string.
  * @returns {string | null} The base64 encoded string or null if the
  * encoding failed.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Encode base64
  * let encoded = json_btoa("Hello World!");
@@ -1394,12 +1475,9 @@ export function json_btoa(data) {
     json_check_type({type: "string", data: data, should_throw: true});
     return globalThis.btoa(data);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `json_btoa() encountered an error. ${err}`
-    });
-    if (err instanceof SyntaxError) {
-      throw err;
+    if (err instanceof CModuleError) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("json_btoa() error.", err);
     }
     return null;
   }
@@ -1416,11 +1494,8 @@ export function json_btoa(data) {
  * @param {boolean} [params.should_throw=false] Whether to throw instead of
  * returning a value upon failure.
  * @returns {boolean} true if it meets the expectations, false otherwise.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Check if data is an expected type
  * let is_expected = json_check_type({type: "string", data: some_data});
@@ -1459,15 +1534,12 @@ export function json_check_type({
       ? isExpectedType && data.length === count
       : isExpectedType;
     if (should_throw && !valid) {
-      throw API_TYPE_VIOLATION;
+      throw new CModuleError(CModuleError.TYPE_VIOLATION);
     }
     return valid;
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `json_check_type() execution error ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("json_check_type() error.", err);
   }
 }
 
@@ -1520,11 +1592,8 @@ export function json_create_object(data) {
  * @param {boolean} [params.should_throw=false] Whether to throw instead
  * of returning a value upon failure.
  * @returns {boolean} true if property was found, false otherwise.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Check if object has field
  * if (json_has_key({data: obj, key: "id"})) {
@@ -1540,15 +1609,12 @@ export function json_has_key({data, key, should_throw = false}) {
     json_check_type({type: "string", data: key, should_throw: true});
     var hasKey = Object.hasOwn(data, key);
     if (should_throw && !hasKey) {
-      throw API_TYPE_VIOLATION;
+      throw new CModuleError(CModuleError.TYPE_VIOLATION);
     }
     return hasKey;
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `json_has_key() execution error ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("json_has_key() error.", err);
   }
 }
 
@@ -1605,11 +1671,8 @@ export function json_stringify(data) {
  * @param {boolean} [params.should_throw=false] Whether to throw instead
  * of returning a value upon failure.
  * @returns {boolean} true if valid, false otherwise.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Test to see if it is a valid URL
  * if (json_valid_url({data: "https://google.com"})) {
@@ -1630,15 +1693,12 @@ export function json_valid_url({data, should_throw = false}) {
     }
     let valid = json_check_type({type: URL, data: url});
     if (should_throw && !valid) {
-      throw API_TYPE_VIOLATION;
+      throw new CModuleError(CModuleError.TYPE_VIOLATION);
     }
     return valid;
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `json_valid_url encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("json_valid_url() error.", err);
   }
 }
 
@@ -1650,11 +1710,8 @@ export function json_valid_url({data, should_throw = false}) {
  * Sets the logger handler for post logging processing.
  * @param {CLogHandler} [handler] The handler to utilize.
  * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To set a logger for post logging processing
  * function log_handler(record) {
@@ -1679,11 +1736,8 @@ export function logger_handler(handler) {
       ModuleUtils.logger_handler = handler;
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `logger_handler() error ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_handler() error.", err);
   }
 }
 
@@ -1692,11 +1746,8 @@ export function logger_handler(handler) {
  * @param {object | undefined} [level] The optional log level to set
  * based on the {@link codemelted LOGGER} object configuration.
  * @returns {string} The string representation of the log level.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To determine the current logger level
  * let logger_level = logger_level();
@@ -1718,11 +1769,8 @@ export function logger_level(level) {
     // @ts-ignore Property exists on the struct.
     return ModuleUtils.logger_level.label;
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `logger_level() execution error ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_level() error.", err);
   }
 }
 
@@ -1732,11 +1780,8 @@ export function logger_level(level) {
  * @param {LOGGER} params.level The log level for the logged event.
  * @param {any} params.data The data to log with the event.
  * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // When the logger is on and you want to log an event
  * // It will only log if the log level is set to log those events.
@@ -1748,7 +1793,7 @@ export function logger_log({level, data}) {
     json_has_key({data: level, key: "level", should_throw: true});
     json_has_key({data: level, key: "label", should_throw: true});
     if (!data) {
-      throw API_TYPE_VIOLATION;
+      throw new CModuleError(CModuleError.TYPE_VIOLATION);
     }
 
     // Check to see if our logging is on or off.
@@ -1794,8 +1839,8 @@ export function logger_log({level, data}) {
       }
     }
   } catch (err) {
-    console.error(`logger_log() execution error ${err}`, err);
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_log() error.", err);
   }
 }
 
@@ -1805,11 +1850,8 @@ export function logger_log({level, data}) {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1817,13 +1859,10 @@ export function npu_compute() {
   // TBD: This will implement complicated items and utilize JSON for the API
   //      to setup requests.
   try {
-    throw API_NOT_IMPLEMENTED;
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `npu_compute() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("npu_compute() error.", err);
   }
 }
 
@@ -1835,11 +1874,8 @@ export function npu_compute() {
  * @param {number[]} params.args The arguments to use with the formula.
  * @returns {number} The calculated answer or NaN if division by 0 or sqrt of
  * a negative number.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Convert from Celsius to Fahrenheit
  * let f = npu_math({
@@ -1877,14 +1913,11 @@ export function npu_math({formula, args}) {
       case MATH_FORMULA.TemperatureKelvinToFahrenheit:
         return (args[0] - 273.15) * (9.0 / 5.0) + 32.0;
       default:
-        throw API_NOT_IMPLEMENTED;
+        throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `npu_math() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("npu_math() error.", err);
   }
 }
 
@@ -1926,6 +1959,8 @@ export function runtime_cpu_count() {
  * @param {object} [params.obj = globalThis] The object to check the property.
  * Defaults to globalThis to facilitate determining JavaScript runtimes.
  * @returns {boolean} true if property exists on object, false otherwise.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Determine if Bun V8 runtime based on globalThis
  * let is_bun = runtime_defined({request: DEFINED_REQUEST.Bun});
@@ -2004,14 +2039,11 @@ export function runtime_defined({
       case DEFINED_REQUEST.WorkerRT:
         return ModuleUtils.is_defined("WorkerGlobalScope");
       default:
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `runtime_defined() usage error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_defined() error.", err);
   }
 }
 
@@ -2021,11 +2053,8 @@ export function runtime_defined({
  * lookup.
  * @returns {string?} The value associated with the name or null if not
  * found.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Find a search parameter based on a search redirect
  * let search_param = runtime_environment("search");
@@ -2040,13 +2069,10 @@ export function runtime_environment(name) {
       let params = new URLSearchParams(globalThis.location.search);
       return params.get(name);
     }
-    throw API_UNSUPPORTED_RUNTIME;
+    throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `runtime_environment() encountered error. ${err}`
-    })
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_environment() error.", err);
   }
 }
 
@@ -2061,11 +2087,8 @@ export function runtime_environment(name) {
  * @param {EventTarget} [params.target=globalThis] The element to attach an
  * event handler to if it supports it.
  * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Listen for browser messages.
  * let message_handler = (evt) => {
@@ -2103,25 +2126,19 @@ export function runtime_event({
     } else if (request === "remove") {
       target.removeEventListener(type, listener);
     } else {
-      throw API_MISUSE;
+      throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `runtime_event() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_event() error.", err);
   }
 }
 
 /**
  * Determines the hostname of the host operating system.
  * @returns {string} The hostname of the computer.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To get the hostname of the browser platform
  * let hostname = runtime_hostname();
@@ -2132,13 +2149,10 @@ export function runtime_hostname() {
       // @ts-ignore Property exists in a browser runtime.
       return globalThis.location.hostname;
     }
-    throw API_UNSUPPORTED_RUNTIME;
+    throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `runtime_hostname() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_hostname() error.", err);
   }
 }
 
@@ -2188,11 +2202,8 @@ export function runtime_name() {
 /**
  * Determines if the web app has access to the Internet.
  * @returns {boolean} true if path to Internet available, false otherwise.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // Determine if the web page has Internet access (useful for PWAs)
  * if (!runtime_online()) {
@@ -2207,13 +2218,10 @@ export function runtime_online() {
       // @ts-ignore Property exists in a browser runtime.
       return globalThis.navigator.onLine;
     }
-    throw API_UNSUPPORTED_RUNTIME;
+    throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `runtime_online() encountered an error. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_online() error.", err);
   }
 }
 
@@ -2225,11 +2233,8 @@ export function runtime_online() {
  * Clears the local storage of the module.
  * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act upon.
  * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To clear all elements in the specified storage type
  * // Defaults to STORAGE_TYPE.Local
@@ -2240,27 +2245,26 @@ export function runtime_online() {
 export function storage_clear(type = STORAGE_TYPE.Local) {
   try {
     if (!ModuleUtils.is_defined("localStorage")) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     switch (type) {
       case STORAGE_TYPE.Cookie:
         ModuleUtils.cookie_clear();
         break;
       case STORAGE_TYPE.Local:
+        // @ts-ignore Will exist in browser context
         globalThis.localStorage.clear();
         break;
       case STORAGE_TYPE.Session:
+        // @ts-ignore Will exist in browser context
         globalThis.sessionStorage.clear();
         break;
       default:
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `storage_clear() error encountered. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("storage_clear() error.", err);
   }
 }
 
@@ -2271,11 +2275,8 @@ export function storage_clear(type = STORAGE_TYPE.Local) {
  * upon.
  * @param {string} params.key The key to search.
  * @returns {string?} The value associated with the key if found.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To get an element from storage. Either string or null if not found
  * // Defaults to STORAGE_TYPE.Local
@@ -2286,25 +2287,24 @@ export function storage_clear(type = STORAGE_TYPE.Local) {
 export function storage_get({type = STORAGE_TYPE.Local, key}) {
   try {
     if (!ModuleUtils.is_defined("localStorage")) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: key, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
         return ModuleUtils.cookie_get_item(key);
       case STORAGE_TYPE.Local:
+        // @ts-ignore Will exist in browser context
         return globalThis.localStorage.getItem(key);
       case STORAGE_TYPE.Session:
+        // @ts-ignore Will exist in browser context
         return globalThis.sessionStorage.getItem(key);
       default:
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `storage_get() error encountered. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("storage_get() error.", err);
   }
 }
 
@@ -2316,11 +2316,8 @@ export function storage_get({type = STORAGE_TYPE.Local, key}) {
  * @param {number} params.index The key entry to look up.
  * @returns {string?} The key at the specified index or null if beyond the
  * storage capacity.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To get a key at an index. Either string or null if not found
  * // Defaults to STORAGE_TYPE.Local
@@ -2331,29 +2328,30 @@ export function storage_get({type = STORAGE_TYPE.Local, key}) {
 export function storage_key({type = STORAGE_TYPE.Local, index}) {
   try {
     if (!ModuleUtils.is_defined("localStorage")) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "number", data: index, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
         return ModuleUtils.cookie_key(index);
       case STORAGE_TYPE.Local:
+        // @ts-ignore Will exist in browser context
         return index < globalThis.localStorage.length
+          // @ts-ignore Will exist in browser context
           ? globalThis.localStorage.key(index)
           : null;
       case STORAGE_TYPE.Session:
+        // @ts-ignore Will exist in browser context
         return index < globalThis.sessionStorage.length
+          // @ts-ignore Will exist in browser context
           ? globalThis.sessionStorage.key(index)
           : null;
       default:
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `storage_key() error encountered. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("storage_key() error.", err);
   }
 }
 
@@ -2362,11 +2360,8 @@ export function storage_key({type = STORAGE_TYPE.Local, index}) {
  * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act
  * upon.
  * @returns {number} The number of entries.
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To get the number of elements in storage
  * // Defaults to STORAGE_TYPE.Local
@@ -2377,24 +2372,23 @@ export function storage_key({type = STORAGE_TYPE.Local, index}) {
 export function storage_length(type = STORAGE_TYPE.Local) {
   try {
     if (!ModuleUtils.is_defined("localStorage")) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     switch (type) {
       case STORAGE_TYPE.Cookie:
         return ModuleUtils.cookie_length();
       case STORAGE_TYPE.Local:
+        // @ts-ignore Will exist in browser context
         return globalThis.localStorage.length;
       case STORAGE_TYPE.Session:
+        // @ts-ignore Will exist in browser context
         return globalThis.sessionStorage.length;
       default:
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `storage_length() error encountered. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("storage_length() error.", err);
   }
 }
 
@@ -2405,11 +2399,8 @@ export function storage_length(type = STORAGE_TYPE.Local) {
  * upon.
  * @param {string} params.key The key to remove.
  * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To remove an element from storage.
  * // Defaults to STORAGE_TYPE.Local
@@ -2420,7 +2411,7 @@ export function storage_length(type = STORAGE_TYPE.Local) {
 export function storage_remove({type = STORAGE_TYPE.Local, key}) {
   try {
     if (!ModuleUtils.is_defined("localStorage")) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: key, should_throw: true});
     switch (type) {
@@ -2428,20 +2419,19 @@ export function storage_remove({type = STORAGE_TYPE.Local, key}) {
         ModuleUtils.cookie_remove_item(key);
         break;
       case STORAGE_TYPE.Local:
+        // @ts-ignore Will exist in browser context
         globalThis.localStorage.removeItem(key);
         break;
       case STORAGE_TYPE.Session:
+        // @ts-ignore Will exist in browser context
         globalThis.sessionStorage.removeItem(key);
         break;
       default:
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `storage_remove() error encountered. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("storage_remove() error.", err);
   }
 }
 
@@ -2453,11 +2443,8 @@ export function storage_remove({type = STORAGE_TYPE.Local, key}) {
  * @param {string} params.value The storage entry.
  * @param {string} params.key The key to store.
  * @returns {void}
- * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
- * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
- * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
- * violations. You should not try-catch these as they serve as asserts
- * to the developer.
+ * @throws {CModuleError} codemelted.js module API violation. You should not
+ * try-catch these as they serve as asserts to the developer.
  * @example
  * // To add an element to storage.
  * // Defaults to STORAGE_TYPE.Local
@@ -2468,7 +2455,7 @@ export function storage_remove({type = STORAGE_TYPE.Local, key}) {
 export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
   try {
     if (!ModuleUtils.is_defined("localStorage")) {
-      throw API_UNSUPPORTED_RUNTIME;
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: key, should_throw: true});
     json_check_type({type: "string", data: value, should_throw: true});
@@ -2477,119 +2464,23 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
         ModuleUtils.cookie_set_item(key, value);
         break;
       case STORAGE_TYPE.Local:
+        // @ts-ignore Will exist in browser context
         globalThis.localStorage.setItem(key, value);
         break;
       case STORAGE_TYPE.Session:
+        // @ts-ignore Will exist in browser context
         globalThis.sessionStorage.setItem(key, value);
         break;
       default:
-        throw API_MISUSE;
+        throw new CModuleError(CModuleError.MISUSE);
     }
   } catch (err) {
-    logger_log({
-      level: LOGGER.Error,
-      data: `storage_set() error encountered. ${err}`
-    });
-    throw err;
+    CModuleError.handle_error(err);
+    throw new CModuleError("storage_set() error.", err);
   }
 }
 
 // ===== REFACTOR BELOW ======
-
-// ============================================================================
-// [ASYNC I/O UC IMPLEMENTATION] ==============================================
-// ============================================================================
-
-// /**
-//  * {@link async_worker}
-//  */
-// class CWorkerProtocol extends CProtocol {
-//   /** @type {Worker} */
-//   #worker;
-
-//   /**
-//    * @inheritdoc
-//    * @returns {boolean}
-//    */
-//   is_running() { return this.#worker != null && this.#worker != undefined; }
-
-//   /**
-//    * Posts data to the given worker for background processing.
-//    * @param {any} data Data specific to the background worker.
-//    * @returns {Promise<CResult>} The result of the request.
-//    */
-//   async post_message(data) {
-//     try {
-//       if (!this.is_running()) {
-//         throw API_MISUSE;
-//       }
-//       this.#worker.postMessage(data);
-//       return new CResult();
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CWorkerProtocol::post_message() error occurred. ${err}`
-//       });
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * Terminates the background worker.
-//    * @returns {void}
-//    */
-//   terminate() {
-//     try {
-//       if (!this.is_running()) {
-//         throw API_MISUSE;
-//       }
-//       this.#worker.terminate();
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CWorkerProtocol::post_message() error occurred. ${err}`
-//       });
-//     }
-//   }
-
-//   /**
-//    * Constructor for the background worker.
-//    * @param {string} url The url to the background worker.
-//    * @param {CProtocolDataRxHandler} rx_handler The callback for received data
-//    * from the background worker.
-//    * @param {object} options Options specific to constructing a background
-//    * worker.
-//    */
-//   constructor(url, rx_handler, options = {}) {
-//     super(`Worker-${url}`, rx_handler);
-//     json_valid_url({data: url, should_throw: true});
-//     this.#worker = new globalThis.Worker(url, options);
-//     this.#worker.onerror = (evt) => {
-//       this.on_data_rx({error: evt});
-//     }
-//     this.#worker.onmessageerror = (evt) => {
-//       this.on_data_rx({error: evt});
-//     }
-//     this.#worker.onmessage = (evt) => {
-//       this.on_data_rx({value: evt});
-//     }
-//   }
-// }
-
-// /**
-//  * <mark>IN DEVELOPMENT! DON'T USE!!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function async_worker() {
-//   throw API_NOT_IMPLEMENTED;
-// }
-
 
 // // ============================================================================
 // // [HW UC IMPLEMENTATION] =====================================================
@@ -3142,11 +3033,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 
 // /**
 //  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -3157,11 +3045,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 
 // /**
 //  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -3178,11 +3063,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * watch for geolocation position updates.
 //  * @return {COrientationProtocol} The protocol that handles
 //  * device orientation changes until terminated.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -3199,11 +3081,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * @returns {Promise<CSerialPortProtocol?>} The requested
 //  * connected serial port or null if request was canceled or could not be
 //  * connected.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // Determine if serial port processing is supported.
 //  * const supported = hw_serial_ports_supported();
@@ -3230,11 +3109,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 
 // /**
 //  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  */
 // export function hw_request_usb() {
 //   // TODO: Develop actual protocol against CProtocol
@@ -3800,11 +3676,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * @param {string} params.url Where to send the beacon.
 //  * @param {any | null} [params.data] The data to send with the beacon.
 //  * @returns {boolean} true if queued up by user agent, false otherwise.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -3827,11 +3700,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * server. {@link CBroadcastChannelProtocol},
 //  * {@link CEventSourceProtocol},
 //  * {@link CWebSocketProtocol}
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -3859,11 +3729,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * @param {object} params.options The data to configure / go along with
 //  * the request. See the attached URL for detailed
 //  * @returns {Promise<CFetchResult>} The result of the request.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -4128,11 +3995,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //    * sound file for playback. Once constructed it can only work with that
 //    * type of data.
 //    * @returns {void}
-//    * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//    * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//    * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//    * violations. You should not try-catch these as they serve as asserts
-//    * to the developer.
+//    * @throws {CModuleError} codemelted.js module API violation. You should not
+//    * try-catch these as they serve as asserts to the developer.
 //    */
 //   load(type, data) {
 //     json_check_type({type: "string", data: data, should_throw: true});
@@ -4290,11 +4154,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 
 //   /**
 //    * Constructor for the class.
-//    * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//    * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//    * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//    * violations. You should not try-catch these as they serve as asserts
-//    * to the developer.
+//    * @throws {CModuleError} codemelted.js module API violation. You should not
+//    * try-catch these as they serve as asserts to the developer.
 //    */
 //   constructor() {
 //     if (!runtime_is_browser()) {
@@ -4637,9 +4498,7 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * in a :root definition.
 //  * @property {string} Define Defines the custom HTMLElements for defining a
 //  * codemelted SPA / PWA user interface.
-//  * @property {string} ElementById Executes a window.getElementById call but
-//  * will throw an {@link API_MISUSE} if the specified id is not found since it
-//  * is assumed to be found.
+//  * @property {string} ElementById Executes a window.getElementById.
 //  */
 // export const WIDGET_REQUEST = Object.freeze({
 //   CssVariable: "CssVariable",
@@ -4669,11 +4528,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * on the browser window.
 //  * @returns {Promise<CResult>} Reflecting success or failure of the given
 //  * request.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -4795,11 +4651,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * @param {string} [params.height] The optional height to set of the dialog
 //  * either by percentage or pixel.
 //  * @returns {Promise<CResult>} The returned value from the dialog.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -5120,11 +4973,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * @param {number} [params.height=600] The height of a popup window.
 //  * Defaulted  to 600.0 when not set.
 //  * @returns {Window | null} Reference to the newly opened browser window.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -5234,11 +5084,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * different aspects to request information about.
 //  * @returns {number | string} Number for all requests except
 //  * ScreenOrientationType request.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -5319,11 +5166,8 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * on the request. {@link WIDGET_REQUEST.CssVariable} string value or empty
 //  * string of the queried variable, {@link WIDGET_REQUEST.Define} undefined,
 //  * and {@link WIDGET_REQUEST.ElementById} the HTMLElement of the queried ID.
-//  * @throws {SyntaxError} Reflecting either {@link API_MISUSE},
-//  * {@link API_NOT_IMPLEMENTED}, {@link API_TYPE_VIOLATION}, or
-//  * {@link API_UNSUPPORTED_RUNTIME} codemelted.js module API
-//  * violations. You should not try-catch these as they serve as asserts
-//  * to the developer.
+//  * @throws {CModuleError} codemelted.js module API violation. You should not
+//  * try-catch these as they serve as asserts to the developer.
 //  */
 // export function ui_widget({request, data}) {
 //   // Check if we are in a supported runtime or not.

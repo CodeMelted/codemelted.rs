@@ -32,10 +32,7 @@ import {
 } from "jsr:@std/assert";
 import {
   // MODULE SYNTAX ERRORS
-  API_MISUSE,
-  API_NOT_IMPLEMENTED,
-  API_TYPE_VIOLATION,
-  API_UNSUPPORTED_RUNTIME,
+  CModuleError,
   // MODULE TYPEDEFS
   DEFINED_REQUEST,
   EVENT_REQUEST,
@@ -47,6 +44,7 @@ import {
   // MODULE PROTOCOL CLASSES
   CProtocol,
   CTimerProtocol,
+  CWorkerProtocol,
   // MODULE CLASSES
   CLogRecord,
   CResult,
@@ -55,6 +53,7 @@ import {
   async_sleep,
   async_task,
   async_timer,
+  async_worker,
   // JSON UC FUNCTIONS
   json_atob,
   json_btoa,
@@ -112,11 +111,12 @@ async function asyncAssertThrows(fn: Function, ex: any) {
 // ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("API_XXX (SyntaxError) Test", () => {
-  assertEquals(true, API_MISUSE instanceof SyntaxError);
-  assertEquals(true, API_NOT_IMPLEMENTED instanceof SyntaxError);
-  assertEquals(true, API_TYPE_VIOLATION instanceof SyntaxError);
-  assertEquals(true, API_UNSUPPORTED_RUNTIME instanceof SyntaxError);
+Deno.test("API_XXX (CModuleError) Test", () => {
+  try {
+    throw new CModuleError("test");
+  } catch (err: any) {
+    assertEquals(err.toString().length > 0, true);
+  }
 });
 
 // ============================================================================
@@ -130,25 +130,25 @@ Deno.test("CProtocol Object Test", () => {
   try {
     // @ts-ignore JavaScript can fail this. TypeScript type checks :)
     obj = new CProtocol(null, null, null);
-    fail("Should Throw SyntaxError");
+    fail("Should Throw CModuleError");
   } catch (err) {
-    assertEquals(err instanceof SyntaxError, true);
+    assertEquals(err instanceof CModuleError, true);
   }
 
   try {
     // @ts-ignore JavaScript can fail this. TypeScript type checks :)
     obj = new CProtocol("id", null, null);
-    fail("Should Throw SyntaxError");
+    fail("Should Throw CModuleError");
   } catch (err) {
-    assertEquals(err instanceof SyntaxError, true);
+    assertEquals(err instanceof CModuleError, true);
   }
 
   try {
     // @ts-ignore JavaScript can fail this. TypeScript type checks :)
     obj = new CProtocol("id", (proto, data) => {}, null);
-    fail("Should Throw SyntaxError");
+    fail("Should Throw CModuleError");
   } catch (err) {
-    assertEquals(err instanceof SyntaxError, true);
+    assertEquals(err instanceof CModuleError, true);
   }
 
   // Ensure proper base class construct
@@ -157,7 +157,7 @@ Deno.test("CProtocol Object Test", () => {
   assertEquals(obj.state(), PROTOCOL_STATE.Started);
   assertEquals(obj.type(), PROTOCOL_TYPE.Timer);
   assertThrows(() => obj.post_message());
-  assertThrows(() => obj.terminate(), SyntaxError);
+  assertThrows(() => obj.terminate(), CModuleError);
 });
 
 // ============================================================================
@@ -197,7 +197,7 @@ Deno.test("CResult Object Test", () => {
   // Validate invalid state
   try {
     new CResult({value: 42, error: "Oh no"});
-    fail("should throw SyntaxError");
+    fail("should throw CModuleError");
   } catch (err) {
     assert(err != null);
   }
@@ -218,7 +218,7 @@ Deno.test("async_sleep() Test", async () => {
   await asyncAssertThrows(
     // @ts-ignore "Checking JavaScript API type checking"
     async () => { async_sleep("duh"); },
-    SyntaxError
+    CModuleError
   );
 });
 
@@ -263,6 +263,55 @@ Deno.test("async_timer() Test", async () => {
   timer_protocol.terminate();
   assertEquals(timer_protocol.state(), PROTOCOL_STATE.Terminated);
   assertEquals(counter >= 4, true);
+});
+
+// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
+Deno.test("async_worker() Test", async () => {
+  // API Failures
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_worker());
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_worker({url: 42, rx_handler: 42, options: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_worker({url: "worker.test.js", rx_handler: 42, options: 42}));
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_worker({url: "worker.test.js", rx_handler: (p, r) => {}, options: 42}));
+
+  // Now lets hook this up and demo it.
+  // It will also go through a series of worker tests as part of the last
+  // post
+
+  // Setup our test conditions
+  let test_post_message_rx = false;
+  let test_on_message_error_rx = false;
+  let test_on_error_rx = false;
+  let test_terminated_rx = false;
+  let rx_handler = (protocol: CProtocol, result: CResult) => {
+    if (protocol.state() === PROTOCOL_STATE.Message) {
+      test_post_message_rx = true;
+    } else if (protocol.state() === PROTOCOL_STATE.Error) {
+      test_on_error_rx = true;
+    } else if (protocol.state() === PROTOCOL_STATE.MessageError) {
+      test_on_message_error_rx = true;
+    } else if (protocol.state() === PROTOCOL_STATE.Terminated) {
+      test_terminated_rx = true;
+    }
+  };
+
+  // Go do some communication.
+  let worker = async_worker({url: "worker.test.js", rx_handler: rx_handler});
+  worker.post_message("test_post_message");
+  await async_sleep(250);
+  worker.post_message("test_on_error");
+  await async_sleep(250);
+  worker.terminate();
+  await async_sleep(250);
+
+  // See if we got our expected messages
+  assertEquals(test_post_message_rx, true);
+  assertEquals(test_on_error_rx, true);
+  assertEquals(test_on_message_error_rx, false);
+  assertEquals(test_terminated_rx, true);
 });
 
 // ============================================================================

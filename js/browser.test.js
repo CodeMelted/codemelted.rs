@@ -26,11 +26,8 @@
 import {assert} from "https://unpkg.com/chai@6.2.2/index.js";
 import "https://unpkg.com/mocha@11.7.5/mocha.js";
 import {
-  // MODULE SYNTAX ERRORS
-  API_MISUSE,
-  API_NOT_IMPLEMENTED,
-  API_TYPE_VIOLATION,
-  API_UNSUPPORTED_RUNTIME,
+  // MODULE ERRORS
+  CModuleError,
   // MODULE TYPEDEFS
   DEFINED_REQUEST,
   EVENT_REQUEST,
@@ -42,6 +39,7 @@ import {
   // MODULE PROTOCOL CLASSES
   CProtocol,
   CTimerProtocol,
+  CWorkerProtocol,
   // MODULE CLASSES
   CLogRecord,
   CResult,
@@ -50,6 +48,7 @@ import {
   async_sleep,
   async_task,
   async_timer,
+  async_worker,
   // JSON UC FUNCTIONS
   json_atob,
   json_btoa,
@@ -92,11 +91,12 @@ mocha.setup('bdd');
 // ============================================================================
 
 describe("MODULE SYNTAX ERRORS VALIDATION", () => {
-  it("API_XXX (SyntaxError) Test", () => {
-    assert.isTrue(API_MISUSE instanceof SyntaxError);
-    assert.isTrue(API_NOT_IMPLEMENTED instanceof SyntaxError);
-    assert.isTrue(API_TYPE_VIOLATION instanceof SyntaxError);
-    assert.isTrue(API_UNSUPPORTED_RUNTIME instanceof SyntaxError);
+  it("API_XXX (CModuleError) Test", () => {
+    try {
+      throw new CModuleError("test");
+    } catch (err) {
+      assert.isTrue(err.toString().length > 0);
+    }
   });
 });
 
@@ -110,23 +110,23 @@ describe("MODULE PROTOCOL CLASSES VALIDATION", () => {
     // Validate failed construction
     try {
       obj = new CProtocol(null, null, null);
-      assert.fail("Should Throw SyntaxError");
+      assert.fail("Should Throw CModuleError");
     } catch (err) {
-      assert.isTrue(err instanceof SyntaxError);
+      assert.isTrue(err instanceof CModuleError);
     }
 
     try {
       obj = new CProtocol("id", null, null);
-      assert.fail("Should Throw SyntaxError");
+      assert.fail("Should Throw CModuleError");
     } catch (err) {
-      assert.isTrue(err instanceof SyntaxError);
+      assert.isTrue(err instanceof CModuleError);
     }
 
     try {
       obj = new CProtocol("id", (proto, data) => {}, null);
-      assert.fail("Should Throw SyntaxError");
+      assert.fail("Should Throw CModuleError");
     } catch (err) {
-      assert.isTrue(err instanceof SyntaxError);
+      assert.isTrue(err instanceof CModuleError);
     }
 
     // Ensure proper base class construct
@@ -135,7 +135,7 @@ describe("MODULE PROTOCOL CLASSES VALIDATION", () => {
     assert.equal(obj.state(), PROTOCOL_STATE.Started);
     assert.equal(obj.type(), PROTOCOL_TYPE.Timer);
     assert.throws(() => obj.post_message());
-    assert.throws(() => obj.terminate(), SyntaxError);
+    assert.throws(() => obj.terminate(), CModuleError);
   });
 });
 
@@ -176,7 +176,7 @@ describe("MODULE CLASSES VALIDATION", () => {
     // Validate invalid state
     try {
       new CResult({value: 42, error: "Oh no"});
-      assert.fail("should throw SyntaxError");
+      assert.fail("should throw CModuleError");
     } catch (err) {
       assert.isNotNull(err);
     }
@@ -228,6 +228,50 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
     timer_protocol.terminate();
     assert.equal(timer_protocol.state(), PROTOCOL_STATE.Terminated);
     assert.equal(counter >= 4, true);
+  });
+
+  it("async_worker() Test", async () => {
+    // API Failures
+    assert.throws(() => async_worker());
+    assert.throws(() => async_worker({url: 42, rx_handler: 42, options: 42}));
+    assert.throws(() => async_worker({url: "worker.test.js", rx_handler: 42, options: 42}));
+    assert.throws(() => async_worker({url: "worker.test.js", rx_handler: (p, r) => {}, options: 42}));
+
+    // Now lets hook this up and demo it.
+    // It will also go through a series of worker tests as part of the last
+    // post
+
+    // Setup our test conditions
+    let test_post_message_rx = false;
+    let test_on_message_error_rx = false;
+    let test_on_error_rx = false;
+    let test_terminated_rx = false;
+    let rx_handler = (protocol, result) => {
+      if (protocol.state() === PROTOCOL_STATE.Message) {
+        test_post_message_rx = true;
+      } else if (protocol.state() === PROTOCOL_STATE.Error) {
+        test_on_error_rx = true;
+      } else if (protocol.state() === PROTOCOL_STATE.MessageError) {
+        test_on_message_error_rx = true;
+      } else if (protocol.state() === PROTOCOL_STATE.Terminated) {
+        test_terminated_rx = true;
+      }
+    };
+
+    // Go do some communication.
+    let worker = async_worker({url: "./worker.test.js", rx_handler: rx_handler});
+    worker.post_message("test_post_message");
+    await async_sleep(100);
+    worker.post_message("test_on_error");
+    await async_sleep(100);
+    worker.terminate();
+    await async_sleep(100);
+
+    // See if we got our expected messages
+    assert.equal(test_post_message_rx, true);
+    assert.equal(test_on_error_rx, true);
+    assert.equal(test_on_message_error_rx, false);
+    assert.equal(test_terminated_rx, true);
   });
 });
 

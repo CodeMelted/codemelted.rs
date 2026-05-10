@@ -26,10 +26,7 @@
 import {describe, expect, test} from "bun:test";
 import {
   // MODULE SYNTAX ERRORS
-  API_MISUSE,
-  API_NOT_IMPLEMENTED,
-  API_TYPE_VIOLATION,
-  API_UNSUPPORTED_RUNTIME,
+  CModuleError,
   // MODULE TYPEDEFS
   DEFINED_REQUEST,
   EVENT_REQUEST,
@@ -41,6 +38,7 @@ import {
   // MODULE PROTOCOL CLASSES
   CProtocol,
   CTimerProtocol,
+  CWorkerProtocol,
   // MODULE CLASSES
   CLogRecord,
   CResult,
@@ -49,6 +47,7 @@ import {
   async_sleep,
   async_task,
   async_timer,
+  async_worker,
   // JSON UC FUNCTIONS
   json_atob,
   json_btoa,
@@ -90,11 +89,12 @@ logger_level(LOGGER.Off);
 // ============================================================================
 
 describe("MODULE COMMON DATA VALIDATION", () => {
-  test("API_XXX (SyntaxError) Test", () => {
-    expect(API_MISUSE instanceof SyntaxError).toBe(true);
-    expect(API_NOT_IMPLEMENTED instanceof SyntaxError).toBe(true);
-    expect(API_TYPE_VIOLATION instanceof SyntaxError).toBe(true);
-    expect(API_UNSUPPORTED_RUNTIME instanceof SyntaxError).toBe(true);
+  test("API_XXX (CModuleError) Test", () => {
+    try {
+      throw new CModuleError("test");
+    } catch (err: any) {
+      expect(err.toString().length > 0).toBe(true);
+    }
   });
 });
 
@@ -109,25 +109,25 @@ describe("MODULE PROTOCOL CLASSES VALIDATION", () => {
     try {
       // @ts-ignore TypeScript won't let this happen, JavaScript would
       obj = new CProtocol(null, null, null);
-      expect.fail("Should Throw SyntaxError");
+      expect.fail("Should Throw CModuleError");
     } catch (err) {
-      expect(err instanceof SyntaxError).toBe(true);
+      expect(err instanceof CModuleError).toBe(true);
     }
 
     try {
       // @ts-ignore TypeScript won't let this happen, JavaScript would
       obj = new CProtocol("id", null, null);
-      expect.fail("Should Throw SyntaxError");
+      expect.fail("Should Throw CModuleError");
     } catch (err) {
-      expect(err instanceof SyntaxError).toBe(true);
+      expect(err instanceof CModuleError).toBe(true);
     }
 
     try {
       // @ts-ignore TypeScript won't let this happen, JavaScript would
       obj = new CProtocol("id", (proto, data) => {}, null);
-      expect.fail("Should Throw SyntaxError");
+      expect.fail("Should Throw CModuleError");
     } catch (err) {
-      expect(err instanceof SyntaxError).toBe(true);
+      expect(err instanceof CModuleError).toBe(true);
     }
 
     // Ensure proper base class construct
@@ -135,8 +135,8 @@ describe("MODULE PROTOCOL CLASSES VALIDATION", () => {
     expect(obj.id()).toBe("test_id");
     expect(obj.state(), PROTOCOL_STATE.Started);
     expect(obj.type(), PROTOCOL_TYPE.Timer);
-    expect(() => obj.post_message()).toThrow<SyntaxError>();
-    expect(() => obj.terminate(), SyntaxError).toThrow<SyntaxError>();
+    expect(() => obj.post_message()).toThrow<CModuleError>();
+    expect(() => obj.terminate(), CModuleError).toThrow<CModuleError>();
   });
 });
 
@@ -177,9 +177,9 @@ describe("MODULE CLASSES VALIDATION", () => {
     // Validate invalid state
     try {
       new CResult({value: 42, error: "Oh no"});
-      expect.fail("should throw SyntaxError");
+      expect.fail("should throw CModuleError");
     } catch (err) {
-      expect(err instanceof SyntaxError).toBe(true);
+      expect(err instanceof CModuleError).toBe(true);
     }
   });
 });
@@ -196,15 +196,15 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
     const exec_time = end - start;
     expect(exec_time >= 498).toBe(true);
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_sleep("duh")).toThrow<SyntaxError>();
+    expect(() => async_sleep("duh")).toThrow<CModuleError>();
   });
 
   test("async_task() Test", async () => {
     let task = (data: number) => { return data + 20; };
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_task()).toThrow<SyntaxError>();
+    expect(() => async_task()).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_task({task: "duh"})).toThrow<SyntaxError>();
+    expect(() => async_task({task: "duh"})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => async_task({task: task, delay: "duh"})).toThrow();
     let future: CFuture = async_task({task: task, data: 22, delay: 500});
@@ -216,15 +216,15 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
   test("async_timer() Test", async () => {
     // API Violations
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_timer()).toThrow<SyntaxError>();
+    expect(() => async_timer()).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_timer({id: 42, task: 42, interval: "duh"})).toThrow<SyntaxError>();
+    expect(() => async_timer({id: 42, task: 42, interval: "duh"})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_timer({id: "timer", task: 42, interval: "duh"})).toThrow<SyntaxError>();
+    expect(() => async_timer({id: "timer", task: 42, interval: "duh"})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_timer({id: "timer", task: () => {}, interval: "duh"})).toThrow<SyntaxError>();
+    expect(() => async_timer({id: "timer", task: () => {}, interval: "duh"})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_timer({id: "timer", task: (p, r) => {}, interval: "duh"})).toThrow<SyntaxError>();
+    expect(() => async_timer({id: "timer", task: (p, r) => {}, interval: "duh"})).toThrow<CModuleError>();
 
     // Now lets see this thing work
     let counter = 0;
@@ -238,6 +238,54 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
     timer_protocol.terminate();
     expect(timer_protocol.state()).toBe(PROTOCOL_STATE.Terminated);
     expect(counter >= 4).toBe(true);
+  });
+
+  test("async_worker() Test", async () => {
+    // API Failures
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_worker()).toThrow<CModuleError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_worker({url: 42, rx_handler: 42, options: 42})).toThrow<CModuleError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_worker({url: "worker.test.js", rx_handler: 42, options: 42})).toThrow<CModuleError>();
+    // @ts-ignore TypeScript won't let this happen, JavaScript would
+    expect(() => async_worker({url: "worker.test.js", rx_handler: (p, r) => {}, options: 42})).toThrow<CModuleError>();
+
+    // Now lets hook this up and demo it.
+    // It will also go through a series of worker tests as part of the last
+    // post
+
+    // Setup our test conditions
+    let test_post_message_rx = false;
+    let test_on_message_error_rx = false;
+    let test_on_error_rx = false;
+    let test_terminated_rx = false;
+    let rx_handler = (protocol: CProtocol, result: CResult) => {
+      if (protocol.state() === PROTOCOL_STATE.Message) {
+        test_post_message_rx = true;
+      } else if (protocol.state() === PROTOCOL_STATE.Error) {
+        test_on_error_rx = true;
+      } else if (protocol.state() === PROTOCOL_STATE.MessageError) {
+        test_on_message_error_rx = true;
+      } else if (protocol.state() === PROTOCOL_STATE.Terminated) {
+        test_terminated_rx = true;
+      }
+    };
+
+    // Go do some communication.
+    let worker = async_worker({url: "./worker.test.js", rx_handler: rx_handler});
+    worker.post_message("test_post_message");
+    await async_sleep(100);
+    worker.post_message("test_on_error");
+    await async_sleep(100);
+    worker.terminate();
+    await async_sleep(100);
+
+    // See if we got our expected messages
+    expect(test_post_message_rx).toBe(true);
+    expect(test_on_error_rx).toBe(true);
+    expect(test_on_message_error_rx).toBe(false);
+    expect(test_terminated_rx).toBe(true);
   });
 });
 
@@ -288,16 +336,16 @@ describe("DISK UC FUNCTIONS VALIDATION", () => {
 describe ("LOGGER UC FUNCTIONS VALIDATION", () => {
   test("logger_handler() Test", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => logger_handler(42)).toThrow<SyntaxError>();
-    expect(() => logger_handler(() => {})).toThrow<SyntaxError>();
+    expect(() => logger_handler(42)).toThrow<CModuleError>();
+    expect(() => logger_handler(() => {})).toThrow<CModuleError>();
     expect(() => logger_handler((record) => {})).not.toThrow();
     expect(() => logger_handler()).not.toThrow();
   });
 
   test("logger_level() Test", () => {
-    expect(() => logger_level({})).toThrow<SyntaxError>();
+    expect(() => logger_level({})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => logger_level(42)).toThrow<SyntaxError>();
+    expect(() => logger_level(42)).toThrow<CModuleError>();
     expect(LOGGER.Info.label === logger_level(LOGGER.Info)).toBe(true);
     expect(LOGGER.Debug.label === logger_level()).toBe(false);
   });
@@ -306,9 +354,9 @@ describe ("LOGGER UC FUNCTIONS VALIDATION", () => {
     // API violation tests
 
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => logger_log()).toThrow<SyntaxError>();
-    expect(() => logger_log({level: {}, data: null})).toThrow<SyntaxError>();
-    expect(() => logger_log({level: LOGGER.Debug, data: null})).toThrow<SyntaxError>();
+    expect(() => logger_log()).toThrow<CModuleError>();
+    expect(() => logger_log({level: {}, data: null})).toThrow<CModuleError>();
+    expect(() => logger_log({level: LOGGER.Debug, data: null})).toThrow<CModuleError>();
 
     // Validate log levels only log events based on log settings.
     let counter = 0;
@@ -375,13 +423,13 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
   test("json_atob() / json_btoa() Test", () => {
     // API violations
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_atob()).toThrow<SyntaxError>();
+    expect(() => json_atob()).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_atob(42)).toThrow<SyntaxError>();
+    expect(() => json_atob(42)).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_btoa()).toThrow<SyntaxError>();
+    expect(() => json_btoa()).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_btoa(42)).toThrow<SyntaxError>();
+    expect(() => json_btoa(42)).toThrow<CModuleError>();
 
     // Invalid encoding / decoding, returns null
     let encoded = json_btoa("Hello 🌍");
@@ -400,12 +448,12 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
   test("json_check_type() Test", () => {
     // Invalid API setup
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_check_type()).toThrow<SyntaxError>();
+    expect(() => json_check_type()).toThrow<CModuleError>();
 
     // Now throws because it was not an expected type
-    expect(() => json_check_type({type: "string", data: 42, should_throw: true})).toThrow<SyntaxError>();
-    expect(() => json_check_type({type: Uint8Array, data: 42, should_throw: true})).toThrow<SyntaxError>();
-    expect(() => json_check_type({type: "function", data: () => {}, count: 2, should_throw: true})).toThrow<SyntaxError>();
+    expect(() => json_check_type({type: "string", data: 42, should_throw: true})).toThrow<CModuleError>();
+    expect(() => json_check_type({type: Uint8Array, data: 42, should_throw: true})).toThrow<CModuleError>();
+    expect(() => json_check_type({type: "function", data: () => {}, count: 2, should_throw: true})).toThrow<CModuleError>();
 
     // Now checks with no throws
     expect(json_check_type({type: "string", data: 42})).toBe(false);
@@ -449,14 +497,14 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
   test("json_has_key() Test", () => {
     // API violations
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_has_key()).toThrow<SyntaxError>();
+    expect(() => json_has_key()).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_has_key({data: "duh"})).toThrow<SyntaxError>();
+    expect(() => json_has_key({data: "duh"})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_has_key({data: {}, key: 42})).toThrow<SyntaxError>();
+    expect(() => json_has_key({data: {}, key: 42})).toThrow<CModuleError>();
 
     // Now throws because we instruct it to
-    expect(() => json_has_key({data: {}, key: "field_name", should_throw: true})).toThrow<SyntaxError>();
+    expect(() => json_has_key({data: {}, key: "field_name", should_throw: true})).toThrow<CModuleError>();
 
     // Now valid check returns
     expect(json_has_key({data: {id: ""}, key: "field_name"})).toBe(false);
@@ -499,12 +547,12 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
   test("json_valid_url() Test", () => {
     // API violations
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_valid_url()).toThrow<SyntaxError>();
+    expect(() => json_valid_url()).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_valid_url({data: 42})).toThrow<SyntaxError>();
+    expect(() => json_valid_url({data: 42})).toThrow<CModuleError>();
 
     // Thrown because told to
-    expect(() => json_valid_url({data: "http://<>.com", should_throw: true})).toThrow<SyntaxError>();
+    expect(() => json_valid_url({data: "http://<>.com", should_throw: true})).toThrow<CModuleError>();
 
     // Now tests
     expect(json_valid_url({data: "http://<>.com"})).toBe(false);
@@ -524,16 +572,16 @@ describe("NPU UC FUNCTIONS VALIDATION", () => {
   test("npu_math() Test", () => {
     // API Violations
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => npu_math()).toThrow<SyntaxError>();
+    expect(() => npu_math()).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => npu_math({formula: 42})).toThrow<SyntaxError>();
+    expect(() => npu_math({formula: 42})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => npu_math({formula: "duh", args: 42})).toThrow<SyntaxError>();
+    expect(() => npu_math({formula: "duh", args: 42})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => npu_math({formula: "duh", args: []})).toThrow<SyntaxError>();
+    expect(() => npu_math({formula: "duh", args: []})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => npu_math({formula: "duh", args: ["duh"]})).toThrow<SyntaxError>();
-    expect(() => npu_math({formula: "duh", args: [42]})).toThrow<SyntaxError>();
+    expect(() => npu_math({formula: "duh", args: ["duh"]})).toThrow<CModuleError>();
+    expect(() => npu_math({formula: "duh", args: [42]})).toThrow<CModuleError>();
 
     // Now formula verifications
     expect(isNaN(npu_math({formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit, args: []}))).toBe(true);
@@ -559,11 +607,11 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => runtime_defined()).toThrow();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => runtime_defined({request: 42})).toThrow<SyntaxError>();
+    expect(() => runtime_defined({request: 42})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => runtime_defined({property: 42})).toThrow<SyntaxError>();
+    expect(() => runtime_defined({property: 42})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => runtime_defined({property: "duh", obj: 42})).toThrow<SyntaxError>();
+    expect(() => runtime_defined({property: "duh", obj: 42})).toThrow<CModuleError>();
 
     expect(runtime_defined({request: DEFINED_REQUEST.Audio})).toBe(false);
     expect(runtime_defined({request: DEFINED_REQUEST.Bluetooth})).toBe(false);
@@ -588,7 +636,7 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
 
   test("runtime_environment() Test", () => {
     // Non-supported runtime
-    expect(() => runtime_environment("search")).toThrow<SyntaxError>();
+    expect(() => runtime_environment("search")).toThrow<CModuleError>();
   });
 
   test("runtime_event() Test", () => {
@@ -596,15 +644,15 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
     let listener = (evt: Event) => { };
 
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => {runtime_event()}).toThrow<SyntaxError>();
+    expect(() => {runtime_event()}).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: 42})}).toThrow<SyntaxError>();
+    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: 42})}).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: 42})}).toThrow<SyntaxError>();
+    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: 42})}).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener, target: 42})}).toThrow<SyntaxError>();
+    expect(() => {runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener, target: 42})}).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => {runtime_event({request: 42, type: "message", listener: listener})}).toThrow<SyntaxError>();
+    expect(() => {runtime_event({request: 42, type: "message", listener: listener})}).toThrow<CModuleError>();
 
     // Now to a valid listener
     runtime_event({request: EVENT_REQUEST.Add, type: "message", listener: listener});
@@ -612,7 +660,7 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
   });
 
   test("runtime_hostname() Test", () => {
-    expect(() => runtime_hostname()).toThrow<SyntaxError>();
+    expect(() => runtime_hostname()).toThrow<CModuleError>();
   });
 
   test("runtime_name() Test", () => {
@@ -621,7 +669,7 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
 
   test("runtime_online() Test", () => {
     // Unsupported runtime.
-    expect(() => runtime_online()).toThrow<SyntaxError>();
+    expect(() => runtime_online()).toThrow<CModuleError>();
   });
 });
 
@@ -632,20 +680,20 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
 describe("STORAGE UC FUNCTIONS VALIDATION", () => {
   test("storage_clear() / storage_length() Test", () => {
     // Storage Use Cases Not Supported on this Runtime
-    expect(() => storage_length(STORAGE_TYPE.Local)).toThrow<SyntaxError>();
-    expect(() => storage_length(STORAGE_TYPE.Session)).toThrow<SyntaxError>();
-    expect(() => storage_length(STORAGE_TYPE.Cookie)).toThrow<SyntaxError>();
-    expect(() => storage_clear(STORAGE_TYPE.Local)).toThrow<SyntaxError>();
-    expect(() => storage_clear(STORAGE_TYPE.Session)).toThrow<SyntaxError>();
-    expect(() => storage_clear(STORAGE_TYPE.Cookie)).toThrow<SyntaxError>();
+    expect(() => storage_length(STORAGE_TYPE.Local)).toThrow<CModuleError>();
+    expect(() => storage_length(STORAGE_TYPE.Session)).toThrow<CModuleError>();
+    expect(() => storage_length(STORAGE_TYPE.Cookie)).toThrow<CModuleError>();
+    expect(() => storage_clear(STORAGE_TYPE.Local)).toThrow<CModuleError>();
+    expect(() => storage_clear(STORAGE_TYPE.Session)).toThrow<CModuleError>();
+    expect(() => storage_clear(STORAGE_TYPE.Cookie)).toThrow<CModuleError>();
   });
 
   test("storage_get() / storage_key() / storage_remove() / storage_set() Test", () => {
     // None of these are supported on this runtime.
-    expect(() => storage_set({key: "cool", value: "guy"})).toThrow<SyntaxError>();
-    expect(() => storage_length()).toThrow<SyntaxError>();
-    expect(() => storage_get({key: "cool"})).toThrow<SyntaxError>();
-    expect(() => storage_key({index: 0})).toThrow<SyntaxError>();
-    expect(() => storage_remove({key: "cool"})).toThrow<SyntaxError>();
+    expect(() => storage_set({key: "cool", value: "guy"})).toThrow<CModuleError>();
+    expect(() => storage_length()).toThrow<CModuleError>();
+    expect(() => storage_get({key: "cool"})).toThrow<CModuleError>();
+    expect(() => storage_key({index: 0})).toThrow<CModuleError>();
+    expect(() => storage_remove({key: "cool"})).toThrow<CModuleError>();
   });
 });

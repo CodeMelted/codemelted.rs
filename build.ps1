@@ -106,14 +106,14 @@ switch ($args[0]) {
       Set-Location $PSScriptRoot/js
 
       # Do the bun tests
-      $did_tests_fail = $false
       bun test --coverage --coverage-reporter=lcov bun.test.ts
       if ($LASTEXITCODE -eq 0) {
         lcov_to_html
         Move-Item -Path coverage -Destination docs/coverage-bun -Force
       } else {
-        $did_tests_fail = $true
         Write-Host "ERROR: bun tests failed!"
+        Set-Location $PSScriptRoot
+        exit 1
       }
 
       # Do the deno tests
@@ -124,8 +124,9 @@ switch ($args[0]) {
         lcov_to_html
         Move-Item -Path coverage -Destination docs/coverage-deno -Force
       } else {
-        $did_tests_fail = $true
         Write-Host "ERROR: deno tests failed!"
+        Set-Location $PSScriptRoot
+        exit 1
       }
 
       # Now do the nodejs tests
@@ -136,17 +137,17 @@ switch ($args[0]) {
         lcov_to_html
         Move-Item -Path coverage -Destination docs/coverage-node -Force
       } else {
-        $did_tests_fail = $true
         Write-Host "ERROR: node tests failed!"
+        Set-Location $PSScriptRoot
+        exit 1
       }
 
       # Setup to do Browser Runtime Testing
-      if (!$did_tests_fail) {
-        New-Item -ItemType Directory docs/coverage-browser -Force
-        Copy-Item coverage-browser.html docs/coverage-browser/index.html -Force
-        Copy-Item browser.test.js docs/coverage-browser -Force
-        Copy-Item codemelted.js docs/coverage-browser -Force
-      }
+      New-Item -ItemType Directory docs/coverage-browser -Force
+      Copy-Item coverage-browser.html docs/coverage-browser/index.html -Force
+      Copy-Item browser.test.js docs/coverage-browser -Force
+      Copy-Item worker.test.js docs/coverage-browser -Force
+      Copy-Item codemelted.js docs/coverage-browser -Force
 
       Set-Location $PSScriptRoot
       message "codemelted.js testing completed."

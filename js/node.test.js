@@ -26,10 +26,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   // MODULE SYNTAX ERRORS
-  API_MISUSE,
-  API_NOT_IMPLEMENTED,
-  API_TYPE_VIOLATION,
-  API_UNSUPPORTED_RUNTIME,
+  CModuleError,
   // MODULE TYPEDEFS
   DEFINED_REQUEST,
   EVENT_REQUEST,
@@ -41,6 +38,7 @@ import {
   // MODULE PROTOCOL CLASSES
   CProtocol,
   CTimerProtocol,
+  CWorkerProtocol,
   // MODULE CLASSES
   CLogRecord,
   CResult,
@@ -49,6 +47,7 @@ import {
   async_sleep,
   async_task,
   async_timer,
+  async_worker,
   // JSON UC FUNCTIONS
   json_atob,
   json_btoa,
@@ -90,11 +89,12 @@ logger_level(LOGGER.Off);
 // ============================================================================
 
 describe("MODULE SYNTAX ERRORS VALIDATION", (t) => {
-  test("API_XXX (SyntaxError) Test", () => {
-    assert.equal(true, API_MISUSE instanceof SyntaxError);
-    assert.equal(true, API_NOT_IMPLEMENTED instanceof SyntaxError);
-    assert.equal(true, API_TYPE_VIOLATION instanceof SyntaxError);
-    assert.equal(true, API_UNSUPPORTED_RUNTIME instanceof SyntaxError);
+  test("API_XXX (CModuleError) Test", () => {
+    try {
+      throw new CModuleError("test");
+    } catch (err) {
+      assert.equal(err.toString().length > 0, true);
+    }
   });
 });
 
@@ -108,23 +108,23 @@ describe("MODULE PROTOCOL CLASSES VALIDATION", (t) => {
     // Validate failed construction
     try {
       obj = new CProtocol(null, null, null);
-      assert.fail("Should Throw SyntaxError");
+      assert.fail("Should Throw CModuleError");
     } catch (err) {
-      assert.equal(err instanceof SyntaxError, true);
+      assert.equal(err instanceof CModuleError, true);
     }
 
     try {
       obj = new CProtocol("id", null, null);
-      assert.fail("Should Throw SyntaxError");
+      assert.fail("Should Throw CModuleError");
     } catch (err) {
-      assert.equal(err instanceof SyntaxError, true);
+      assert.equal(err instanceof CModuleError, true);
     }
 
     try {
       obj = new CProtocol("id", (proto, data) => {}, null);
-      assert.fail("Should Throw SyntaxError");
+      assert.fail("Should Throw CModuleError");
     } catch (err) {
-      assert.equal(err instanceof SyntaxError, true);
+      assert.equal(err instanceof CModuleError, true);
     }
 
     // Ensure proper base class construct
@@ -133,7 +133,7 @@ describe("MODULE PROTOCOL CLASSES VALIDATION", (t) => {
     assert.equal(obj.state(), PROTOCOL_STATE.Started);
     assert.equal(obj.type(), PROTOCOL_TYPE.Timer);
     assert.throws(() => obj.post_message());
-    assert.throws(() => obj.terminate(), SyntaxError);
+    assert.throws(() => obj.terminate(), CModuleError);
   });
 });
 
@@ -174,9 +174,9 @@ describe("MODULE CLASSES VALIDATION", (t) => {
     // Validate invalid state
     try {
       new CResult({value: 42, error: "Oh no"});
-      assert.fail("should throw SyntaxError");
+      assert.fail("should throw CModuleError");
     } catch (err) {
-      assert.equal(true, err instanceof SyntaxError);
+      assert.equal(true, err instanceof CModuleError);
     }
   });
 });
@@ -226,6 +226,16 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
     timer_protocol.terminate();
     assert.equal(timer_protocol.state(), PROTOCOL_STATE.Terminated);
     assert.equal(counter >= 4, true);
+  });
+
+  test("async_worker() Test", async () => {
+    // Non-supported runtime.
+    try {
+      let worker = async_worker({url: "./worker.test.js", rx_handler: (p, r) => {}});
+      assert.fail("Should throw exception, non-supported runtime.");
+    } catch (err) {
+      assert.equal(err instanceof CModuleError, true);
+    }
   });
 });
 
