@@ -143,7 +143,6 @@
  * <tr><td>json_has_key            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>json_parse              </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>json_stringify          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_valid_url          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>logger_handler          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>logger_level            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
  * <tr><td>logger_log              </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
@@ -201,11 +200,387 @@
  */
 
 // ============================================================================
-// [MODULE ERROR] =============================================================
+// [FAKE OUT TYPEDEFS] ========================================================
+// ============================================================================
+// NOTE: Defined to support proper typing in the JSDocs when type checking
+//       in a TypeScript environment.
 // ============================================================================
 
 /**
- *
+ * Defined to support proper typing in the JSDocs when type checking in a
+ * TypeScript environment.
+ * @typedef {object} DeviceOrientationEvent
+ * @property {boolean} absolute A boolean that indicates whether or not the
+ * device is providing orientation data absolutely.
+ * @property {number?} alpha A number representing the motion of the device
+ * around the z axis, express in degrees with values ranging from 0
+ * (inclusive) to 360 (exclusive).
+ * @property {number?} beta A number representing the motion of the device
+ * around the x axis, express in degrees with values ranging from -180
+ * (inclusive) to 180 (exclusive). This represents a front to back motion of
+ *  the device.
+ * @property {number?} gamma A number representing the motion of the device
+ * around the y axis, express in degrees with values ranging from -90
+ * (inclusive) to 90 (exclusive). This represents a left to right motion of
+ * the device.
+ */
+
+/**
+ * The GeolocationCoordinates interface represents the position and
+ * altitude of the device on Earth, as well as the accuracy with which
+ * these  properties are calculated. The geographic position information is
+ * provided in terms of World Geodetic System coordinates (WGS84).
+ * @typedef {object} GeolocationCoordinates
+ * @property {number} latitude Returns a double representing the position's
+ * latitude in decimal degrees.
+ * @property {number} longitude Returns a double representing the position's
+ * longitude in decimal degrees.
+ * @property {number | null} altitude Returns a double representing the
+ * position's altitude in meters, relative to nominal sea level. This value
+ * can be null if the implementation cannot provide the data.
+ * @property {number} accuracy Returns a double representing the accuracy
+ * of the latitude and longitude properties, expressed in meters.
+ * @property {number | null} altitudeAccuracy Returns a double representing
+ * the accuracy of the altitude expressed in meters. This value can be null
+ * if the implementation cannot provide the data.
+ * @property {number | null} heading Returns a double representing the
+ * direction towards which the device is facing. This value, specified in
+ * degrees, indicates how far off from heading true north the device is. 0
+ * degrees represents true north, and the direction is determined clockwise
+ * (which means that east is 90 degrees and west is 270 degrees). If speed
+ * is 0 or the device is unable to provide heading information, heading is
+ * null.
+ * @property {number | null} speed Returns a double representing the
+ * velocity of the device in meters per second. This value can be null.
+ */
+
+/**
+ * The SerialPort interface of the Web Serial API provides access to a
+ * serial port on the host device.
+ * @typedef {object} SerialPort
+ * @property {boolean} connected Returns a boolean value that indicates
+ * whether the port is logically connected to the device.
+ * @property {ReadableStream} readable Returns a ReadableStream for
+ * receiving data from the device connected to the port.
+ * @property {WritableStream} writable Returns a WritableStream for sending
+ * data to the device connected to the port.
+ * @property {function} forget Returns a Promise that resolves when access
+ * to the serial port is revoked. Calling this "forgets" the device,
+ * resetting any previously-set permissions so the calling site can no
+ * longer communicate with the port.
+ * @property {function} getInfo Returns an object containing identifying
+ * information for the device available via the port.
+ * @property {function} open Returns a Promise that resolves when the port
+ * is opened. By default the port is opened with 8 data bits, 1 stop bit
+ * and no parity checking.
+ * @property {function} setSignals Sets control signals on the port and
+ * returns a Promise that resolves when they are set.
+ * @property {function} getSignals Returns a Promise that resolves with an
+ * object containing the current state of the port's control signals.
+ * @property {function} close Returns a Promise that resolves when the port
+ * closes.
+ */
+
+// ============================================================================
+// [MODULE ENUMERATIONS] ======================================================
+// ============================================================================
+
+/**
+ * Provides the ability to connect to different server protocols via the
+ * {@link network_connect} function.
+ * @readonly
+ * @enum {string}
+ * @property {string} BroadcastChannel Creates a
+ * {@link CBroadcastChannelProtocol} that allows
+ * basic communication between browsing contexts (that is, windows, tabs,
+ * frames, or iframes) and workers on the same origin.
+ * @property {string} EventSource Creates a {@link CEventSourceProtocol}
+ * that opens a persistent connection to an HTTP server, which sends events
+ * in text/event-stream format.
+ * @property {string} WebSocket Creates a {@link CWebSocketProtocol}
+ * connection to a server supporting a bi-directional exchange of
+ * information.
+ * @property {string} WebRTC Creates a {@link CWebRtcProtocol} connecting
+ * to allow for peer-to-peer communication (voice, video, etc) with other
+ * users.
+ */
+export const CONNECT_REQUEST = Object.freeze({
+  BroadcastChannel: "broadcast_channel",
+  EventSource: "event_source",
+  WebSocket: "web_socket",
+  WebRTC: "web_rtc",
+});
+
+/**
+ * Provides the request actions of the {@link runtime_defined} function call.
+ * @readonly
+ * @enum {string}
+ * @property {string} AskRuntime When performing a search for a specific
+ * definition on a particular object or globalThis namespace.
+ * @property {string} Audio Determines if audio is available in the runtime.
+ * @property {string} Browser Determine if the runtime is a Web Browser.
+ * @property {string} Bun Determines if the runtime is Bun.
+ * @property {string} Bluetooth Determines if bluetooth is available.
+ * @property {string} Deno Determines if the runtime is Deno.
+ * @property {string} MIDI Determines if MIDI devices are available.
+ * @property {String} Node Determines if the runtime is Node.
+ * @property {String} Orientation Determines if Orientation is available
+ * (i.e. GPS and 3D space device orientation.)
+ * @property {string} PWA Determines if the browser window represents an
+ * installed Progressive Web Application.
+ * @property {string} SerialPort Determines if SerialPort protocols are
+ * available.
+ * @property {string} SecureContext indicating whether the current context
+ * is secure (true) or not (false).
+ * @property {string} Share Determines if sharing is available to the
+ * runtime.
+ * @property {string} TextToSpeech Determines if text-to-speech is available
+ * to the runtime.
+ * @property {string} TouchEnabled Identifies if the browser is accessible
+ * via a touch device.
+ * @property {string} USB Determines if USB is available to the runtime.
+ * @property {string} WorkerAvailable Determines if a Worker can be created
+ * with the runtime.
+ * @property {string} WorkerRuntime Determines if the runtime is a Worker.
+ */
+export const DEFINED_REQUEST = Object.freeze({
+  AskRuntime: "ask_runtime",
+  Audio: "audio",
+  Browser: "browser",
+  Bun: "bun",
+  Bluetooth: "bluetooth",
+  Deno: "deno",
+  MIDI: "midi",
+  Node: "node",
+  Orientation: "orientation",
+  PWA: "pwa",
+  SerialPort: "serial_port",
+  SecureContext: "secure_context",
+  Share: "share",
+  TextToSpeech: "text_to_speech",
+  TouchEnabled: "touch_enabled",
+  USB: "usb",
+  WorkerAvailable: "worker_available",
+  WorkerRuntime: "worker_runtime",
+});
+
+/**
+ * Provides the request actions of the {@link runtime_event} function.
+ * @readonly
+ * @enum {string}
+ * @property {string} Add Will provide ability to add event listeners.
+ * @property {string} Remove Will provide the ability to remove event
+ * listeners.
+ */
+export const EVENT_REQUEST = Object.freeze({
+  Add: "add",
+  Remove: "remove",
+});
+
+/**
+ * Holds the logger configuration information for log level and labels.
+ * @readonly
+ * @enum {object}
+ * @property {object} Debug   level (0) / label "DEBUG"
+ * @property {object} Info    level (1) / label "INFO"
+ * @property {object} Warning level (2) / label "WARNING"
+ * @property {object} Error   level (3) / label "ERROR"
+ * @property {object} Off     level (4) / label "OFF"
+ */
+export const LOGGER = Object.freeze({
+  Debug:   { level: 0, label: "DEBUG"   },
+  Info:    { level: 1, label: "INFO"    },
+  Warning: { level: 2, label: "WARNING" },
+  Error:   { level: 3, label: "ERROR"   },
+  Off:     { level: 4, label: "OFF"     },
+});
+
+/**
+ * The math formula to execute with the {@link npu_math} call.
+ * @readonly
+ * @enum {string}
+ * @property {string} GeodeticDistance
+ * Distance in meters between two WGS84 points. The parameters for the
+ * formula are start_latitude / start_longitude / end_latitude / end_longitude
+ * @property {string} GeodeticHeading
+ * Heading in °N true North 0 - 359. The parameters for the
+ * formula are start_latitude / start_longitude / end_latitude / end_longitude
+ * @property {string} GeodeticSpeed
+ * Speed in meters per second between two WGS84 points. The parameters for the
+ * formula are start_milliseconds / start_latitude / start_longitude /
+ * end_milliseconds / end_latitude / end_longitude
+ * @property {string} TemperatureCelsiusToFahrenheit
+ * °F = (°C x 9/5) + 32
+ * @property {string} TemperatureCelsiusToKelvin
+ * °K = °C + 273.15
+ * @property {string} TemperatureFahrenheitToCelsius
+ * °C = (°F − 32) × 5/9
+ * @property {string} TemperatureFahrenheitToKelvin
+ * °K = (°F − 32) × 5/9 + 273.15
+ * @property {string} TemperatureKelvinToCelsius
+ * °C = °K − 273.15
+ * @property {string} TemperatureKelvinToFahrenheit
+ * °F = (°K − 273.15) × 9/5 + 32
+ */
+export const MATH_FORMULA = Object.freeze({
+  GeodeticDistance: "geodetic_distance",
+  GeodeticHeading: "geodetic_heading",
+  GeodeticSpeed: "geodetic_speed",
+  TemperatureCelsiusToFahrenheit: "temperature_celsius_to_fahrenheit",
+  TemperatureCelsiusToKelvin: "temperature_celsius_to_kelvin",
+  TemperatureFahrenheitToCelsius: "temperature_fahrenheit_to_celsius",
+  TemperatureFahrenheitToKelvin: "temperature_fahrenheit_to_kelvin",
+  TemperatureKelvinToCelsius: "temperature_kelvin_to_celsius",
+  TemperatureKelvinToFahrenheit: "temperature_kelvin_to_fahrenheit"
+});
+
+/**
+ * Provides the current state of the {@link CProtocol.state()} object.
+ * @readonly
+ * @enum {string}
+ * @property {string} Error Signifies an onerror listener received an
+ * ErrorEvent.
+ * @property {string} Message Signifies a onmessage listener received a
+ * MessageEvent that contains received data via its data property
+ * @property {string} MessageError Signifies a onmessageerror listener
+ * received MessageEvent containing an error accessible via its data
+ * property.
+ * @property {string} Started Signifies a {@link CProtocol} object has been
+ * constructed and is running.
+ * @property {string} Terminated Signifies a {@link CProtocol} object has
+ * been terminated and is no longer running.
+ */
+export const PROTOCOL_STATE = Object.freeze({
+  Message: "message",
+  MessageError: "message_error",
+  Error: "error",
+  Started: "started",
+  Terminated: "terminated",
+});
+
+/**
+ * Provides the type of protocol for the {@link CProtocol.type()} object.
+ * @readonly
+ * @enum {string}
+ * @property {string} BroadcastChannel Identifies a
+ * {@link CBroadcastChannelProtocol} object.
+ * @property {string} EventSource Identifies a {@link CEventSourceProtocol}
+ * object.
+ * @property {string} Orientation Identifies a {@link COrientationProtocol}
+ * object.
+ * @property {string} Timer Identifies a {@link CTimerProtocol} object.
+ * @property {string} SerialPort Identifies a {@link CSerialPortProtocol}
+ * object.
+ * @property {string} WebSocket Identifies a {@link CWebSocketProtocol}
+ * object.
+ * @property {string} Worker Identifies a {@link CWorkerProtocol} object.
+ */
+export const PROTOCOL_TYPE = Object.freeze({
+  BroadcastChannel: "broadcast_channel",
+  EventSource: "event_source",
+  Orientation: "orientation",
+  Timer: "timer",
+  SerialPort: "serial_port",
+  WebSocket: "web_socket",
+  Worker: "worker",
+});
+
+/**
+ * Provides the support to the {@link CSerialPortProtocol.post_message} serial
+ * port communications.
+ * @enum {string}
+ * @property {string} Break Sends a break signal (boolean) to the port.
+ * @property {string} CarrierDetect Line control status of the port reported
+ * as { carrier_detect: boolean }
+ * @property {string} ClearToSend Line control status of the port reported
+ * as { clear_to_send: boolean }
+ * @property {string} DataBytesRead Read data from the serial port reported
+ * as { data_bytes_read: Uint8Array }
+ * @property {string} DataBytesWrite Writes data to the serial port.
+ * @property {string} DataSetReady Line control status of the port reported
+ * as { data_set_ready: boolean }
+ * @property {string} DataTerminalReady Sends a data terminal ready
+ * (boolean) signal to the port.
+ * @property {string} RequestToSend Sends a request to send signal
+ * (boolean) to the port.
+ * @property {string} RingIndicator Line control status of the port reported
+ * as { ring_indicator: boolean }
+ */
+export const SERIAL_PORT_DATA_REQUEST = Object.freeze({
+  Break: "break",
+  CarrierDetect: "carrier_detect",
+  ClearToSend: "clear_to_send",
+  DataBytesRead: "data_bytes_read",
+  DataBytesWrite: "data_bytes_write",
+  DataSetReady: "data_set_ready",
+  DataTerminalReady: "data_terminal_ready",
+  RequestToSend: "request_to_send",
+  RingIndicator: "ring_indicator",
+});
+
+/**
+ * Provides the {@link storage_clear}, {@link storage_get},
+ * {@link storage_key}, {@link storage_length}, {@link storage_remove}, and
+ * {@link storage_set} calls.
+ * @readonly
+ * @enum {string}
+ * @property {string} Cookie To utilize cookies as the storage method.
+ * @property {string} Local To utilize local storage which lives once a
+ * session is closed.
+ * @property {string} Session To utilize session storage which clears once
+ * a session is closed.
+ */
+export const STORAGE_TYPE = Object.freeze({
+  Cookie: "cookie",
+  Local: "local",
+  Session: "session",
+});
+
+// ============================================================================
+// [MODULE CALLBACKS] =========================================================
+// ============================================================================
+
+/**
+ * The event handler utilized within a given JavaScript runtime. This
+ * represents a global event handler that should suffice any JavaScript
+ * event callback.
+ * @callback CEventHandler
+ * @param {Event} e The event object that was triggered
+ * @returns {void}
+ */
+
+/**
+ * A log handler for further processing of a logged event.
+ * @callback CLogHandler
+ * @param {CLogRecord} record The record logged.
+ * @returns {void}
+ */
+
+/**
+ * Supports the {@link CProtocol} for data received as part of a
+ * protocol.
+ * @callback CProtocolHandler
+ * @param {CProtocol} protocol Reference to the protocol receiving the
+ * data.
+ * @param {CResult} data The data received as part of protocol.
+ */
+
+/**
+ * The task to run as part of the {@link async_task} call.
+ * @callback CTaskCB
+ * @param {any} [data] Optional data to pass to the task.
+ * @returns {any} The result of the task completing.
+ */
+
+// ============================================================================
+// [MODULE UTILITY OBJECTS] ===================================================
+// ============================================================================
+
+/**
+ * Class that represents any codemelted.js API violations or caught exceptions
+ * that were not handled properly as this module is intended to never throw
+ * so any "unknown / unhandled" exception is either an API violation or an
+ * exception not properly handled by this module.
  */
 export class CModuleError extends Error {
   /**
@@ -274,631 +649,6 @@ export class CModuleError extends Error {
     }
   }
 }
-
-// ============================================================================
-// [MODULE TYPEDEFS] ==========================================================
-// ============================================================================
-
-/**
- * Provides the {@link storage_clear}, {@link storage_get},
- * {@link storage_key}, {@link storage_length}, {@link storage_remove}, and
- * {@link storage_set} calls.
- * @readonly
- * @enum {string}
- * @property {string} Cookie To utilize cookies as the storage method.
- * @property {string} Local To utilize local storage which lives once a
- * session is closed.
- * @property {string} Session To utilize session storage which clears once
- * a session is closed.
- */
-export const STORAGE_TYPE = Object.freeze({
-  Cookie: "cookie",
-  Local: "local",
-  Session: "session",
-});
-
-/**
- * Provides the request actions of the {@link runtime_defined} function call.
- * @readonly
- * @enum {string}
- * @property {string} AskRuntime When performing a search for a specific
- * definition on a particular object or globalThis namespace.
- * @property {string} Audio Determines if audio is available in the runtime.
- * @property {string} Browser Determine if the runtime is a Web Browser.
- * @property {string} Bun Determines if the runtime is Bun.
- * @property {string} Bluetooth Determines if bluetooth is available.
- * @property {string} Deno Determines if the runtime is Deno.
- * @property {string} MIDI Determines if MIDI devices are available.
- * @property {String} Node Determines if the runtime is Node.
- * @property {String} Orientation Determines if Orientation is available
- * (i.e. GPS and 3D space device orientation.)
- * @property {string} PWA Determines if the browser window represents an
- * installed Progressive Web Application.
- * @property {string} SerialPort Determines if SerialPort protocols are
- * available.
- * @property {string} SecureContext indicating whether the current context
- * is secure (true) or not (false).
- * @property {string} Share Determines if sharing is available to the
- * runtime.
- * @property {string} TextToSpeech Determines if text-to-speech is available
- * to the runtime.
- * @property {string} TouchEnabled Identifies if the browser is accessible
- * via a touch device.
- * @property {string} USB Determines if USB is available to the runtime.
- * @property {string} WorkerAvailable Determines if a Worker can be created
- * with the runtime.
- * @property {string} WorkerRT Determines if the runtime is a Worker.
- */
-export const DEFINED_REQUEST = Object.freeze({
-  AskRuntime: "AskRuntime",
-  Audio: "Audio",
-  Browser: "Browser",
-  Bun: "Bun",
-  Bluetooth: "Bluetooth",
-  Deno: "Deno",
-  MIDI: "MIDI",
-  Node: "Node",
-  Orientation: "Orientation",
-  PWA: "PWA",
-  SerialPort: "SerialPort",
-  SecureContext: "SecureContext",
-  Share: "Share",
-  TextToSpeech: "TextToSpeech",
-  TouchEnabled: "TouchEnabled",
-  USB: "USB",
-  WorkerAvailable: "WorkerAvailable",
-  WorkerRT: "WorkerRT",
-});
-
-/**
- * Provides the request actions of the {@link runtime_event} function.
- * @readonly
- * @enum {string}
- * @property {string} Add Will provide ability to add event listeners.
- * @property {string} Remove Will provide the ability to remove event
- * listeners.
- */
-export const EVENT_REQUEST = Object.freeze({
-  Add: "add",
-  Remove: "remove",
-});
-
-/**
- * Holds the logger configuration information for log level and labels.
- * @readonly
- * @enum {object}
- * @property {object} Debug   level (0) / label "DEBUG"
- * @property {object} Info    level (1) / label "INFO"
- * @property {object} Warning level (2) / label "WARNING"
- * @property {object} Error   level (3) / label "ERROR"
- * @property {object} Off     level (4) / label "OFF"
- */
-export const LOGGER = Object.freeze({
-  Debug:   { level: 0, label: "DEBUG"   },
-  Info:    { level: 1, label: "INFO"    },
-  Warning: { level: 2, label: "WARNING" },
-  Error:   { level: 3, label: "ERROR"   },
-  Off:     { level: 4, label: "OFF"     },
-});
-
-/**
- * The math formula to execute with the {@link npu_math} call.
- * @readonly
- * @enum {string}
- * @property {string} GeodeticDistance
- * Distance in meters between two WGS84 points. The parameters for the
- * formula are start_latitude / start_longitude / end_latitude / end_longitude
- * @property {string} GeodeticHeading
- * Heading in °N true North 0 - 359. The parameters for the
- * formula are start_latitude / start_longitude / end_latitude / end_longitude
- * @property {string} GeodeticSpeed
- * Speed in meters per second between two WGS84 points. The parameters for the
- * formula are start_milliseconds / start_latitude / start_longitude /
- * end_milliseconds / end_latitude / end_longitude
- * @property {string} TemperatureCelsiusToFahrenheit
- * °F = (°C x 9/5) + 32
- * @property {string} TemperatureCelsiusToKelvin
- * °K = °C + 273.15
- * @property {string} TemperatureFahrenheitToCelsius
- * °C = (°F − 32) × 5/9
- * @property {string} TemperatureFahrenheitToKelvin
- * °K = (°F − 32) × 5/9 + 273.15
- * @property {string} TemperatureKelvinToCelsius
- * °C = °K − 273.15
- * @property {string} TemperatureKelvinToFahrenheit
- * °F = (°K − 273.15) × 9/5 + 32
- */
-export const MATH_FORMULA = Object.freeze({
-  GeodeticDistance: "GeodeticDistance",
-  GeodeticHeading: "GeodeticHeading",
-  GeodeticSpeed: "GeodeticSpeed",
-  TemperatureCelsiusToFahrenheit: "TemperatureCelsiusToFahrenheit",
-  TemperatureCelsiusToKelvin: "TemperatureCelsiusToKelvin",
-  TemperatureFahrenheitToCelsius: "TemperatureFahrenheitToCelsius",
-  TemperatureFahrenheitToKelvin: "TemperatureFahrenheitToKelvin",
-  TemperatureKelvinToCelsius: "TemperatureKelvinToCelsius",
-  TemperatureKelvinToFahrenheit: "TemperatureKelvinToFahrenheit"
-});
-
-/**
- * Provides the current state of the {@link CProtocol.state()} object.
- * @readonly
- * @enum {string}
- * @property {string} Error Signifies an onerror listener received an
- * ErrorEvent.
- * @property {string} Message Signifies a onmessage listener received a
- * MessageEvent that contains received data via its data property
- * @property {string} MessageError Signifies a onmessageerror listener
- * received MessageEvent containing an error accessible via its data
- * property.
- * @property {string} Started Signifies a {@link CProtocol} object has been
- * constructed and is running.
- * @property {string} Terminated Signifies a {@link CProtocol} object has
- * been terminated and is no longer running.
- * @property {string} TimerExpired Signifies the {@link CTimerProtocol} has
- * expired.
- */
-export const PROTOCOL_STATE = Object.freeze({
-  Message: "message",
-  MessageError: "message_error",
-  Error: "error",
-  Started: "started",
-  Terminated: "terminated",
-  TimerExpired: "timer_expired",
-});
-
-/**
- * Provides the type of protocol for the {@link CProtocol.type()} object.
- * @readonly
- * @enum {string}
- * @property {string} Timer Identifies a {@link CTimerProtocol} object.
- * @property {string} Worker Identifies a {@link CWorkerProtocol} object.
- */
-export const PROTOCOL_TYPE = Object.freeze({
-  Timer: "timer",
-  Worker: "worker",
-});
-
-// ============================================================================
-// [MODULE CALLBACKS] =========================================================
-// ============================================================================
-
-/**
- * The event handler utilized within a given JavaScript runtime. This
- * represents a global event handler that should suffice any JavaScript
- * event callback.
- * @callback CEventHandler
- * @param {Event} e The event object that was triggered
- * @returns {void}
- */
-
-/**
- * A log handler for further processing of a logged event.
- * @callback CLogHandler
- * @param {CLogRecord} record The record logged.
- * @returns {void}
- */
-
-/**
- * Supports the {@link CProtocol} for data received as part of a
- * protocol.
- * @callback CProtocolHandler
- * @param {CProtocol} protocol Reference to the protocol receiving the
- * data.
- * @param {CResult} data The data received as part of protocol.
- */
-
-/**
- * The task to run as part of the {@link async_task} call.
- * @callback CTaskCB
- * @param {any} [data] Optional data to pass to the task.
- * @returns {any} The result of the task completing.
- */
-
-// ============================================================================
-// [MODULE PROTOCOLS] =========================================================
-// ============================================================================
-
-/**
- * Defines the "rules" for objects that will setup a protocol that directly
- * exchanges data with an external item, will continuously run until
- * terminated, requires the ability to know it is running, and get any
- * errors that have occurred during its run.
- */
-export class CProtocol {
-  /** @type {string} */
-  #id = "";
-  /** @type {CProtocolHandler} */
-  #rx_handler;
-  /** @type {PROTOCOL_STATE} */
-  #state;
-  /** @type {PROTOCOL_TYPE} */
-  #type;
-
-  /**
-   * Helper function to process received data on a protocol.
-   * @protected
-   * @param {object} params The named parameters for the object.
-   * @param {PROTOCOL_STATE} params.state The current state of the protocol.
-   * @param {any} [params.value] The value associated with the result
-   * @param {any} [params.error] The error associated with the result
-   * @returns {void}
-   */
-  on_data_rx({state, error = null, value = null}) {
-    this.#state = state;
-    this.#rx_handler(this, new CResult({error: error, value: value}));
-  }
-
-  /**
-   * A unique ID for the protocol.
-   * @returns {string}
-   */
-  id() { return this.#id; }
-
-  /**
-   * Identifies the current state of the protocol.
-   * @returns {PROTOCOL_STATE}
-   */
-  state() { return this.#state; }
-
-  /**
-   * Identifies the type of protocol.
-   * @returns {PROTOCOL_TYPE}
-   */
-  type() { return this.#type; }
-
-  /**
-   * Posts a given message to the given implementing protocol.
-   * @param {any} [data] The data to post for the given protocol.
-   * @returns {void}
-   */
-  post_message(data) {
-    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
-  }
-
-  /**
-   * Terminates the given protocol.
-   * @returns {void}
-   */
-  terminate() {
-    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
-  }
-
-  /**
-   * Constructor for the class.
-   * @param {string} id Identification for the protocol for debugging
-   * purposes.
-   * @param {CProtocolHandler} rx_handler The callback for received
-   * data.
-   * @param {PROTOCOL_TYPE} type The type of protocol.
-   */
-  constructor(id, rx_handler, type) {
-    try {
-      json_check_type({type: "string", data: id, should_throw: true});
-      json_check_type({
-        type: "function",
-        data: rx_handler,
-        count: 2,
-        should_throw: true
-      });
-      json_check_type({type: "string", data: type, should_throw: true});
-      this.#id = id;
-      this.#rx_handler = rx_handler;
-      this.#state = PROTOCOL_STATE.Started;
-      this.#type = type;
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CProtocol construction error.", err);
-    }
-  }
-}
-
-/**
- * Creates an asynchronous timer that fires on the specified interval until
- * terminated. Created via the {@link async_timer} call.
- * @extends {CProtocol}
- */
-export class CTimerProtocol extends CProtocol {
-  /** @type {number} */
-  #timer_id = -1;
-
-  /**
-   * @inheritdoc
-   * @override
-   */
-  terminate() {
-    try {
-      if (this.state() == PROTOCOL_STATE.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      globalThis.clearInterval(this.#timer_id);
-      this.#timer_id = -1;
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CTimerProtocol terminate error.", err);
-    }
-  }
-
-  /**
-   * Constructor for the protocol.
-   * @param {string} id Unique id for the protocol
-   * @param {CProtocolHandler} rx_handler Handler for the protocol.
-   * @param {number} interval How often to fire the timer.
-   */
-  constructor(id, rx_handler, interval) {
-    super(id, rx_handler, PROTOCOL_TYPE.Timer);
-    try {
-      json_check_type({type: "number", data: interval, should_throw: true});
-      // @ts-ignore node returns an object.
-      this.#timer_id = globalThis.setInterval(() => {
-        try {
-          this.on_data_rx({state: PROTOCOL_STATE.TimerExpired});
-        } catch (err) {
-          CModuleError.handle_error(err);
-          throw new CModuleError("CTimerProtocol on_data_rx() error.", err);
-        }
-      }, interval);
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CTimerProtocol construction error.", err);
-    }
-  }
-}
-
-/**
- * Constructs a dedicated background worker off the JavaScript runtime main
- * thread. Object constructed via the {@link async_worker} call.
- * @extends {CProtocol}
- */
-export class CWorkerProtocol extends CProtocol {
-  /** @type {Worker} */
-  #worker;
-
-  /**
-   * Data specific to how you construct your dedicated background worker.
-   * @override
-   * @param {any} data The data to send to the background worker.
-   * @returns {void}
-   */
-  post_message(data) {
-    try {
-      if (this.state() == PROTOCOL_STATE.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#worker.postMessage(data);
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CWorkerProtocol.post_message() error.", err);
-    }
-  }
-
-  /**
-   * @inheritdoc
-   * @override
-   */
-  terminate() {
-    try {
-      if (this.state() == PROTOCOL_STATE.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#worker.terminate();
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CWorkerProtocol.terminate() error.", err);
-    }
-  }
-
-  /**
-   * Constructs a worker protocol for asynchronous processing off the main
-   * runtime thread.
-   * @param {string} url A unique ID for the protocol.
-   * @param {CProtocolHandler} rx_handler The receive handler for data and
-   * state changes
-   * @param {object} options Options for further configuration of the worker.
-   */
-  constructor(url, rx_handler, options = {type: "module"}) {
-    super(`Worker-${url}`, rx_handler, PROTOCOL_TYPE.Worker);
-    try {
-      if (!ModuleUtils.is_defined("Worker")) {
-        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-      }
-      json_check_type({type: "string", data: url, should_throw: true});
-      json_check_type({type: "object", data: options, should_throw: true});
-      this.#worker = new globalThis.Worker(
-        new URL(url, import.meta.url).href,
-        options
-      );
-      this.#worker.onerror = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.Error, error: evt});
-        evt.preventDefault();
-      }
-      this.#worker.onmessageerror = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: evt});
-        evt.preventDefault();
-      }
-      this.#worker.onmessage = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
-        evt.preventDefault();
-      }
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CWorkerProtocol construction error.", err);
-    }
-  }
-}
-
-// ============================================================================
-// [MODULE CLASSES] ===========================================================
-// ============================================================================
-
-/**
- * The log record processed via the {@link CLogHandler} post logging event.
- */
-export class CLogRecord {
-  /** @type {Date} */
-  #time = new Date();
-  /** @type {LOGGER} */
-  #level;
-  /** @type {any} */
-  #data = undefined;
-
-  /**
-   * The time the logged event was created.
-   * @returns {Date}
-   */
-  time() { return this.#time; }
-
-  /**
-   * The object representation of the log level.
-   * @returns {LOGGER}
-   */
-  level() { return this.#level; }
-
-  /**
-   * The data associated with the log event.
-   * @returns {any}
-   */
-  data() { return this.#data; }
-
-  /**
-   * Constructor for the class.
-   * @param {LOGGER} level object information.
-   * @param {any} data The data to log.
-   */
-  constructor(level, data) {
-    try {
-      json_check_type({type: "object", data: level, should_throw: true});
-      json_has_key({data: level, key: "level", should_throw: true});
-      json_has_key({data: level, key: "label", should_throw: true});
-      this.#level = level;
-      this.#data = data;
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CLogRecord construction error.", err);
-    }
-  }
-}
-
-/**
- * Support object for the {@link CProtocol} and any other object to
- * provide a result where either the value or the error can be signaled for
- * later checking by a user.
- */
-export class CResult {
-  /** @type {any} */
-  #error;
-  /** @type {any} */
-  #value;
-
-  /**
-   * Holds any error message associated with a failed transaction request.
-   * @returns {any}
-   */
-  error() { return this.#error; }
-
-  /**
-   * Signals whether an error was captured or not.
-   * @returns {boolean}
-   */
-  is_error() {
-    if (this.error() instanceof Error) {
-      return true;
-    }
-    return this.error() != null;
-  }
-
-  /**
-   * Signals the transaction completed with no errors.
-   * @returns {boolean}
-   */
-  is_ok() { return !this.is_error(); }
-
-  /**
-   * Hold the value of the given result or nothing if the [CResult] is
-   * being used to signal there was no error.
-   * @returns {any}
-   */
-  value() { return this.#value; }
-
-  /**
-   * Constructor for the class.
-   * @param {object} params The named parameters for the object.
-   * @param {any} [params.value] The value associated with the result.
-   * @param {any} [params.error] The error associated with the result.
-   */
-  constructor({value = null, error = null} = {}) {
-    try {
-      if (value && error) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#value = value;
-      this.#error = error;
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CLogRecord construction error.", err);
-    }
-  }
-}
-
-/**
- * The resulting object from the {@link async_task} function call with a
- * promise of the future {@link CResult}.
- */
-export class CFuture {
-  /** @type {Promise<CResult>} */
-  #task
-  /** @type {boolean} */
-  #has_task_completed = false;
-
-  /**
-   * Determines if the task has completed or not.
-   * @returns {boolean} true if completed, false otherwise.
-   */
-  has_completed() { return this.#has_task_completed; }
-
-  /**
-   * Holds the result of the {@link async_task} function call.
-   * @returns {Promise<CResult>} The result of the asynchronous processing.
-   */
-  async result() {
-    let result = await this.#task;
-    return result;
-  }
-
-  /**
-   * Result for the {@link async_task} function call.
-   * @param {CTaskCB} task The task to run.
-   * @param {any} [data] The optional data to pass to the task.
-   * @param {number} [delay=0] The delay to schedule the task in the
-   * future.
-   */
-  constructor(task, data, delay = 0) {
-    try {
-      json_check_type({type: "function", data: task, should_throw: true});
-      json_check_type({type: "number", data: delay, should_throw: true});
-      this.#task = new Promise((resolve) => {
-        try {
-          setTimeout(() => {
-            let answer = task(data);
-            resolve(new CResult({value: answer}));
-          }, delay);
-        } catch (err) {
-          this.#has_task_completed = true;
-          resolve(new CResult({error: err}));
-        }
-      });
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CFuture construction error.", err);
-    }
-  }
-}
-
-// ============================================================================
-// [MODULE UTILS API HELPER] ==================================================
-// ============================================================================
 
 /**
  * Supports the module public facing APIs to hold state necessary for tracking
@@ -1162,8 +912,1191 @@ class ModuleUtils {
    */
   static is_defined(property, obj = globalThis) {
     json_check_type({type: "string", data: property, should_throw: true});
-    json_check_type({type: "object", data: obj, should_throw: true});
-    return property in obj;
+    if (json_check_type({type: "object", data: obj})) {
+      return property in obj;
+    }
+    return false;
+  }
+}
+
+// ============================================================================
+// [MODULE DATA CLASSES] ======================================================
+// ============================================================================
+
+/**
+ * The resulting object from the {@link async_task} function call with a
+ * promise of the future {@link CResult}.
+ */
+export class CFuture {
+  /** @type {Promise<CResult>} */
+  #task
+  /** @type {boolean} */
+  #has_task_completed = false;
+
+  /**
+   * Determines if the task has completed or not.
+   * @returns {boolean} true if completed, false otherwise.
+   */
+  has_completed() { return this.#has_task_completed; }
+
+  /**
+   * Holds the result of the {@link async_task} function call.
+   * @returns {Promise<CResult>} The result of the asynchronous processing.
+   */
+  async result() {
+    let result = await this.#task;
+    return result;
+  }
+
+  /**
+   * Result for the {@link async_task} function call.
+   * @param {CTaskCB} task The task to run.
+   * @param {any} [data] The optional data to pass to the task.
+   * @param {number} [delay=0] The delay to schedule the task in the
+   * future.
+   */
+  constructor(task, data, delay = 0) {
+    try {
+      json_check_type({type: "function", data: task, should_throw: true});
+      json_check_type({type: "number", data: delay, should_throw: true});
+      this.#task = new Promise((resolve) => {
+        try {
+          setTimeout(() => {
+            let answer = task(data);
+            resolve(new CResult({value: answer}));
+          }, delay);
+        } catch (err) {
+          this.#has_task_completed = true;
+          resolve(new CResult({error: err}));
+        }
+      });
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CFuture construction error.", err);
+    }
+  }
+}
+
+/**
+ * Represents the geodetic data captured from the [COrientationProtocol]
+ * object when created via the [hw_request_orientation] function call.
+ */
+export class CGeodeticData {
+  /** @type {Date} */
+  #timestamp = new Date();
+  /** @type {number} */
+  #latitude = NaN;
+  /** @type {number} */
+  #longitude = NaN;
+  /** @type {number?} */
+  #altitude = null;
+  /** @type {number} */
+  #heading = NaN;
+  /** @type {number} */
+  #speed = NaN;
+  /** @type {number?} */
+  #alpha = null;
+  /** @type {number?} */
+  #beta = null;
+  /** @type {number?} */
+  #gamma = null;
+
+  /**
+   * The time the orientation data was last updated.
+   * @returns {Date}
+   */
+  timestamp() { return this.#timestamp; }
+
+  /**
+   * Returns a double representing the position's latitude in decimal
+   * degrees.
+   * @returns {number}
+   */
+  latitude() { return this.#latitude; }
+
+  /**
+   * Returns a double representing the position's longitude in decimal
+   * degrees.
+   * @returns {number}
+   */
+  longitude() { return this.#longitude; }
+
+  /**
+   * Returns a double representing the position's altitude in meters,
+   * relative to sea level. This value can be null if the implementation
+   * cannot provide the data.
+   * @returns {number?}
+   */
+  altitude() { return this.#altitude; }
+
+  /**
+   * Returns a double representing the direction towards which the
+   * device is facing. This value, specified in degrees, indicates how
+   * far off from heading true north the device is. 0 degrees represents
+   * true north, and the direction is determined clockwise (which means
+   * that east is 90 degrees and west is 270 degrees). If speed is 0,
+   * heading is NaN.
+   * @readonly
+   * @returns {number}
+   */
+  heading() { return this.#heading; }
+
+  /**
+   * Returns a double representing the velocity of the device in meters
+   * per second.
+   * @return {number}
+   */
+  speed() { return this.#speed; }
+
+  /**
+   * A number representing the motion of the device around the z axis,
+   * express in degrees with values ranging from 0 (inclusive) to
+   * 360 (exclusive).
+   * @returns {number?}
+   */
+  alpha() { return this.#alpha; }
+
+  /**
+   * A number representing the motion of the device around the x axis,
+   * expressed in degrees with values ranging from -180 (inclusive) to
+   * 180 (exclusive). This represents the front to back motion of the
+   * device.
+   * @returns {number?}
+   */
+  beta() { return this.#beta; }
+
+  /**
+   * A number representing the motion of the device around the y axis,
+   * expressed in degrees with values ranging from -90 (inclusive) to 90
+   * (exclusive). This represents the left to right motion of the device.
+   * @returns {number?}
+   */
+  gamma() { return this.#gamma; }
+
+  /**
+   * Determines the distance between two geodetic points.
+   * @param {CGeodeticData} d The secondary point to determine the distance
+   * between.
+   * @returns {number} in meters.
+   */
+  distance_in_meters(d) {
+    return ModuleUtils.geodetic_distance(
+      this.latitude(),
+      this.longitude(),
+      d.latitude(),
+      d.longitude()
+    );
+  }
+
+  /**
+   * Updates the currently held data with the newest iteration of the data
+   * set.
+   * @param {DeviceOrientationEvent | GeolocationCoordinates} data  The data
+   * to update with. Data not of a matching type is ignored.
+   * @returns {void}
+   */
+  update(data) {
+    let now = new Date();
+    // @ts-ignore DeviceOrientationEvent part of browser runtime.
+    if (data instanceof DeviceOrientationEvent) {
+      this.#timestamp = now;
+      // @ts-ignore data will have specified property
+      this.#alpha = data.alpha;
+      // @ts-ignore data will have specified property
+      this.#beta = data.beta;
+      // @ts-ignore data will have specified property
+      this.#gamma = data.gamma;
+    // @ts-ignore GeolocationCoordinates part of browser runtime.
+    } else if (data instanceof GeolocationCoordinates) {
+      // First see if we got null data where we can at least derive the values.
+      // @ts-ignore data will have specified property
+      this.#heading = data.heading
+        // @ts-ignore data will have specified property
+        ? data.heading
+        : ModuleUtils.geodetic_heading(
+            this.#latitude,
+            this.#longitude,
+            // @ts-ignore data will have specified property
+            data.latitude,
+            // @ts-ignore data will have specified property
+            data.longitude
+          );
+      // @ts-ignore data will have specified property
+      this.#speed = data.speed
+        // @ts-ignore data will have specified property
+        ?  data.speed
+        : ModuleUtils.geodetic_speed(
+            this.#latitude,
+            this.#longitude,
+            this.#timestamp.getTime(),
+            // @ts-ignore data will have specified property
+            data.latitude,
+            // @ts-ignore data will have specified property
+            data.longitude,
+            now.getTime()
+          );
+      this.#timestamp = now;
+      // @ts-ignore data will have specified property
+      this.#latitude = data.latitude;
+      // @ts-ignore data will have specified property
+      this.#longitude = data.longitude;
+      // @ts-ignore data will have specified property
+      this.#altitude = data.altitude;
+    }
+  }
+
+  /**
+   * Default constructor
+   */
+  constructor() { }
+}
+
+/**
+ * The log record processed via the {@link CLogHandler} post logging event.
+ */
+export class CLogRecord {
+  /** @type {Date} */
+  #time = new Date();
+  /** @type {LOGGER} */
+  #level;
+  /** @type {any} */
+  #data = undefined;
+
+  /**
+   * The time the logged event was created.
+   * @returns {Date}
+   */
+  time() { return this.#time; }
+
+  /**
+   * The object representation of the log level.
+   * @returns {LOGGER}
+   */
+  level() { return this.#level; }
+
+  /**
+   * The data associated with the log event.
+   * @returns {any}
+   */
+  data() { return this.#data; }
+
+  /**
+   * Constructor for the class.
+   * @param {LOGGER} level object information.
+   * @param {any} data The data to log.
+   */
+  constructor(level, data) {
+    try {
+      json_check_type({type: "object", data: level, should_throw: true});
+      json_has_key({data: level, key: "level", should_throw: true});
+      json_has_key({data: level, key: "label", should_throw: true});
+      this.#level = level;
+      this.#data = data;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CLogRecord construction error.", err);
+    }
+  }
+}
+
+/**
+ * Support object for the {@link CProtocol} and any other object to
+ * provide a result where either the value or the error can be signaled for
+ * later checking by a user.
+ */
+export class CResult {
+  /** @type {any} */
+  #error;
+  /** @type {any} */
+  #value;
+
+  /**
+   * Holds any error message associated with a failed transaction request.
+   * @returns {any}
+   */
+  error() { return this.#error; }
+
+  /**
+   * Signals whether an error was captured or not.
+   * @returns {boolean}
+   */
+  is_error() {
+    if (this.error() instanceof Error) {
+      return true;
+    }
+    return this.error() != null;
+  }
+
+  /**
+   * Signals the transaction completed with no errors.
+   * @returns {boolean}
+   */
+  is_ok() { return !this.is_error(); }
+
+  /**
+   * Hold the value of the given result or nothing if the [CResult] is
+   * being used to signal there was no error.
+   * @returns {any}
+   */
+  value() { return this.#value; }
+
+  /**
+   * Constructor for the class.
+   * @param {object} params The named parameters for the object.
+   * @param {any} [params.value] The value associated with the result.
+   * @param {any} [params.error] The error associated with the result.
+   */
+  constructor({value = null, error = null} = {}) {
+    try {
+      if (value && error) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#value = value;
+      this.#error = error;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CLogRecord construction error.", err);
+    }
+  }
+}
+
+/**
+ * The result object from a {@link network_fetch} call containing any data
+ * from the call along with the HTTP Status Code of the transaction.
+ * @extends {CResult}
+ */
+export class CFetchResult extends CResult {
+  /** @type {number} */
+  #status = -1;
+
+  /**
+   * Will get the data if it is a Uint8Array or null if not that object
+   * type.
+   * @returns {Uint8Array?}
+   */
+  as_binary() {
+    return json_check_type({type: Uint8Array,
+      data: this.value()})
+        ? this.value()
+        : null;
+  }
+
+  /**
+   * Will get the data if it is a Blob or null if not that object type.
+   * @readonly
+   * @returns {Blob?}
+   */
+  as_blob() {
+    return json_check_type({type: Blob, data: this.value()})
+      ? this.value()
+      : null;
+  }
+
+  /**
+   * Will get the value if it is a FormData or null if not that object
+   * type.
+   * @returns {FormData?}
+   */
+  as_form_data() {
+    return json_check_type({type: FormData, data: this.value()})
+      ? this.value()
+      : null;
+  }
+
+  /**
+   * Will get the value if it is a Object or null if not that object
+   * type.
+   * @returns {object?}
+   */
+  as_object() {
+    return json_check_type({type: "object", data: this.value()})
+      ? this.value()
+      : null;
+  }
+
+  /**
+   * Will get the value if it is a string or null if not that object
+   * type.
+   * @returns {string?}
+   */
+  as_string() {
+    return json_check_type({type: "string", data: this.value()})
+      ? this.value()
+      : null;
+  }
+
+  /**
+   * Provides additional check of status code along with super property.
+   * @override
+   * @returns {boolean} true if an error was captured, false otherwise.
+   */
+  is_error() {
+    return super.is_error() || this.status() < 200 || this.status() > 299;
+  }
+
+  /**
+   * The HTTP Status Code
+   * @returns {number}
+   */
+  status() { return this.#status; }
+
+  /**
+   * Constructor for the class.
+   * @param {object} params The named parameters.
+   * @param {number} params.status The HTTP status code of the fetch request.
+   * @param {any} [params.data] Any data associated with the request.
+   * @param {any} [params.error] Any captured errors as a result of the
+   * request.
+   */
+  constructor({status, data, error=null}) {
+    super({value: data, error: error});
+    this.#status = status;
+  }
+}
+
+// ============================================================================
+// [MODULE PROTOCOLS] =========================================================
+// ============================================================================
+
+/**
+ * Defines the "rules" for objects that will setup a protocol that directly
+ * exchanges data with an external item, will continuously run until
+ * terminated, requires the ability to know it is running, and get any
+ * errors that have occurred during its run.
+ */
+export class CProtocol {
+  /** @type {string} */
+  #id = "";
+  /** @type {CProtocolHandler} */
+  #rx_handler;
+  /** @type {PROTOCOL_STATE} */
+  #state;
+  /** @type {PROTOCOL_TYPE} */
+  #type;
+
+  /**
+   * Helper function to process received data on a protocol.
+   * @protected
+   * @param {object} params The named parameters for the object.
+   * @param {PROTOCOL_STATE} params.state The current state of the protocol.
+   * @param {any} [params.value] The value associated with the result
+   * @param {any} [params.error] The error associated with the result
+   * @returns {void}
+   */
+  on_data_rx({state, error = null, value = null}) {
+    this.#state = state;
+    this.#rx_handler(this, new CResult({error: error, value: value}));
+  }
+
+  /**
+   * A unique ID for the protocol.
+   * @returns {string}
+   */
+  id() { return this.#id; }
+
+  /**
+   * Identifies the current state of the protocol.
+   * @returns {PROTOCOL_STATE}
+   */
+  state() { return this.#state; }
+
+  /**
+   * Identifies the type of protocol.
+   * @returns {PROTOCOL_TYPE}
+   */
+  type() { return this.#type; }
+
+  /**
+   * Posts a given message to the given implementing protocol.
+   * @param {any} [data] The data to post for the given protocol.
+   * @returns {void}
+   */
+  post_message(data) {
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+  }
+
+  /**
+   * Terminates the given protocol.
+   * @returns {void}
+   */
+  terminate() {
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+  }
+
+  /**
+   * Constructor for the class.
+   * @param {string} id Identification for the protocol for debugging
+   * purposes.
+   * @param {CProtocolHandler} rx_handler The callback for received
+   * data.
+   * @param {PROTOCOL_TYPE} type The type of protocol.
+   */
+  constructor(id, rx_handler, type) {
+    try {
+      json_check_type({type: "string", data: id, should_throw: true});
+      json_check_type({
+        type: "function",
+        data: rx_handler,
+        count: 2,
+        should_throw: true
+      });
+      json_check_type({type: "string", data: type, should_throw: true});
+      this.#id = id;
+      this.#rx_handler = rx_handler;
+      this.#state = PROTOCOL_STATE.Started;
+      this.#type = type;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CProtocol construction error.", err);
+    }
+  }
+}
+
+/**
+ * This protocol represents a named channel that any browsing context of a
+ * given origin can subscribe to. It allows communication between different
+ * documents (in different windows, tabs, frames, iframes, or worker) of the
+ * same origin. {@link network_connect} creates this protocol.
+ * @extends {CProtocol}
+ */
+export class CBroadcastChannelProtocol extends CProtocol {
+  /** @type {BroadcastChannel} */
+  #channel;
+
+  /**
+   * Sends a message, which can be of any kind of Object, to each listener
+   * in any browsing context with the same origin. The message is
+   * transmitted as a message event targeted at each BroadcastChannel
+   * bound to the channel.
+   * @override
+   * @param {any} [data] The data to broadcast. The data is
+   * serialized using the structured clone algorithm. This means you can
+   * pass a broad variety of data objects safely to the destination window
+   * without having to serialize them yourself.
+   * @returns {void}
+   */
+  post_message(data) {
+    try {
+      if (this.state() === PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#channel.postMessage(data);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CBroadcastChannel.post_message() error", err);
+    }
+  }
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() === PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#channel.close();
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CBroadcastChannelProtocol.terminate() error",
+        err
+      );
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {string} url The URL to connect this broadcast channel on.
+   * @param {CProtocolHandler} rx_handler The handler to receive data
+   * from the protocol.
+   */
+  constructor(url, rx_handler) {
+    super(
+      `CBroadcastChannel-${url}`,
+      rx_handler,
+      PROTOCOL_TYPE.BroadcastChannel
+    );
+    try {
+      if (!ModuleUtils.is_defined("BroadcastChannel")) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      this.#channel = new globalThis.BroadcastChannel(url);
+      this.#channel.onmessage = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+      };
+      this.#channel.onmessageerror = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: evt});
+      };
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CBroadcastChannel construction error.", err);
+    }
+  }
+}
+
+/**
+ * Opens a persistent connection to an HTTP server, which sends events in
+ * text/event-stream format. The connection remains open until terminate is
+ * called. {@link network_connect} creates this protocol.
+ * @extends {CProtocol}
+ */
+export class CEventSourceProtocol extends CProtocol {
+  /** @type {EventSource} */
+  #sse
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() === PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#sse.close();
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CEventSourceProtocol construction error.",
+        err
+      );
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {string} url URL of the server sending the events.
+   * @param {CProtocolHandler} rx_handler The protocol handler to receive
+   * those events.
+   */
+  constructor(url, rx_handler) {
+    super(`CEventSourceProtocol-${url}`, rx_handler, PROTOCOL_TYPE.EventSource);
+    try {
+      if (!ModuleUtils.is_defined("EventSource")) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      this.#sse = new globalThis.EventSource(url);
+      this.#sse.onerror = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.Error, value: evt});
+      };
+      this.#sse.onmessage = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+      };
+      this.#sse.onopen = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+      };
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CEventSourceProtocol error.", err);
+    }
+  }
+}
+
+/**
+ * Creates the ability to get a devices geodetic orientation
+ * (GPS location, 3D orientation). Protocol created via the
+ * {@link hw_request_orientation} function call.
+ * @extends {CProtocol}
+ */
+export class COrientationProtocol extends CProtocol {
+  /** @type {CGeodeticData} */
+  #data = new CGeodeticData();
+  /** @type {CEventHandler} */
+  #on_device_orientation;
+  /** @type {number} */
+  #watch_id;
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() == PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      // @ts-ignore Object exists in browser runtime.
+      globalThis.navigator.geolocation.clearWatch(this.#watch_id);
+      this.#watch_id = -1;
+      // @ts-ignore Object exists in browser runtime.
+      globalThis.removeEventListener(
+        "deviceorientation",
+        this.#on_device_orientation
+      );
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("COrientationProtocol.terminate() error.", err);
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {string} id A unique ID for the protocol.
+   * @param {CProtocolHandler} rx_handler The handler to receive data.
+   * @param {object} [options={}]  Options specific to the  protocol.
+   */
+  constructor(id, rx_handler, options={}) {
+    super(id, rx_handler, PROTOCOL_TYPE.Orientation);
+    try {
+      let supported = ModuleUtils.is_defined("navigator") &&
+        // @ts-ignore We are checking to see if this is defined
+        ModuleUtils.is_defined("geolocation", globalThis["navigator"]);
+      if (!supported) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      json_check_type({type: "object", data: options, should_throw: true});
+      // @ts-ignore Object exists in browser runtime.
+      this.#on_device_orientation =
+        (/** @type {DeviceOrientationEvent} */ evt) => {
+          this.#data.update(evt);
+      };
+      // @ts-ignore Object exists in browser runtime.
+      globalThis.addEventListener(
+        "deviceorientation",
+        this.#on_device_orientation
+      );
+      // @ts-ignore Property exists in browser runtime.
+      this.#watch_id = globalThis.navigator.geolocation.watchPosition(
+        // @ts-ignore This will work in Browser runtime.
+        (/** @type {GeolocationPosition} */ evt) => {
+          this.#data.update(evt.coords);
+          this.on_data_rx({
+            state: PROTOCOL_STATE.Message,
+            value: Object.assign({}, this.#data)
+          });
+        },
+        // @ts-ignore This will work in Browser runtime.
+        (/** @type {GeolocationPositionError} */evt) => {
+          this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: evt});
+        },
+        options
+      );
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("COrientationProtocol construction error.", err);
+    }
+  }
+}
+
+/**
+ * Creates a protocol allowing communication with an attached serial port
+ * device. Provides the ability to interact with the device setting signals
+ * data, and querying the current line status of the port. This is all
+ * handled via the {@link SERIAL_PORT_DATA_REQUEST} via
+ * the post_message() call.
+ * @extends {CProtocol}
+ */
+export class CSerialPortProtocol extends CProtocol {
+  /** @type {SerialPort} */
+  #port;
+
+  /**
+   * Carries out either a request for data from an open serial port or to send
+   * data to that open port.
+   * @override
+   * @param {object} params The named parameters.
+   * @param {SERIAL_PORT_DATA_REQUEST} params.request The request to make of the
+   * protocol.
+   * @param {any} [params.data] Any data associated with the given request.
+   * @returns {Promise<void>}
+   */
+  async post_message({request, data}) {
+    try {
+      if (this.state() === PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      let resp = null;
+      switch (request) {
+        case SERIAL_PORT_DATA_REQUEST.Break:
+          json_check_type({
+            type: "boolean",
+            data: data,
+            should_throw: true
+          });
+          await this.#port.setSignals("break", data);
+          break;
+        case SERIAL_PORT_DATA_REQUEST.CarrierDetect:
+          resp = await this.#port.getSignals();
+          this.on_data_rx({
+            state: PROTOCOL_STATE.Message,
+            value: {carrier_detect: resp["carrierDetect"]}
+          });
+          break;
+        case SERIAL_PORT_DATA_REQUEST.ClearToSend:
+          resp = await this.#port.getSignals();
+          this.on_data_rx({
+            state: PROTOCOL_STATE.Message,
+            value: {clear_to_send: resp["clearToSend"]}
+          });
+          break;
+        case SERIAL_PORT_DATA_REQUEST.DataBytesRead:
+          if (!this.#port.readable) {
+            this.on_data_rx({
+              state: PROTOCOL_STATE.Message,
+              value: {data_bytes_read: new Uint8Array()}
+            });
+          }
+          const reader = this.#port.readable.getReader();
+          // @ts-ignore This will exist in the browser runtime.
+          const { value, done } = await reader.read();
+          reader.releaseLock();
+          this.on_data_rx({
+            state: PROTOCOL_STATE.Message,
+            value: {data_bytes_read: value}
+          });
+          break;
+        case SERIAL_PORT_DATA_REQUEST.DataBytesWrite:
+          json_check_type({
+            type: Uint8Array,
+            data: data,
+            should_throw: true
+          });
+          const writer = this.#port.writable.getWriter();
+          await writer.write(data);
+          writer.releaseLock();
+          break;
+        case SERIAL_PORT_DATA_REQUEST.DataSetReady:
+          resp = await this.#port.getSignals();
+          this.on_data_rx({
+            state: PROTOCOL_STATE.Message,
+            value: {data_set_ready: resp["dataSetReady"]}
+          });
+          break;
+        case SERIAL_PORT_DATA_REQUEST.DataTerminalReady:
+          json_check_type({
+            type: "boolean",
+            data: data,
+            should_throw: true
+          });
+          await this.#port.setSignals("dataTerminalReady", data);
+          break;
+        case SERIAL_PORT_DATA_REQUEST.RequestToSend:
+          json_check_type({
+            type: "boolean",
+            data: data,
+            should_throw: true
+          });
+          await this.#port.setSignals("requestToSend", data);
+          break;
+        case SERIAL_PORT_DATA_REQUEST.RingIndicator:
+          resp = await this.#port.getSignals();
+          this.on_data_rx({
+            state: PROTOCOL_STATE.Message,
+            value: {ring_indicator: resp["ringIndicator"]}
+          });
+          break;
+        default:
+          throw new CModuleError(CModuleError.MISUSE);
+      }
+    } catch (err) {
+      if (err instanceof CModuleError) {
+        CModuleError.handle_error(err);
+      }
+      this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: err});
+    }
+  }
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() === PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#port.close();
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CSerialPortProtocol.terminate() error.",
+        err
+      );
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {CProtocolHandler} rx_handler  The receive handler for data from
+   * the protocol.
+   * @param {SerialPort} port The physical serial port opened by the
+   * protocol.
+   */
+  constructor(rx_handler, port) {
+    super(
+      `CSerialPortProtocol_${port.getInfo().usbVendorId}` +
+      `_${[port.getInfo().usbProductId]}`,
+      rx_handler,
+      PROTOCOL_TYPE.SerialPort
+    );
+    try {
+      let supported = ModuleUtils.is_defined("navigator") &&
+        // @ts-check This will exist in the browser runtime.
+        ModuleUtils.is_defined("serial", globalThis["navigator"]);
+      if (!supported) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      // @ts-ignore SerialPort exists as a type in Browser context.
+      json_check_type({type: SerialPort, data: port, should_throw: true});
+      this.#port = port;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CSerialPortProtocol construction error.",
+        err
+      );
+    }
+  }
+}
+
+/**
+ * Creates an asynchronous timer that fires on the specified interval until
+ * terminated. Created via the {@link async_timer} call.
+ * @extends {CProtocol}
+ */
+export class CTimerProtocol extends CProtocol {
+  /** @type {number} */
+  #timer_id = -1;
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() == PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      globalThis.clearInterval(this.#timer_id);
+      this.#timer_id = -1;
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CTimerProtocol terminate error.", err);
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {string} id Unique id for the protocol
+   * @param {CProtocolHandler} rx_handler Handler for the protocol.
+   * @param {number} interval How often to fire the timer.
+   */
+  constructor(id, rx_handler, interval) {
+    super(id, rx_handler, PROTOCOL_TYPE.Timer);
+    try {
+      json_check_type({type: "number", data: interval, should_throw: true});
+      // @ts-ignore node returns an object.
+      this.#timer_id = globalThis.setInterval(() => {
+        try {
+          this.on_data_rx({state: PROTOCOL_STATE.Message, value: "timer_expired"});
+        } catch (err) {
+          CModuleError.handle_error(err);
+          throw new CModuleError("CTimerProtocol on_data_rx() error.", err);
+        }
+      }, interval);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CTimerProtocol construction error.", err);
+    }
+  }
+}
+
+/**
+ * Creates a WebSocket connection to a server allowing a dedicated
+ * bi-directional exchange of data. This socket will continuously attempt
+ * reconnecting to the server on connection loss until the protocol is
+ * terminated. {@link network_connect} creates this protocol.
+ * @extends {CProtocol}
+ */
+export class CWebSocketProtocol extends CProtocol {
+  /** @type {string} */
+  #url;
+  /** @type {WebSocket} */
+  // @ts-ignore The #connect_socket() creates this member field.
+  #socket;
+
+  /**
+   * Enqueues the specified data to be transmitted to the server over the
+   * WebSocket connection, increasing the value of bufferedAmount by the
+   * number of bytes needed to contain the data. If the data can't be sent
+   * (for example, because it needs to be buffered but the buffer is full),
+   * the socket is closed automatically.
+   * @override
+   * @param {string | ArrayBuffer | Blob } data Data to send to the server
+   * for further processing.
+   * @returns {void}
+   */
+  post_message(data) {
+    try {
+      if (this.state() === PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#socket.send(data);
+    } catch (err) {
+      if (err instanceof CModuleError) {
+        CModuleError.handle_error(err);
+        throw new CModuleError(
+          "CWebSocketProtocol.post_message() error.",
+          err
+        );
+      }
+      this.on_data_rx({state: PROTOCOL_STATE.Error, error: err});
+    }
+  }
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() === PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#socket.close();
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWebSocketProtocol.terminate() error.", err);
+    }
+  }
+
+  /**
+   * Handles creating a web socket to connect to a server.
+   */
+  #connect_socket() {
+    // @ts-ignore URL will not be null.
+    this.#socket = new globalThis.WebSocket(this.#url);
+    this.#socket.onmessage = (evt) => {
+      this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+    }
+    this.#socket.onerror = (evt) => {
+      this.on_data_rx({state: PROTOCOL_STATE.Error, error: evt});
+    }
+    this.#socket.onclose = (evt) => {
+      this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+      this.#socket.close();
+      this.#connect_socket();
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {string} url The URL of the server to connect.
+   * @param {CProtocolHandler} rx_handler The handler for receiving data from
+   * this protocol.
+   */
+  constructor(url, rx_handler) {
+    super(`CWebSocketProtocol-${url}`, rx_handler, PROTOCOL_TYPE.WebSocket);
+    try {
+      if (!ModuleUtils.is_defined("WebSocket")) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      json_check_type({type: "string", data: url, should_throw: true});
+      this.#url = url;
+      this.#connect_socket();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWebSocketProtocol construction error.", err);
+    }
+  }
+}
+
+/**
+ * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
+ * @extends {CProtocol}
+ */
+export class CWebRtcProtocol extends CProtocol {
+
+}
+
+/**
+ * Constructs a dedicated background worker off the JavaScript runtime main
+ * thread. Object constructed via the {@link async_worker} call.
+ * @extends {CProtocol}
+ */
+export class CWorkerProtocol extends CProtocol {
+  /** @type {Worker} */
+  #worker;
+
+  /**
+   * Data specific to how you construct your dedicated background worker.
+   * @override
+   * @param {any} data The data to send to the background worker.
+   * @returns {void}
+   */
+  post_message(data) {
+    try {
+      if (this.state() == PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#worker.postMessage(data);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol.post_message() error.", err);
+    }
+  }
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      if (this.state() == PROTOCOL_STATE.Terminated) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#worker.terminate();
+      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol.terminate() error.", err);
+    }
+  }
+
+  /**
+   * Constructs a worker protocol for asynchronous processing off the main
+   * runtime thread.
+   * @param {string} url A unique ID for the protocol.
+   * @param {CProtocolHandler} rx_handler The receive handler for data and
+   * state changes
+   * @param {object} options Options for further configuration of the worker.
+   */
+  constructor(url, rx_handler, options = {type: "module"}) {
+    super(`Worker-${url}`, rx_handler, PROTOCOL_TYPE.Worker);
+    try {
+      if (!ModuleUtils.is_defined("Worker")) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      json_check_type({type: "string", data: url, should_throw: true});
+      json_check_type({type: "object", data: options, should_throw: true});
+      this.#worker = new globalThis.Worker(
+        new URL(url, import.meta.url).href,
+        options
+      );
+      this.#worker.onerror = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.Error, error: evt});
+        evt.preventDefault();
+      }
+      this.#worker.onmessageerror = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: evt});
+        evt.preventDefault();
+      }
+      this.#worker.onmessage = (evt) => {
+        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+        evt.preventDefault();
+      }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol construction error.", err);
+    }
   }
 }
 
@@ -1176,8 +2109,6 @@ class ModuleUtils {
  * in milliseconds.
  * @param {number} delay Time is milliseconds to delay the task.
  * @returns {Promise<void>} The promise to await on for the delay.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // From within an async function, sleep 2 seconds.
  * await codemelted.async_sleep(2000);
@@ -1205,8 +2136,6 @@ export function async_sleep(delay) {
  * future.
  * @returns {CFuture} A future promise with the result of the
  * task.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Schedule a task for getting a future result and write it to the
  * // console.
@@ -1238,8 +2167,6 @@ export function async_task({task, data, delay = 0}) {
  * the given task.
  * @returns {CTimerProtocol} The timer that runs the task on
  * the specified interval.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Schedule a repeating task on a quarter second interval.
  * let counter = 0;
@@ -1269,8 +2196,6 @@ export function async_timer({id, task, interval}) {
  * @param {object} [params.options={type: "module"}] Options to specify with
  * the construction of the worker. Defaults to ES6 module type worker.
  * @returns {CWorkerProtocol}
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Construct a dedicated background worker
  * let rx_handler = (protocol, result) => {
@@ -1302,8 +2227,6 @@ export function async_worker({url, rx_handler, options = {type: "module"}}) {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1319,8 +2242,6 @@ export function db_exists() {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1336,8 +2257,6 @@ export function db_manage() {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1353,8 +2272,6 @@ export function db_query() {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1370,8 +2287,6 @@ export function db_update() {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1391,8 +2306,6 @@ export function db_version() {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1409,8 +2322,6 @@ export function disk_read_file() {
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1426,6 +2337,116 @@ export function disk_write_file() {
 }
 
 // ============================================================================
+// [HW UC FUNCTIONS] ==========================================================
+// ============================================================================
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @example
+ * // TBD
+ */
+export function hw_request_bluetooth() {
+  // TODO: Develop actual protocol against CProtocol
+  try {
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("hw_request_bluetooth() error.", err);
+  }
+}
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @example
+ * // TBD
+ */
+export function hw_request_midi() {
+  // TODO: Develop actual protocol against CProtocol
+  try {
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("hw_request_midi() error.", err);
+  }
+}
+
+/**
+ * Requests a device orientation protocol to retrieve the devices current
+ * geodetic orientation in 3D space.
+ * @param {object} params The named parameters.
+ * @param {string} params.id A unique identification for the protocol.
+ * @param {CProtocolHandler} params.rx_handler The handler for received data.
+ * @param {object} [params.options = {}] The options for tuning the protocol to
+ * watch for geolocation position updates.
+ * @return {COrientationProtocol} The protocol that handles
+ * device orientation changes until terminated.
+ * @example
+ * // TBD
+ */
+export function hw_request_orientation({id, rx_handler, options = {}}) {
+  try {
+    return new COrientationProtocol(id, rx_handler, options);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("hw_request_bluetooth() error.", err);
+  }
+}
+
+/**
+ * Provides the mechanism to request permission to connect to an attached
+ * serial port device.
+ * @param {CProtocolHandler} rx_handler Handler to receive processed serial
+ * port data. See {@link SERIAL_PORT_DATA_REQUEST} for what the data would
+ * look like when calling CSerialPortProtocol.post_message().
+ * @returns {Promise<CSerialPortProtocol?>} The requested
+ * connected serial port or null if request was canceled or could not be
+ * connected.
+ * @example
+ * // Determine if serial port processing is supported.
+ * const handler = (protocol, data) => {
+ *  // Do something with received data.
+ * };
+ * const supported = runtime_defined({request: DEFINED_REQUEST.SerialPort});
+ * if (supported) {
+ *    const port = await hw_request_serial_port(handler);
+ *    if (port) {
+ *      // Do something with port
+ *    }
+ * }
+ */
+export async function hw_request_serial_port(rx_handler) {
+  try {
+    if (!runtime_defined({request: DEFINED_REQUEST.SerialPort})) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
+    // @ts-ignore This is available in some web browsers
+    const port = await globalThis.navigator.serial.requestPort();
+    return new CSerialPortProtocol(rx_handler, port);
+  } catch (err) {
+    if (err instanceof CModuleError) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("hw_request_serial_port() error.", err);
+    }
+    return null;
+  }
+}
+
+/**
+ * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
+ * @example
+ * // TBD
+ */
+export function hw_request_usb() {
+  // TODO: Develop actual protocol against CProtocol
+  try {
+    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("hw_request_bluetooth() error.", err);
+  }
+}
+
+// ============================================================================
 // [JSON UC FUNCTIONS] ========================================================
 // ============================================================================
 
@@ -1434,8 +2455,6 @@ export function disk_write_file() {
  * @param {string} data Base64 encoded string.
  * @returns {string | null} The decoded string or null if the encoding
  * failed.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Encode base64
  * let encoded = json_btoa("Hello World!");
@@ -1462,8 +2481,6 @@ export function json_atob(data) {
  * @param {string} data The binary string.
  * @returns {string | null} The base64 encoded string or null if the
  * encoding failed.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Encode base64
  * let encoded = json_btoa("Hello World!");
@@ -1494,8 +2511,6 @@ export function json_btoa(data) {
  * @param {boolean} [params.should_throw=false] Whether to throw instead of
  * returning a value upon failure.
  * @returns {boolean} true if it meets the expectations, false otherwise.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Check if data is an expected type
  * let is_expected = json_check_type({type: "string", data: some_data});
@@ -1527,12 +2542,12 @@ export function json_check_type({
   should_throw = false
 }) {
   try {
-    const isExpectedType = typeof type !== "string"
+    const is_expected_type = typeof type !== "string"
       ? (data instanceof type)
       : typeof data === type;
     let valid = typeof count === "number"
-      ? isExpectedType && data.length === count
-      : isExpectedType;
+      ? is_expected_type && data.length === count
+      : is_expected_type;
     if (should_throw && !valid) {
       throw new CModuleError(CModuleError.TYPE_VIOLATION);
     }
@@ -1592,8 +2607,6 @@ export function json_create_object(data) {
  * @param {boolean} [params.should_throw=false] Whether to throw instead
  * of returning a value upon failure.
  * @returns {boolean} true if property was found, false otherwise.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Check if object has field
  * if (json_has_key({data: obj, key: "id"})) {
@@ -1663,45 +2676,6 @@ export function json_stringify(data) {
   }
 }
 
-/**
- * Checks for a valid URL.
- * @param {object} params
- * @param {string} params.data String to parse to see if it is a valid
- * URL.
- * @param {boolean} [params.should_throw=false] Whether to throw instead
- * of returning a value upon failure.
- * @returns {boolean} true if valid, false otherwise.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
- * @example
- * // Test to see if it is a valid URL
- * if (json_valid_url({data: "https://google.com"})) {
- *   // Do the thing
- * }
- *
- * // Throw if an invalid URL is encountered
- * json_valid_url({data: "https://<>.com", should_throw: true});
- */
-export function json_valid_url({data, should_throw = false}) {
-  try {
-    json_check_type({type: "string", data: data, should_throw: true});
-    let url = undefined;
-    try {
-      url = new URL(data);
-    } catch (_err) {
-      url = undefined;
-    }
-    let valid = json_check_type({type: URL, data: url});
-    if (should_throw && !valid) {
-      throw new CModuleError(CModuleError.TYPE_VIOLATION);
-    }
-    return valid;
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("json_valid_url() error.", err);
-  }
-}
-
 // ============================================================================
 // [LOGGER UC FUNCTIONS] ======================================================
 // ============================================================================
@@ -1710,8 +2684,6 @@ export function json_valid_url({data, should_throw = false}) {
  * Sets the logger handler for post logging processing.
  * @param {CLogHandler} [handler] The handler to utilize.
  * @returns {void}
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To set a logger for post logging processing
  * function log_handler(record) {
@@ -1746,8 +2718,6 @@ export function logger_handler(handler) {
  * @param {object | undefined} [level] The optional log level to set
  * based on the {@link codemelted LOGGER} object configuration.
  * @returns {string} The string representation of the log level.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To determine the current logger level
  * let logger_level = logger_level();
@@ -1780,8 +2750,6 @@ export function logger_level(level) {
  * @param {LOGGER} params.level The log level for the logged event.
  * @param {any} params.data The data to log with the event.
  * @returns {void}
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // When the logger is on and you want to log an event
  * // It will only log if the log level is set to log those events.
@@ -1845,13 +2813,109 @@ export function logger_log({level, data}) {
 }
 
 // ============================================================================
+// [NETWORK UC IMPLEMENTATION] ================================================
+// ============================================================================
+
+/**
+ * Sends an HTTP POST request containing a small amount of data to a web
+ * server.
+ * @param {object} params The named parameters
+ * @param {string} params.url Where to send the beacon.
+ * @param {any | null} [params.data] The data to send with the beacon.
+ * @returns {boolean} true if queued up by user agent, false otherwise.
+ * @example
+ * // TBD
+ */
+export function network_beacon({url, data}) {
+  try {
+    let supported = ModuleUtils.is_defined("navigator") &&
+      // @ts-ignore Should exist in browser runtime
+      ModuleUtils.is_defined("sendBeacon", globalThis["navigator"]);
+    if (!supported) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
+    json_check_type({type: "string", data: url, should_throw: true});
+    // @ts-ignore Will exist in a browser context.
+    return globalThis.navigator.sendBeacon(url, data);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("network_beacon() error.", err);
+  }
+}
+
+/**
+ * Provides the ability to create client side protocols to send / receive
+ * data with other items within the network / Internet.
+ * @param {object} params The named parameters.
+ * @param {CONNECT_REQUEST} params.request The protocol to connect.
+ * @param {string} params.url The server hosting the protocol to connect.
+ * @param {CProtocolHandler} params.rx_handler The receive handler for
+ * the given protocol.
+ * @returns {CBroadcastChannelProtocol | CEventSourceProtocol |
+ * CWebSocketProtocol | CWebRtcProtocol} The protocol to communicate
+ * with the connected server.
+ * @example
+ * // TBD
+ */
+export function network_connect({request, url, rx_handler}) {
+  try {
+    switch (request) {
+      case CONNECT_REQUEST.BroadcastChannel:
+        return new CBroadcastChannelProtocol(url, rx_handler);
+      case CONNECT_REQUEST.EventSource:
+        return new CEventSourceProtocol(url, rx_handler);
+      case CONNECT_REQUEST.WebSocket:
+        return new CWebSocketProtocol(url, rx_handler);
+      case CONNECT_REQUEST.WebRTC:
+        throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("network_connect() error.", err);
+  }
+}
+
+/**
+ * Provides the ability to make requests from a hosted server REST API.
+ * @param {object} params The named parameters
+ * @param {string} params.url The URL to the server REST API to
+ * communicate.
+ * @param {object} params.options The data to configure / go along with
+ * the request. See the attached URL for detailed
+ * @returns {Promise<CFetchResult>} The result of the request.
+ * @example
+ * // TBD
+ */
+export async function network_fetch({url, options}) {
+  try {
+    const resp = await globalThis.fetch(url, options);
+    const contentType = resp.headers.get("Content-Type") ?? "";
+    const status = resp.status;
+    const data = contentType.includes("application/json")
+      ? await resp.json()
+      : contentType.includes("form-data")
+        ? await resp.formData()
+        : contentType.includes("application/octet-stream")
+          ? await resp.blob()
+          : contentType.includes("text/")
+            ? await resp.text()
+            : "";
+    return status > 199 && status < 300
+      ? new CFetchResult({status: status, data: data})
+      : new CFetchResult({status: status, error: data})
+  } catch (err) {
+    return new CFetchResult({status: 418, error: err});
+  }
+}
+
+// ============================================================================
 // [NPU UC IMPLEMENTATION] ====================================================
 // ============================================================================
 
 /**
  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // TBD
  */
@@ -1874,8 +2938,6 @@ export function npu_compute() {
  * @param {number[]} params.args The arguments to use with the formula.
  * @returns {number} The calculated answer or NaN if division by 0 or sqrt of
  * a negative number.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Convert from Celsius to Fahrenheit
  * let f = npu_math({
@@ -1959,8 +3021,6 @@ export function runtime_cpu_count() {
  * @param {object} [params.obj = globalThis] The object to check the property.
  * Defaults to globalThis to facilitate determining JavaScript runtimes.
  * @returns {boolean} true if property exists on object, false otherwise.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Determine if Bun V8 runtime based on globalThis
  * let is_bun = runtime_defined({request: DEFINED_REQUEST.Bun});
@@ -1983,6 +3043,7 @@ export function runtime_defined({
     obj = globalThis
 }) {
   try {
+    json_check_type({type: "object", data: obj, should_throw: true});
     switch (request) {
       case DEFINED_REQUEST.AskRuntime:
         // @ts-ignore This is in a browser context
@@ -2036,7 +3097,7 @@ export function runtime_defined({
           ModuleUtils.is_defined("usb", globalThis["navigator"]);
       case DEFINED_REQUEST.WorkerAvailable:
         return ModuleUtils.is_defined("Worker");
-      case DEFINED_REQUEST.WorkerRT:
+      case DEFINED_REQUEST.WorkerRuntime:
         return ModuleUtils.is_defined("WorkerGlobalScope");
       default:
         throw new CModuleError(CModuleError.MISUSE);
@@ -2053,8 +3114,6 @@ export function runtime_defined({
  * lookup.
  * @returns {string?} The value associated with the name or null if not
  * found.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Find a search parameter based on a search redirect
  * let search_param = runtime_environment("search");
@@ -2087,8 +3146,6 @@ export function runtime_environment(name) {
  * @param {EventTarget} [params.target=globalThis] The element to attach an
  * event handler to if it supports it.
  * @returns {void}
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Listen for browser messages.
  * let message_handler = (evt) => {
@@ -2137,8 +3194,6 @@ export function runtime_event({
 /**
  * Determines the hostname of the host operating system.
  * @returns {string} The hostname of the computer.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To get the hostname of the browser platform
  * let hostname = runtime_hostname();
@@ -2192,7 +3247,7 @@ export function runtime_name() {
     return "deno";
   } else if (runtime_defined({request: DEFINED_REQUEST.Node})) {
     return "node";
-  } else if (runtime_defined({request: DEFINED_REQUEST.WorkerRT})) {
+  } else if (runtime_defined({request: DEFINED_REQUEST.WorkerRuntime})) {
     return "worker";
   } else {
     return "UNKNOWN V8 RUNTIME";
@@ -2202,8 +3257,6 @@ export function runtime_name() {
 /**
  * Determines if the web app has access to the Internet.
  * @returns {boolean} true if path to Internet available, false otherwise.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // Determine if the web page has Internet access (useful for PWAs)
  * if (!runtime_online()) {
@@ -2233,8 +3286,6 @@ export function runtime_online() {
  * Clears the local storage of the module.
  * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act upon.
  * @returns {void}
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To clear all elements in the specified storage type
  * // Defaults to STORAGE_TYPE.Local
@@ -2275,8 +3326,6 @@ export function storage_clear(type = STORAGE_TYPE.Local) {
  * upon.
  * @param {string} params.key The key to search.
  * @returns {string?} The value associated with the key if found.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To get an element from storage. Either string or null if not found
  * // Defaults to STORAGE_TYPE.Local
@@ -2316,8 +3365,6 @@ export function storage_get({type = STORAGE_TYPE.Local, key}) {
  * @param {number} params.index The key entry to look up.
  * @returns {string?} The key at the specified index or null if beyond the
  * storage capacity.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To get a key at an index. Either string or null if not found
  * // Defaults to STORAGE_TYPE.Local
@@ -2360,8 +3407,6 @@ export function storage_key({type = STORAGE_TYPE.Local, index}) {
  * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act
  * upon.
  * @returns {number} The number of entries.
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To get the number of elements in storage
  * // Defaults to STORAGE_TYPE.Local
@@ -2399,8 +3444,6 @@ export function storage_length(type = STORAGE_TYPE.Local) {
  * upon.
  * @param {string} params.key The key to remove.
  * @returns {void}
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To remove an element from storage.
  * // Defaults to STORAGE_TYPE.Local
@@ -2443,8 +3486,6 @@ export function storage_remove({type = STORAGE_TYPE.Local, key}) {
  * @param {string} params.value The storage entry.
  * @param {string} params.key The key to store.
  * @returns {void}
- * @throws {CModuleError} codemelted.js module API violation. You should not
- * try-catch these as they serve as asserts to the developer.
  * @example
  * // To add an element to storage.
  * // Defaults to STORAGE_TYPE.Local
@@ -2481,1278 +3522,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 }
 
 // ===== REFACTOR BELOW ======
-
-// // ============================================================================
-// // [HW UC IMPLEMENTATION] =====================================================
-// // ============================================================================
-
-// /**
-//  * Represents the geodetic data captured from the [COrientationProtocol]
-//  * object when created via the [hw_request_orientation] function call.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/deviceorientation_event
-//  */
-// export class CGeodeticData {
-//   /** @type {Date} */
-//   #timestamp = new Date();
-//   /** @type {number} */
-//   #latitude = NaN;
-//   /** @type {number} */
-//   #longitude = NaN;
-//   /** @type {number?} */
-//   #altitude = null;
-//   /** @type {number?} */
-//   #heading = null;
-//   /** @type {number?} */
-//   #speed = null;
-//   /** @type {number?} */
-//   #alpha = null;
-//   /** @type {number?} */
-//   #beta = null;
-//   /** @type {number?} */
-//   #gamma = null;
-
-//   /**
-//    * The time the orientation data was last updated.
-//    * @readonly
-//    * @type {Date}
-//    */
-//   get timestamp() { return this.#timestamp; }
-
-//   /**
-//    * Returns a double representing the position's latitude in decimal
-//    * degrees.
-//    * @readonly
-//    * @type {number}
-//    */
-//   get latitude() { return this.#latitude; }
-
-//   /**
-//    * Returns a double representing the position's longitude in decimal
-//    * degrees.
-//    * @readonly
-//    * @type {number}
-//    */
-//   get longitude() { return this.#longitude; }
-
-//   /**
-//    * Returns a double representing the position's altitude in meters,
-//    * relative to sea level. This value can be null if the implementation
-//    * cannot provide the data.
-//    * @readonly
-//    * @type {number?}
-//    */
-//   get altitude() { return this.#altitude; }
-
-//   /**
-//    * Returns a double representing the direction towards which the
-//    * device is facing. This value, specified in degrees, indicates how
-//    * far off from heading true north the device is. 0 degrees represents
-//    * true north, and the direction is determined clockwise (which means
-//    * that east is 90 degrees and west is 270 degrees). If speed is 0,
-//    * heading is NaN. If the device is unable to provide heading
-//    * information, this value is null.
-//    * @readonly
-//    * @type {number?}
-//    */
-//   get heading() { return this.#heading; }
-
-//   /**
-//    * Returns a double representing the velocity of the device in meters
-//    * per second. This value can be null.
-//    * @readonly
-//    * @type {number?}
-//    */
-//   get speed() { return this.#speed; }
-
-//   /**
-//    * A number representing the motion of the device around the z axis,
-//    * express in degrees with values ranging from 0 (inclusive) to
-//    * 360 (exclusive).
-//    * @readonly
-//    * @type {number?}
-//    */
-//   get alpha() { return this.#alpha; }
-
-//   /**
-//    * A number representing the motion of the device around the x axis,
-//    * expressed in degrees with values ranging from -180 (inclusive) to
-//    * 180 (exclusive). This represents the front to back motion of the
-//    * device.
-//    * @readonly
-//    * @type {number?}
-//    */
-//   get beta() { return this.#beta; }
-
-//   /**
-//    * A number representing the motion of the device around the y axis,
-//    * expressed in degrees with values ranging from -90 (inclusive) to 90
-//    * (exclusive). This represents the left to right motion of the device.
-//    * @readonly
-//    * @type {number?}
-//    */
-//   get gamma() { return this.#gamma; }
-
-//   /**
-//    * Processes a device orientation event to get the particular device's
-//    * orientation in 3D space.
-//    * @param {DeviceOrientationEvent} data The event object to process.
-//    * @returns {void}
-//    */
-//   updateDeviceOrientation(data) {
-//     // @ts-ignore DeviceOrientationEvent part of browser runtime.
-//     if (json_check_type({type: DeviceOrientationEvent, data: data})) {
-//       this.#timestamp = new Date();
-//       this.#alpha = data.alpha ?? NaN;
-//       this.#beta = data.beta ?? NaN;
-//       this.#gamma = data.gamma ?? NaN;
-//     }
-//   }
-
-//   /**
-//    * Processes the current WGS84 geo location information for the devices
-//    * position in the world.
-//    * @param {GeolocationCoordinates} data The data to process.
-//    * @returns {void}
-//    */
-//   updateGeolocation(data) {
-//     // @ts-ignore Object exists in browser runtime.
-//     if (json_check_type({type: GeolocationCoordinates, data: data})) {
-//       this.#timestamp = new Date();
-//       this.#latitude = data.latitude;
-//       this.#longitude = data.longitude;
-//       this.#altitude = data.altitude;
-//       this.#heading = data.heading;
-//       this.#speed = data.speed;
-//     }
-//   }
-
-//   /**
-//    * Default constructor
-//    */
-//   constructor() { }
-// }
-
-// /**
-//  * Implements the orientation protocol to determine your application's
-//  * position in 3D space based on the sensors on the device.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/deviceorientation_event
-//  * @extends {CProtocol}
-//  */
-// export class COrientationProtocol extends CProtocol {
-//   /** @type {CGeodeticData} */
-//   #data = new CGeodeticData();
-//   #onDeviceOrientation;
-//   #watchId;
-//   /** @type {string?} */
-//   #errorRx = null;
-
-//   /**
-//    * Will retrieve the latest [CGeodeticData] object from the returned
-//    * [CResult] object.
-//    * @override
-//    */
-//   // @ts-ignore
-//   async get_message(request="") {
-//     if (this.#errorRx) {
-//       const result = new CResult({
-//         error: this.#errorRx
-//       });
-//       this.#errorRx = null;
-//       return result;
-//     }
-//     return new CResult({
-//       value: Object.assign({}, this.#data),
-//     });
-//   }
-
-//   /**
-//    * @inheritdoc
-//    * @override
-//    */
-//   is_running() {
-//     return this.#watchId != -1;
-//   }
-
-//   /**
-//    * NOT USED. WILL THROW EXCEPTION.
-//    * @override
-//    * @param {any} data
-//    * @returns {Promise<CResult>}
-//    */
-//   // @ts-ignore
-//   post_message(data) { throw API_NOT_IMPLEMENTED; }
-
-//   /**
-//    * @inheritdoc
-//    * @override
-//    */
-//   terminate() {
-//     if (!this.is_running) {
-//       throw API_MISUSE;
-//     }
-//     // @ts-ignore Object exists in browser runtime.
-//     globalThis.navigator.geolocation.clearWatch(this.#watchId);
-//     this.#watchId = -1;
-//     // @ts-ignore Object exists in browser runtime.
-//     globalThis.removeEventListener(
-//       "deviceorientation",
-//       this.#onDeviceOrientation
-//     );
-//   }
-
-//   /**
-//    * Constructor for the protocol.
-//    * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition
-//    * @param {object} [options] Optional options for fine tuning the
-//    * watch of geolocation changes.
-//    */
-//   constructor(options) {
-//     super("COrientationProtocol");
-
-//     // Setup to listen for device orientation changes.
-//     // @ts-ignore Object exists in browser runtime.
-//     this.#onDeviceOrientation =
-//       (/** @type {DeviceOrientationEvent} */ e) => {
-//         this.#data.updateDeviceOrientation(e);
-//       };
-//     // @ts-ignore Object exists in browser runtime.
-//     globalThis.addEventListener(
-//       "deviceorientation",
-//       this.#onDeviceOrientation
-//     );
-
-//     // Setup listening for geolocation updates
-//     // @ts-ignore Property exists in browser runtime.
-//     this.#watchId = globalThis.navigator.geolocation.watchPosition(
-//       // @ts-ignore Object exists in browser runtime.
-//       (/** @type {GeolocationPosition} */ position) => {
-//         this.#data.updateGeolocation(position.coords);
-//       },
-//       // @ts-ignore Object exists in browser runtime.
-//       (/** @type {GeolocationError} */ err) => {
-//         this.#errorRx = err.message;
-//       },
-//       options
-//     )
-//   }
-// }
-
-// /**
-//  * The data that supports a [CSerialPortProtocol::get_message] or
-//  * [CSerialPortProtocol::post_message] function calls to communicate with
-//  * the connected serial port.
-//  * @typedef {object} CSerialPortPostRequest
-//  * @property {SERIAL_PORT_DATA_REQUEST} request The request to either
-//  * read or write to the serial port via the {@link CSerialPortProtocol}.
-//  * @property {any} data The data associated with the request.
-//  */
-
-// /**
-//  * Object created from the [hw_request_serial_port] function call opening a
-//  * connection to the requested serial port connected to the host computer.
-//  * With the opened serial port, utilize the [CSerialPort::get_message] and
-//  * [CSerialPort::post_message] to interact with the port until it is
-//  * [CSerialPort::terminate].
-//  * @extends {CProtocol}
-//  */
-// export class CSerialPortProtocol extends CProtocol {
-//   /** @type {SerialPort} */
-//   #port;
-
-//   /**
-//    * Reads the requested data from the currently connected serial port.
-//    * @override
-//    * @param {SERIAL_PORT_DATA_REQUEST} request The request to read
-//    * the current state of the serial port or actual data. The supported items
-//    * to query are ClearToSend, CarrierDetect, DataSetReady, RingIndicator,
-//    * and DataBytes.
-//    * @returns {Promise<CResult>} holding the data associated with the
-//    * request. A rejected promise is the result of an API violation.
-//    */
-//   async get_message(request) {
-//     try {
-//       if (!this.is_running) {
-//         throw API_MISUSE;
-//       }
-//       let resp = null;
-//       let data = null;
-//       switch (request) {
-//         case SERIAL_PORT_DATA_REQUEST.ClearToSend:
-//           resp = await this.#port.getSignals();
-//           data = resp["clearToSend"];
-//           break;
-//         case SERIAL_PORT_DATA_REQUEST.CarrierDetect:
-//           resp = await this.#port.getSignals();
-//           data = resp["dataCarrierDetect"];
-//           break;
-//         case SERIAL_PORT_DATA_REQUEST.DataSetReady:
-//           resp = await this.#port.getSignals();
-//           data = resp["dataSetReady"];
-//           break;
-//         case SERIAL_PORT_DATA_REQUEST.RingIndicator:
-//           resp = await this.#port.getSignals();
-//           data = resp["ringIndicator"];
-//           break;
-//         case SERIAL_PORT_DATA_REQUEST.DataBytes:
-//           if (!this.#port.readable) {
-//             return new CResult({
-//               error: "Serial port was unreadable at this time"
-//             });
-//           }
-//           const reader = this.#port.readable.getReader();
-//           // @ts-ignore
-//           const { value, done } = await reader.read();
-//           data = value;
-//           reader.releaseLock();
-//           break;
-//         default:
-//           throw API_MISUSE;
-//       }
-//       return new CResult({value: data});
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CSerialPortProtocol::get_message() error occurred. ${err}`
-//       });
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * @inheritdoc
-//    * @override
-//    */
-//   is_running() {
-//     return this.#port.connected;
-//   }
-
-//   /**
-//    * Will process the data request and perform the requested transaction
-//    * with the connected serial port returning a result of if it was
-//    * successfully carried out.
-//    * @override
-//    * @param {CSerialPortPostRequest} data The request to make to the
-//    * connected serial port with associated data.
-//    * @return {Promise<CResult>} The result of the posted data to the port.
-//    * A rejected promise is the result of an API violation.
-//    */
-//   async post_message(data) {
-//     try {
-//       json_check_type({type: "object", data: data, should_throw: true});
-//       let request = data.request;
-//       switch (request) {
-//         case SERIAL_PORT_DATA_REQUEST.DataTerminalReady:
-//           json_check_type({
-//             type: "boolean",
-//             data: data.data,
-//             should_throw: true
-//           });
-//           await this.#port.setSignals("dataTerminalReady", data.data);
-//           break;
-//         case SERIAL_PORT_DATA_REQUEST.RequestToSend:
-//           json_check_type({
-//             type: "boolean",
-//             data: data.data,
-//             should_throw: true
-//           });
-//           await this.#port.setSignals("requestToSend", data.data);
-//           break;
-//         case SERIAL_PORT_DATA_REQUEST.Break:
-//           json_check_type({
-//             type: "boolean",
-//             data: data.data,
-//             should_throw: true
-//           });
-//           await this.#port.setSignals("break", data.data);
-//           break;
-//         case SERIAL_PORT_DATA_REQUEST.DataBytes:
-//           json_check_type({
-//             type: Uint8Array,
-//             data: data.data,
-//             should_throw: true
-//           });
-//           const writer = this.#port.writable.getWriter();
-//           await writer.write(data.data);
-//           writer.releaseLock();
-//           break;
-//         default:
-//           throw API_MISUSE;
-//       }
-//       return new CResult();
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CSerialPortProtocol::post_message() error occurred. ${err}`
-//       });
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * @inheritdoc
-//    * @override
-//    */
-//   terminate() {
-//     if (!this.is_running) {
-//       throw API_MISUSE;
-//     }
-//     this.#port.close();
-//   }
-
-//   /**
-//    * Constructor for the class.
-//    * @param {SerialPort} port The port that we are connecting to.
-//    */
-//   constructor(port) {
-//     super(
-//       `CSerialPort_${port.getInfo().usbVendorId}` +
-//       `_${[port.getInfo().usbProductId]}`
-//     );
-//     this.#port = port;
-//   }
-// }
-
-// /**
-//  * Defined to support proper typing in the JSDocs when type checking in a
-//  * TypeScript environment.
-//  * NOTE: Defined to support proper typing in the JSDocs when type checking
-//  *       in a TypeScript environment.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent
-//  * @typedef {object} DeviceOrientationEvent
-//  * @property {boolean} absolute A boolean that indicates whether or not the
-//  * device is providing orientation data absolutely.
-//  * @property {number?} alpha A number representing the motion of the device
-//  * around the z axis, express in degrees with values ranging from 0
-//  * (inclusive) to 360 (exclusive).
-//  * @property {number?} beta A number representing the motion of the device
-//  * around the x axis, express in degrees with values ranging from -180
-//  * (inclusive) to 180 (exclusive). This represents a front to back motion of
-//  *  the device.
-//  * @property {number?} gamma A number representing the motion of the device
-//  * around the y axis, express in degrees with values ranging from -90
-//  * (inclusive) to 90 (exclusive). This represents a left to right motion of
-//  * the device.
-//  */
-
-// /**
-//  * The GeolocationCoordinates interface represents the position and
-//  * altitude of the device on Earth, as well as the accuracy with which
-//  * these  properties are calculated. The geographic position information is
-//  * provided in terms of World Geodetic System coordinates (WGS84).
-//  * NOTE: Defined to support proper typing in the JSDocs when type checking
-//  *       in a TypeScript environment.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates
-//  * @typedef {object} GeolocationCoordinates
-//  * @property {number} latitude Returns a double representing the position's
-//  * latitude in decimal degrees.
-//  * @property {number} longitude Returns a double representing the position's
-//  * longitude in decimal degrees.
-//  * @property {number | null} altitude Returns a double representing the
-//  * position's altitude in meters, relative to nominal sea level. This value
-//  * can be null if the implementation cannot provide the data.
-//  * @property {number} accuracy Returns a double representing the accuracy
-//  * of the latitude and longitude properties, expressed in meters.
-//  * @property {number | null} altitudeAccuracy Returns a double representing
-//  * the accuracy of the altitude expressed in meters. This value can be null
-//  * if the implementation cannot provide the data.
-//  * @property {number | null} heading Returns a double representing the
-//  * direction towards which the device is facing. This value, specified in
-//  * degrees, indicates how far off from heading true north the device is. 0
-//  * degrees represents true north, and the direction is determined clockwise
-//  * (which means that east is 90 degrees and west is 270 degrees). If speed
-//  * is 0 or the device is unable to provide heading information, heading is
-//  * null.
-//  * @property {number | null} speed Returns a double representing the
-//  * velocity of the device in meters per second. This value can be null.
-//  */
-
-// /**
-//  * The SerialPort interface of the Web Serial API provides access to a
-//  * serial port on the host device.
-//  * NOTE: Defined to support proper typing in the JSDocs when type checking
-//  *       in a TypeScript environment.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/SerialPort
-//  * @typedef {object} SerialPort
-//  * @property {boolean} connected Returns a boolean value that indicates
-//  * whether the port is logically connected to the device.
-//  * @property {ReadableStream} readable Returns a ReadableStream for
-//  * receiving data from the device connected to the port.
-//  * @property {WritableStream} writable Returns a WritableStream for sending
-//  * data to the device connected to the port.
-//  * @property {function} forget Returns a Promise that resolves when access
-//  * to the serial port is revoked. Calling this "forgets" the device,
-//  * resetting any previously-set permissions so the calling site can no
-//  * longer communicate with the port.
-//  * @property {function} getInfo Returns an object containing identifying
-//  * information for the device available via the port.
-//  * @property {function} open Returns a Promise that resolves when the port
-//  * is opened. By default the port is opened with 8 data bits, 1 stop bit
-//  * and no parity checking.
-//  * @property {function} setSignals Sets control signals on the port and
-//  * returns a Promise that resolves when they are set.
-//  * @property {function} getSignals Returns a Promise that resolves with an
-//  * object containing the current state of the port's control signals.
-//  * @property {function} close Returns a Promise that resolves when the port
-//  * closes.
-//  */
-
-// /**
-//  * Provides the support to the {@link CSerialPort} get_message and
-//  * post_message calls to interact with the connect serial port hardware.
-//  * @enum {string}
-//  * @property {string} Break Line control status of the
-//  * [CSerialPortProtocol].
-//  * @property {string} CarrierDetect Line control status of the
-//  * [CSerialPortProtocol].
-//  * @property {string} ClearToSend Line control status of the
-//  * [CSerialPortProtocol].
-//  * @property {string} DataSetReady Line control status of the
-//  * [CSerialPortProtocol].
-//  * @property {string} DataTerminalReady Line control status of the
-//  * [CSerialPortProtocol].
-//  * @property {string} RequestToSend Line control status of the
-//  * [CSerialPortProtocol].
-//  * @property {string} RingIndicator Line control status of the
-//  * [CSerialPortProtocol].
-//  * @property {string} DataBytes Read / Write from the
-//  * [CSerialPortProtocol].
-//  */
-// export const SERIAL_PORT_DATA_REQUEST = Object.freeze({
-//   Break: "Break",
-//   CarrierDetect: "CarrierDetect",
-//   ClearToSend: "ClearToSend",
-//   DataSetReady: "DataSetReady",
-//   DataTerminalReady: "DataTerminalReady",
-//   RequestToSend: "RequestToSend",
-//   RingIndicator: "RingIndicator",
-//   DataBytes: "DataBytes",
-// });
-
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function hw_request_bluetooth() {
-//   // TODO: Develop actual protocol against CProtocol
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function hw_request_midi() {
-//   // TODO: Develop actual protocol against CProtocol
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-// /**
-//  * Requests a device orientation protocol to retrieve the devices current
-//  * geodetic orientation in 3D space.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/getCurrentPosition#options
-//  * @param {object} [options] The options for tuning the protocol to
-//  * watch for geolocation position updates.
-//  * @return {COrientationProtocol} The protocol that handles
-//  * device orientation changes until terminated.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function hw_request_orientation(options) {
-//   if (!hw_support_orientation()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   return new COrientationProtocol(options)
-// }
-
-// /**
-//  * Provides the mechanism to request permission to connect to an attached
-//  * serial port device.
-//  * @returns {Promise<CSerialPortProtocol?>} The requested
-//  * connected serial port or null if request was canceled or could not be
-//  * connected.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  * @example
-//  * // Determine if serial port processing is supported.
-//  * const supported = hw_serial_ports_supported();
-//  * if (supported) {
-//  *    const port = await hw_request_serial_port();
-//  *    if (port) {
-//  *      // Do something with port
-//  *    }
-//  * }
-//  */
-// export async function hw_request_serial_port() {
-//   if (!hw_support_serial_port()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-
-//   try {
-//     // @ts-ignore This is available in some web browsers
-//     const port = await globalThis.navigator.serial.requestPort();
-//     return new CSerialPortProtocol(port);
-//   } catch (err) {
-//     return null;
-//   }
-// }
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  */
-// export function hw_request_usb() {
-//   // TODO: Develop actual protocol against CProtocol
-//   throw API_NOT_IMPLEMENTED;
-// }
-
-
-// // ============================================================================
-// // [NETWORK UC IMPLEMENTATION] ================================================
-// // ============================================================================
-
-// /**
-//  * The BroadcastChannel interface represents a named channel that any browsing
-//  * context of a given origin can subscribe to. It allows communication between
-//  * different documents (in different windows, tabs, frames or iframes) of the
-//  * same origin.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API
-//  * @extends {CProtocol}
-//  */
-// export class CBroadcastChannelProtocol extends CProtocol {
-//   /** @type {BroadcastChannel} */
-//   #channel
-
-//   /** @type {MessageEvent[]} */
-//   #rxData = [];
-
-//   /** @type {MessageEvent[]} */
-//   #rxError = [];
-
-//   /**
-//    * Gets the latest data received from the protocol.
-//    * @override
-//    * @param {string} [request=""] NOT USED.
-//    * @returns {Promise<CResult>} The result containing the given
-//    * information. Errors are processed first if they have been received.
-//    */
-//   // @ts-ignore
-//   async get_message(request="") {
-//     return new Promise((resolve) => {
-//       if (!this.is_running) {
-//         resolve(new CResult({error: API_MISUSE}));
-//       }
-//       setTimeout(() => {
-//         if (this.#rxError.length > 0) {
-//           resolve(new CResult({error: this.#rxError.shift()}));
-//         } else {
-//           if (this.#rxData.length > 0) {
-//             resolve(new CResult({value: this.#rxData.shift()}));
-//           } else {
-//             resolve(new CResult());
-//           }
-//         }
-//       });
-//     });
-//   }
-
-//   /**
-//    * @override
-//    * @inheritdoc
-//    */
-//   is_running() {
-//     return this.#channel.onmessage !=null
-//       && this.#channel.onmessageerror != null;
-//   }
-
-//   /**
-//    * Sends a message, which can be of any kind of Object, to each listener
-//    * in any browsing context with the same origin. The message is
-//    * transmitted as a message event targeted at each BroadcastChannel
-//    * bound to the channel.
-//    * @override
-//    * @param {any} data Data to be sent to the other window. The data is
-//    * serialized using the structured clone algorithm. This means you can
-//    * pass a broad variety of data objects safely to the destination window
-//    * without having to serialize them yourself.
-//    * @returns {Promise<CResult>} The result of the transmission.
-//    */
-//   async post_message(data) {
-//     try {
-//       if (!this.is_running()) {
-//         throw API_MISUSE;
-//       }
-//       this.#channel.postMessage(data);
-//       return new CResult();
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CBroadcastChannelProtocol::post_message() error ` +
-//           `occurred. ${err}`
-//       })
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * @override
-//    * @inheritdoc
-//    */
-//   terminate() {
-//     if (!this.is_running()) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CBroadcastChannelProtocol::terminate() error. ${API_MISUSE}`
-//       });
-//       throw API_MISUSE;
-//     }
-//     // Close the connection and clear the channel items.
-//     this.#channel.onmessage = null;
-//     this.#channel.onmessageerror = null;
-//     this.#channel.close();
-//     this.#rxData.length = 0;
-//     this.#rxError.length = 0;
-//   }
-
-//   /**
-//    * Constructor for the class.
-//    * @param {string} url The URL to open a connection to broadcast data to
-//    * other listeners.
-//    */
-//   constructor(url) {
-//     super(`CBroadcastChannelProtocol-${url}`);
-//     this.#channel = new globalThis.BroadcastChannel(url);
-//     this.#channel.onmessage = (evt) => {
-//       setTimeout(() => {
-//         this.#rxData.push(evt);
-//       });
-//     };
-//     this.#channel.onmessageerror = (evt) => {
-//       setTimeout(() => {
-//         this.#rxError.push(evt);
-//       });
-//     };
-//   }
-// }
-
-// /**
-//  * Provides the ability to connect to different server protocols via the
-//  * {@link network_connect} function.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} BroadcastChannel The Broadcast Channel API allows
-//  * basic communication between browsing contexts (that is, windows, tabs,
-//  * frames, or iframes) and workers on the same origin.
-//  * @property {string} EventSource An EventSource instance opens a
-//  * persistent connection to an HTTP server, which sends events in
-//  * text/event-stream format.
-//  * @property {string} WebSocket Provides the API for creating and managing
-//  * a WebSocket connection to a server, as well as for sending and receiving
-//  * data on the connection.
-//  * @property {string} WebRTC Provides the API for creating and connecting
-//  * to a WebRTC server allowing for voice / video connection with another
-//  * user.
-//  */
-// export const CONNECT_REQUEST = Object.freeze({
-//   BroadcastChannel: "broadcast_channel",
-//   EventSource: "event_source",
-//   WebSocket: "web_socket",
-//   WebRTC: "web_rtc",
-// });
-
-// /**
-//  * Opens a persistent connection to an HTTP server, which sends events in
-//  * text/event-stream format. The connection remains open until terminate is
-//  * called.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/EventSource
-//  * @extends {CProtocol}
-//  */
-// export class CEventSourceProtocol extends CProtocol {
-//   /**
-//    * Supports the [CEventSourceProtocol.state] function.
-//    * @constant {number}
-//    */
-//   static get CONNECTING() { return  0; }
-
-//   /**
-//    * Supports the [CEventSourceProtocol.state] function.
-//    * @constant {number}
-//    */
-//   static get OPEN() { return  1; }
-
-//   /**
-//    * Supports the [CEventSourceProtocol.state] function.
-//    * @constant {number}
-//    */
-//   static get CLOSED() { return  2; }
-
-//   /** @type {EventSource} */
-//   #sse
-
-//   /** @type {MessageEvent[]} */
-//   #rxData = [];
-
-//   /** @type {Event[]} */
-//   #rxError = [];
-
-//   /**
-//    * Retrieves the current state of the [CEventSourceProtocol]. -1 returns
-//    * if protocol has been terminated.
-//    * @readonly
-//    * @type {number}
-//    */
-//   get state() {
-//     return this.is_running() ?
-//       this.#sse.readyState
-//       : -1;
-//   }
-
-//   /**
-//    * Gets the latest data received from the protocol.
-//    * @override
-//    * @param {string} [request=""] NOT USED.
-//    * @returns {Promise<CResult>} The result containing the given
-//    * information. Errors are processed first if they have been received.
-//    */
-//   // @ts-ignore
-//   async get_message(request="") {
-//     return new Promise((resolve) => {
-//       if (!this.is_running()) {
-//         resolve(new CResult({error: API_MISUSE}));
-//       }
-//       setTimeout(() => {
-//         if (this.#rxError.length > 0) {
-//           resolve(new CResult({error: this.#rxError.shift()}));
-//         } else {
-//           if (this.#rxData.length > 0) {
-//             resolve(new CResult({value: this.#rxData.shift()}));
-//           } else {
-//             resolve(new CResult());
-//           }
-//         }
-//       });
-//     });
-//   }
-
-//   /**
-//    * @override
-//    * @inheritdoc
-//    */
-//   is_running() {
-//     return this.#sse.onmessage !=null
-//       && this.#sse.onerror != null;
-//   }
-
-//   /**
-//    * NOT USED. DON'T CALL.
-//    * @override
-//    * @param {any} data
-//    * @returns {Promise<CResult>}
-//    */
-//   // @ts-ignore
-//   async post_message(data) { throw API_NOT_IMPLEMENTED; }
-
-//   /**
-//    * @override
-//    * @inheritdoc
-//    */
-//   terminate() {
-//     if (!this.is_running()) {
-//       throw API_MISUSE;
-//     }
-//     // Close the connection and clear the channel items.
-//     this.#sse.close();
-//     this.#sse.onerror = null;
-//     this.#sse.onmessage = null;
-//     this.#rxData.length = 0;
-//     this.#rxError.length = 0;
-//   }
-
-//   /**
-//    * Constructor for the protocol
-//    * @param {string} url The URL to connect to receive events.
-//    */
-//   constructor(url) {
-//     super(`CEventSourceProtocol-${url}`);
-//     this.#sse = new globalThis.EventSource(url);
-//     this.#sse.onerror = (evt) => {
-//       setTimeout(() => {
-//         this.#rxError.push(evt);
-//       });
-//     }
-//     this.#sse.onmessage = (evt) => {
-//       setTimeout(() => {
-//         this.#rxData.push(evt);
-//       });
-//     }
-//   }
-// }
-
-// /**
-//  * The result object from a [network_fetch] call containing any data
-//  * from the call along with the HTTP Status Code of the transaction.
-//  * @extends {CResult}
-//  */
-// export class CFetchResult extends CResult {
-//   /** @type {number} */
-//   #status = -1;
-
-//   /**
-//    * Will get the data if it is a Uint8Array or null if not that object
-//    * type.
-//    * @readonly
-//    * @type {Uint8Array?}
-//    */
-//   get asBinary() {
-//     return json_check_type({type: Uint8Array,
-//       data: this.value()})
-//         ? this.value()
-//         : null;
-//   }
-
-//   /**
-//    * Will get the data if it is a Blob or null if not that object type.
-//    * @readonly
-//    * @type {Blob?}
-//    */
-//   get asBlob() {
-//     return json_check_type({type: Blob, data: this.value()})
-//       ? this.value()
-//       : null;
-//   }
-
-//   /**
-//    * Will get the value if it is a FormData or null if not that object
-//    * type.
-//    * @readonly
-//    * @type {FormData?}
-//    */
-//   get asFormData() {
-//     return json_check_type({type: FormData, data: this.value()})
-//       ? this.value()
-//       : null;
-//   }
-
-//   /**
-//    * Will get the value if it is a Object or null if not that object
-//    * type.
-//    * @readonly
-//    * @type {object?}
-//    */
-//   get asObject() {
-//     return json_check_type({type: "object", data: this.value()})
-//       ? this.value()
-//       : null;
-//   }
-
-//   /**
-//    * Will get the value if it is a string or null if not that object
-//    * type.
-//    * @readonly
-//    * @type {string?}
-//    */
-//   get asString() {
-//     return json_check_type({type: "string", data: this.value()})
-//       ? this.value()
-//       : null;
-//   }
-
-//   /**
-//    * Provides additional check of status code along with super property.
-//    * @override
-//    */
-//   is_error() {
-//     return super.is_error() || this.status < 200 || this.status > 299;
-//   }
-
-//   /**
-//    * The HTTP Status Code
-//    * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
-//    * @readonly
-//    * @type {number}
-//    */
-//   get status() { return this.#status; }
-
-//   /**
-//    * Constructor for the class.
-//    * @param {object} params
-//    * @param {number} params.status
-//    * @param {any} [params.data]
-//    * @param {any} [params.error]
-//    */
-//   constructor({status, data, error=null}) {
-//     super({value: data, error: error});
-//     this.#status = status;
-//   }
-// }
-
-// /**
-//  * Provides the API for creating and managing a WebSocket connection to a
-//  * server, as well as for sending and receiving data on the connection.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
-//  * @extends {CProtocol}
-//  */
-// export class CWebSocketProtocol extends CProtocol {
-//   /**
-//    * Supports the [CWebSocketProtocol.state] function.
-//    * @constant {number}
-//    */
-//   static get CONNECTING() { return  0; }
-
-//   /**
-//    * Supports the [CWebSocketProtocol.state] function.
-//    * @constant {number}
-//    */
-//   static get OPEN() { return  1; }
-
-//   /**
-//    * Supports the [CWebSocketProtocol.state] function.
-//    * @constant {number}
-//    */
-//   static get CLOSING() { return  2; }
-
-//   /**
-//    * Supports the [CWebSocketProtocol.state] function.
-//    * @constant {number}
-//    */
-//   static get CLOSED() { return  3; }
-
-//   /** @type {string} */
-//   #url;
-
-//   /** @type {any} */
-//   #socket
-
-//   /** @type {MessageEvent[]} */
-//   #rxData = [];
-
-//   /** @type {Event[]} */
-//   #rxError = [];
-
-//   /**
-//    * Retrieves the current state of the [CWebSocketProtocol]. -1 returns
-//    * if protocol has been terminated.
-//    * @readonly
-//    * @type {number}
-//    */
-//   get state() {
-//     return this.is_running() ?
-//       this.#socket.readyState
-//       : -1;
-//   }
-
-//   /**
-//    * Gets the latest data received from the protocol.
-//    * @override
-//    * @param {string} [request=""] NOT USED.
-//    * @returns {Promise<CResult>} The result containing the given
-//    * information. Errors are processed first if they have been received.
-//    */
-//   // @ts-ignore
-//   async get_message(request="") {
-//     if (!this.is_running) {
-//       throw API_MISUSE;
-//     }
-//     return new Promise((resolve) => {
-//       setTimeout(() => {
-//         if (this.#rxError.length > 0) {
-//           resolve(new CResult({error: this.#rxError.shift()}));
-//         } else {
-//           if (this.#rxData.length > 0) {
-//             resolve(new CResult({value: this.#rxData.shift()}));
-//           } else {
-//             resolve(new CResult());
-//           }
-//         }
-//       });
-//     });
-//   }
-
-//   /**
-//    * @override
-//    * @inheritdoc
-//    */
-//   is_running() {
-//     return this.#socket.onmessage !=null
-//       && this.#socket.onerror != null;
-//   }
-
-//   /**
-//    * Enqueues the specified data to be transmitted to the server over the
-//    * WebSocket connection, increasing the value of bufferedAmount by the
-//    * number of bytes needed to contain the data. If the data can't be sent
-//    * (for example, because it needs to be buffered but the buffer is full),
-//    * the socket is closed automatically.
-//    * @see https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send#data
-//    * @override
-//    * @param {string | ArrayBuffer | Blob } data Data to send to the server
-//    * for further processing.
-//    * @returns {Promise<CResult>} The result of the transmission. A failure
-//    * will result in a disconnect and reconnect of the underlying protocol
-//    * socket.
-//    */
-//   async post_message(data) {
-//     if (!this.is_running) {
-//       throw API_MISUSE;
-//     }
-//     try {
-//       this.#socket.send(data);
-//       return new CResult();
-//     } catch (err) {
-//       this.#closeSocket();
-//       this.#connectSocket();
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * @override
-//    * @inheritdoc
-//    */
-//   terminate() {
-//     if (!this.is_running) {
-//       throw API_MISUSE;
-//     }
-//     this.#closeSocket();
-//   }
-
-//   /**
-//    * Constructs the given protocol connecting it to the server at url.
-//    * @param {object} params The named parameters
-//    * @param {string} params.url The url to connect to a server.
-//    */
-//   constructor({url}) {
-//     super(`CWebSocketProtocol-${url ?? 'server'}`);
-//     this.#url = url;
-//     this.#connectSocket();
-//   }
-
-//   /**
-//    * Handles creating a web socket to connect to a server.
-//    */
-//   #connectSocket() {
-//     // @ts-ignore URL will not be null.
-//     this.#socket = new globalThis.WebSocket(this.#url);
-//     this.#socket.onmessage = (/** @type {MessageEvent<any>} */ evt) => {
-//       setTimeout(() => {
-//         this.#rxData.push(evt);
-//       });
-//     }
-//     this.#socket.onerror = (/** @type {Event} */ evt) => {
-//       setTimeout(() => {
-//         this.#rxError.push(evt);
-//       });
-//     }
-//   }
-
-//   /**
-//    * Closes the socket.
-//    */
-//   #closeSocket() {
-//     this.#socket.close();
-//     this.#socket.onmessage = null;
-//     this.#socket.onerror = null;
-//     this.#rxData.length = 0;
-//     this.#rxError.length = 0;
-//   }
-// }
-
-// /**
-//  * Sends an HTTP POST request containing a small amount of data to a web
-//  * server.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon
-//  * @param {object} params The named parameters
-//  * @param {string} params.url Where to send the beacon.
-//  * @param {any | null} [params.data] The data to send with the beacon.
-//  * @returns {boolean} true if queued up by user agent, false otherwise.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function network_beacon({url, data}) {
-//   if (!runtime_is_browser()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   // @ts-ignore Will exist in a browser context.
-//   return globalThis.navigator.sendBeacon(url, data);
-// }
-
-// /**
-//  * Provides the ability to create client side protocols to send / receive
-//  * data with other items within the network / Internet.
-//  * @param {object} params The named parameters.
-//  * @param {CONNECT_REQUEST} params.request The protocol to connect.
-//  * @param {string} params.url The server hosting the protocol to connect.
-//  * @returns {CBroadcastChannelProtocol | CEventSourceProtocol |
-//  * CWebSocketProtocol } The protocol to communicate with the connected
-//  * server. {@link CBroadcastChannelProtocol},
-//  * {@link CEventSourceProtocol},
-//  * {@link CWebSocketProtocol}
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function network_connect({request, url}) {
-//   switch (request) {
-//     case CONNECT_REQUEST.BroadcastChannel:
-//       return new CBroadcastChannelProtocol(url);
-//     case CONNECT_REQUEST.EventSource:
-//       return new CEventSourceProtocol(url);
-//     case CONNECT_REQUEST.WebSocket:
-//       return new CWebSocketProtocol({url: url});
-//     case CONNECT_REQUEST.WebRTC:
-//       throw API_NOT_IMPLEMENTED;
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
-
-// /**
-//  * Provides the ability to make requests from a hosted server REST API.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/RequestInit
-//  * @param {object} params The named parameters
-//  * @param {string} params.url The URL to the server REST API to
-//  * communicate.
-//  * @param {object} params.options The data to configure / go along with
-//  * the request. See the attached URL for detailed
-//  * @returns {Promise<CFetchResult>} The result of the request.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export async function network_fetch({url, options}) {
-//   try {
-//     const resp = await globalThis.fetch(url, options);
-//       const contentType = resp.headers.get("Content-Type") ?? "";
-//       const status = resp.status;
-//       const data = contentType.includes("application/json")
-//           ? await resp.json()
-//           : contentType.includes("form-data")
-//           ? await resp.formData()
-//           : contentType.includes("application/octet-stream")
-//           ? await resp.blob()
-//           : contentType.includes("text/")
-//           ? await resp.text()
-//           : "";
-//       return new CFetchResult({status: status, data: data});
-//   } catch (err) {
-//     return new CFetchResult({status: 418, error: err});
-//   }
-// }
 
 // // ============================================================================
 // // [UI UC IMPLEMENTATION] =====================================================
@@ -3995,8 +3764,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //    * sound file for playback. Once constructed it can only work with that
 //    * type of data.
 //    * @returns {void}
-//    * @throws {CModuleError} codemelted.js module API violation. You should not
-//    * try-catch these as they serve as asserts to the developer.
 //    */
 //   load(type, data) {
 //     json_check_type({type: "string", data: data, should_throw: true});
@@ -4154,7 +3921,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 
 //   /**
 //    * Constructor for the class.
-//    * @throws {CModuleError} codemelted.js module API violation. You should not
 //    * try-catch these as they serve as asserts to the developer.
 //    */
 //   constructor() {
@@ -4162,134 +3928,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //       throw API_UNSUPPORTED_RUNTIME;
 //     }
 //     this.#state = "stopped";
-//   }
-// }
-
-// /**
-//  * Utility class to control the showing / hiding of dialogs on an HTML
-//  * document via the [ui_dialog] function.
-//  * @private
-//  */
-// class CDialog {
-//   /** @type {any} */
-//   static returnValue;
-
-//   /**
-//    * Closes an open dialog and removes it from the body
-//    * @param {string} id The HTML node id of the dialog opened.
-//    * @param {any} [returnValue] The optional return values associated
-//    * with the dialog.
-//    * @returns {void}
-//    */
-//   static close(id, returnValue) {
-//     // @ts-ignore In browser context, will not be null
-//     const dlg = globalThis.document.getElementById(id);
-//     CDialog.returnValue = returnValue;
-//     // @ts-ignore In browser context, will not be null
-//     dlg.close();
-//     // @ts-ignore In browser context, will not be null
-//     const divDialog = globalThis.document.getElementById(`div_${id}`);
-//     // @ts-ignore In browser context, will not be null
-//     globalThis.document.body.removeChild(divDialog);
-//   }
-
-//   /**
-//    * Supports the [ui_dialog] use case function in constructing
-//    * the HTML template to display embedded modal dialog content.
-//    * @param {string} icon An icon to put in the title bar.
-//    * @param {string} id The HTML node id that is unique on the page
-//    * @param {string} title The title to display in the title bar.
-//    * @param {string} content The HTML content to display
-//    * @param {string} [width="250px"] The width as px / % to size the dialog to.
-//    * @param {string} [height] The width as px / % to size the dialog to.
-//    * @returns {void}
-//    */
-//   static show(icon, id, title, content, width="250px", height) {
-//     const html = `
-//       <style>
-//         .codemelted-dialog {
-//           background-color: black;
-//           flex-flow: column;
-//           border: 5px solid black;
-//           padding: 0;
-//           width: ${width};
-//           height: ${height};
-//           overflow: hidden;
-//         }
-//         dialog::backdrop {
-//           background: rgba(0, 0, 0, 0.50);
-//         }
-//         .codemelted-dialog-title {
-//           flex: 0 1 auto;
-//           font-size: large;
-//           font-weight: bolder;
-//           text-align: center;
-//           vertical-align: middle;
-//           background-color: black;
-//           color: white;
-//           display: grid;
-//           grid-template-columns: auto 1fr auto;
-//           border-bottom: 3px solid black;
-//         }
-//         .codemelted-dialog-title button {
-//           margin-left: 5px;
-//           cursor: pointer;
-//         }
-//         .codemelted-dialog-content {
-//           background-color: gray;
-//           color: white;
-//           border: 0;
-//           margin: 0;
-//           padding: 0;
-//           width: 100%;
-//           flex: 1 1 auto;
-//         }
-//         .codemelted-dialog-content div {
-//           padding: 10px;
-//         }
-//         .codemelted-dialog-content input[type=text] {
-//           margin-left: 10px;
-//           margin-right: 10px;
-//           width: 85%;
-//         }
-//         .codemelted-dialog-content select {
-//           margin-left: 10px;
-//           margin-right: 10px;
-//           margin-bottom: 10px;
-//           width: 150px;
-//         }
-//         .codemelted-dialog-content button {
-//           cursor: pointer;
-//           height: 25px;
-//           width: 75px;
-//         }
-//         .codemelted-align-center {
-//           padding: 5px;
-//           text-align: center;
-//         }
-//       </style>
-//       <dialog id="${id}" class="codemelted-dialog">
-//         <div class="codemelted-dialog-title">
-//           <label>${icon}</label>
-//           <label style="margin-top: 2px;">${title}</label>
-//           <button id="${id}CloseDialog">X</button>
-//         </div>
-//         ${content}
-//       </dialog>
-//     `;
-
-//     // @ts-ignore In browser context
-//     const divDialog = globalThis.document.createElement("div");
-//     // @ts-ignore In browser context
-//     divDialog.id = `div_${id}`;
-//     // @ts-ignore In browser context
-//     divDialog.innerHTML = html;
-//     // @ts-ignore In browser context
-//     globalThis.document.body.appendChild(divDialog);
-//     // @ts-ignore In browser context
-//     const dialog = globalThis.document.getElementById(id);
-//     // @ts-ignore In browser context
-//     dialog.showModal();
 //   }
 // }
 
@@ -4323,7 +3961,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * video.
 //  * NOTE: Defined to support proper typing in the JSDocs when type checking
 //  *       in a TypeScript environment.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLAudioElement
 //  * @typedef {object} HTMLAudioElement
 //  * @property {number} currentTime specifies the current playback time in
 //  * seconds.
@@ -4459,7 +4096,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * pitch and volume.)
 //  * NOTE: Defined to support proper typing in the JSDocs when type checking
 //  *       in a TypeScript environment.
-//  * @see https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesisUtterance
 //  * @typedef {object} SpeechSynthesisUtterance
 //  * @property {number} rate gets and sets the speed at which the utterance
 //  * will be spoken.
@@ -4528,8 +4164,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * on the browser window.
 //  * @returns {Promise<CResult>} Reflecting success or failure of the given
 //  * request.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -4632,321 +4266,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //   return new CResult({value: value});
 // }
 
-// /**
-//  * An asynchronous function to display a dialog to inform user's of things
-//  * occurring with their HTML document.
-//  * @param {object} params The named parameters
-//  * @param {DIALOG_REQUEST} params.request The request to carry out.
-//  * @param {string} params.title A unique way of identifying the dialog.
-//  * @param {string | HTMLElement} [params.message=""] The message to use with
-//  * all DIALOG_REQUEST options except .Browser / .Close / .Loading
-//  * @param {string[]} [params.choices=[]] The choices to utilize with the
-//  * DIALOG_REQUEST.Choose option.
-//  * @param {any} [params.returnValue] The optional value to pass along with
-//  * the DIALOG_REQUEST.Close option.
-//  * @param {boolean} [params.use_native=false] Signals to use the browser
-//  * native of the given dialog request if available.
-//  * @param {string} [params.width] The optional width to set of the dialog
-//  * either by percentage or pixel.
-//  * @param {string} [params.height] The optional height to set of the dialog
-//  * either by percentage or pixel.
-//  * @returns {Promise<CResult>} The returned value from the dialog.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
-//  * @example
-//  * // TBD
-//  */
-// export function ui_dialog({
-//   request,
-//   title,
-//   message="",
-//   choices = [],
-//   returnValue,
-//   use_native=false,
-//   width,
-//   height
-// }) {
-//   if (!runtime_is_browser()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   json_check_type({type: Array, data: choices, should_throw: true});
-//   json_check_type({type: "string", data: request, should_throw: true});
-//   json_check_type({type: "string", data: title, should_throw: true});
-//   if (!json_check_type({type: "string", data: message}) &&
-//     // @ts-ignore This will exist in a browser context
-//     !json_check_type({type: globalThis.HTMLElement, data: message})) {
-//     throw API_TYPE_VIOLATION;
-//   }
-//   const id = title.replace(/\s/g, '');
-//   switch (request) {
-//     case DIALOG_REQUEST.Alert:
-//       return new Promise((resolve) => {
-//         if (use_native) {
-//           // @ts-ignore This is in a browser context
-//           globalThis.alert(data);
-//           resolve(new CResult());
-//         } else {
-//           const content = `
-//             <div class="codemelted-dialog-content">
-//               <div>${message}</div>
-//               <div class="codemelted-align-center">
-//                 <button id="${id}OK">OK</button>
-//               </div>
-//             </div>
-//           `;
-//           setTimeout(() => {
-//             // @ts-ignore Will exist in the browser context.
-//             const dlg = globalThis.document.getElementById(id);
-//             // @ts-ignore Will not be null
-//             dlg.onclose = () => {
-//               resolve(new CResult());
-//             }
-
-//             // @ts-ignore Will exist in the browser context
-//             const closeBtn = globalThis.document.getElementById(
-//               `${id}CloseDialog`
-//             );
-//             // @ts-ignore Will not be null
-//             closeBtn.onclick = () => {
-//               CDialog.close(id);
-//               resolve(new CResult());
-//             };
-
-//             // @ts-ignore Will exist in the browser context.
-//             const ok = globalThis.document.getElementById(`${id}OK`);
-//             // @ts-ignore Will not be null
-//             ok.onclick = () => {
-//               CDialog.close(id);
-//               resolve(new CResult());
-//             };
-//           });
-//           CDialog.show("💬", id, title, content, width, height);
-//         }
-//       });
-//     case DIALOG_REQUEST.Choose:
-//       return new Promise((resolve) => {
-//         /** @type {string[]} */
-//         const selectOptions = [];
-//         choices.forEach((e) => {
-//           selectOptions.push(`<option value="${e}">${e}</option>`);
-//         });
-//         const content = `
-//           <div class="codemelted-dialog-content">
-//             <div>${message}:</div>
-//             <select id="${id}Select">
-//               ${selectOptions.toString()}
-//             </select>
-//             <div class="codemelted-align-center">
-//               <button id="${id}OK">OK</button>
-//               <button id="${id}Cancel">Cancel</button>
-//             </div>
-//           </div>
-//         `;
-
-//         setTimeout(() => {
-//           // @ts-ignore Will exist in the browser context
-//           const dlg = globalThis.document.getElementById(id);
-//           // @ts-ignore Will not be null
-//           dlg.onclose = () => {
-//             resolve(new CResult());
-//           }
-
-//           // @ts-ignore Will exist in the browser context
-//           const closeBtn = globalThis.document.getElementById(
-//             `${id}CloseDialog`
-//           );
-//           // @ts-ignore Will not be null
-//           closeBtn.onclick = () => {
-//             CDialog.close(id, null);
-//             resolve(new CResult());
-//           };
-
-//           // @ts-ignore Will exist in the browser context
-//           const cancel = globalThis.document.getElementById(`${id}Cancel`);
-//           // @ts-ignore Will not be null
-//           cancel.onclick = () => {
-//             CDialog.close(id, null);
-//             resolve(new CResult());
-//           };
-
-//           // @ts-ignore Will exist in the browser context
-//           const cmbSelect = globalThis.document.getElementById(
-//             `${id}Select`);
-//           // @ts-ignore Will exist in the browser context
-//           const ok = globalThis.document.getElementById(`${id}OK`);
-//           // @ts-ignore Will not be null
-//           ok.onclick = () => {
-//             // @ts-ignore Will not be null
-//             CDialog.close(id, cmbSelect.value);
-//             const rtnval = CDialog.returnValue
-//               ? CDialog.returnValue
-//               : "";
-//             resolve(new CResult({value: rtnval}));
-//           };
-//         });
-//         CDialog.show("🤔", id, title, content, width, height);
-//       });
-//     case DIALOG_REQUEST.Close:
-//       return new Promise((resolve) => {
-//         CDialog.close(id, returnValue);
-//         resolve(new CResult());
-//       });
-//     case DIALOG_REQUEST.Confirm:
-//       return new Promise((resolve) => {
-//         if (use_native) {
-//           // @ts-ignore This is in a browser context
-//           let answer = globalThis.confirm(data);
-//           resolve(new CResult({value: answer}))
-//         } else {
-//           const content = `
-//             <div class="codemelted-dialog-content">
-//               <div>${message}</div>
-//               <div class="codemelted-align-center">
-//                 <button id="${id}OK">OK</button>
-//                 <button id="${id}Cancel">Cancel</button>
-//               </div>
-//             </div>
-//           `;
-//           setTimeout(() => {
-//             // @ts-ignore Will exist in the browser context
-//             const dlg = globalThis.document.getElementById(id);
-//             // @ts-ignore Will not be null.
-//             dlg.onclose = () => {
-//               resolve(new CResult());
-//             }
-
-//             // @ts-ignore Will exist in a browser context
-//             const closeBtn = globalThis.document.getElementById(
-//               `${id}CloseDialog`
-//             );
-//             // @ts-ignore This will not be null
-//             closeBtn.onclick = () => {
-//               CDialog.close(id, false);
-//               resolve(new CResult({value: CDialog.returnValue}));
-//             };
-
-//             // @ts-ignore Will exist in the browser context
-//             const ok = globalThis.document.getElementById(`${id}OK`);
-//             // @ts-ignore Will not be null
-//             ok.onclick = () => {
-//               CDialog.close(id, true);
-//               resolve(new CResult({value: CDialog.returnValue}));
-//             };
-
-//             // @ts-ignore Will exist in browser context
-//             const cancel = globalThis.document.getElementById(`${id}Cancel`);
-//             // @ts-ignore It will not be null
-//             cancel.onclick = () => {
-//               CDialog.close(id, false);
-//               resolve(new CResult({value: CDialog.returnValue}));
-//             };
-//           });
-//           CDialog.show("🙋‍♂️", id, title, content, width, height);
-//         }
-//       });
-//     case DIALOG_REQUEST.Loading:
-//       return new Promise((resolve) => {
-//         const content = `
-//           <div class="codemelted-dialog-content">
-//             <div>${message}</div>
-//             <div id="${id}-${request}"></div>
-//           </div>
-//         `;
-//         setTimeout(() => {
-//           // @ts-ignore Will exist in a browser context
-//           const txtProcessing = globalThis.document.getElementById(
-//             `${id}-${request}`
-//           );
-//           let x = 0;
-//           const timerId = setInterval(() => {
-//             let dots = "";
-//             if (x === 0) {
-//               dots = " .";
-//             } else if (x === 1) {
-//               dots = " . .";
-//             } else if (x == 2) {
-//               dots = " . . .";
-//               x = -1;
-//             }
-//             // @ts-ignore This will not be null
-//             txtProcessing.innerHTML = `Processing${dots}`;
-//             x += 1;
-//           }, 500);
-
-//           // @ts-ignore This will be in a browser context.
-//           const dlg = globalThis.document.getElementById(id);
-//           // @ts-ignore This will not be null
-//           dlg.onclose = () => {
-//             resolve(new CResult({value: CDialog.returnValue}));
-//             clearInterval(timerId);
-//           }
-//         });
-//         CDialog.show("⏳", id, title, content, width, height);
-//       });
-//     case DIALOG_REQUEST.Prompt:
-//       return new Promise((resolve) => {
-//         if (use_native) {
-//           // @ts-ignore This is in a browser context
-//           let answer = globalThis.prompt(data);
-//           resolve(new CResult({value: answer}));
-//         } else {
-//           const content = `
-//             <div class="codemelted-dialog-content">
-//               <div>${message}:</div>
-//               <input id="${id}Text" type="text" />
-//               <div class="codemelted-align-center">
-//                 <button id="${id}OK">OK</button>
-//                 <button id="${id}Cancel">Cancel</button>
-//               </div>
-//             </div>
-//           `;
-//           setTimeout(() => {
-//             // @ts-ignore Will exist in a browser context
-//             const dlg = globalThis.document.getElementById(id);
-//             // @ts-ignore Will not be null
-//             dlg.onclose = () => {
-//               resolve(new CResult());
-//             }
-
-//             // @ts-ignore Will exist in a browser context
-//             const closeBtn = globalThis.document.getElementById(
-//               `${id}CloseDialog`
-//             );
-//             // @ts-ignore Will not be null
-//             closeBtn.onclick = () => {
-//               CDialog.close(id, null);
-//               resolve(new CResult({value: CDialog.returnValue}));
-//             };
-
-//             // @ts-ignore Will exist in a browser context
-//             const txtField = globalThis.document.getElementById(`${id}Text`);
-//             // @ts-ignore Will exist in a browser context
-//             const ok = globalThis.document.getElementById(`${id}OK`);
-//             // @ts-ignore Won't be null
-//             ok.onclick = () => {
-//               // @ts-ignore Won't be null
-//               CDialog.close(id, txtField.value);
-//               const rtnval = CDialog.returnValue
-//                 ? CDialog.returnValue
-//                 : "";
-//               resolve(new CResult({value: rtnval}));
-//             };
-
-//             // @ts-ignore Exists in a browser context
-//             const cancel = globalThis.document.getElementById(`${id}Cancel`);
-//             // @ts-ignore Will not be null
-//             cancel.onclick = () => {
-//               CDialog.close(id, null);
-//               resolve(new CResult({value: CDialog.returnValue}));
-//             };
-//           });
-//           CDialog.show("🤨", id, title, content, width, height);
-//         }
-//       });
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
 
 // /**
 //  * Opens the specified protocol to a browser window or native app
@@ -4973,8 +4292,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * @param {number} [params.height=600] The height of a popup window.
 //  * Defaulted  to 600.0 when not set.
 //  * @returns {Window | null} Reference to the newly opened browser window.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -5084,8 +4401,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * different aspects to request information about.
 //  * @returns {number | string} Number for all requests except
 //  * ScreenOrientationType request.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
 //  * @example
 //  * // TBD
 //  */
@@ -5166,8 +4481,6 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 //  * on the request. {@link WIDGET_REQUEST.CssVariable} string value or empty
 //  * string of the queried variable, {@link WIDGET_REQUEST.Define} undefined,
 //  * and {@link WIDGET_REQUEST.ElementById} the HTMLElement of the queried ID.
-//  * @throws {CModuleError} codemelted.js module API violation. You should not
-//  * try-catch these as they serve as asserts to the developer.
 //  */
 // export function ui_widget({request, data}) {
 //   // Check if we are in a supported runtime or not.

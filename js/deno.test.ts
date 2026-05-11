@@ -63,7 +63,6 @@ import {
   json_has_key,
   json_parse,
   json_stringify,
-  json_valid_url,
   // LOGGER UC FUNCTIONS
   logger_handler,
   logger_level,
@@ -89,22 +88,6 @@ import {
 } from "./codemelted.js";
 
 logger_level(LOGGER.Off);
-
-// ===============================================================================
-// [HELPER TEST FUNCTIONS] =======================================================
-// ===============================================================================
-
-/**
- * Assists in testing the codemelted.js async throws.
- */
-async function asyncAssertThrows(fn: Function, ex: any) {
-  try {
-    await fn();
-    fail("Expected Throw")
-  } catch (err) {
-    assert(err instanceof ex);
-  }
-}
 
 // ============================================================================
 // [MODULE SYNTAX ERRORS VALIDATION] ==========================================
@@ -209,17 +192,15 @@ Deno.test("CResult Object Test", () => {
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("async_sleep() Test", async () => {
+  // @ts-ignore TypeScript won't let this happen, JavaScript would
+  assertThrows(() => async_sleep("duh"));
+
+  // Now prove it works.
   const start = Date.now();
   await async_sleep(500);
   const end = Date.now();
   const exec_time = end - start;
   assertEquals(true, exec_time >= 498);
-
-  await asyncAssertThrows(
-    // @ts-ignore "Checking JavaScript API type checking"
-    async () => { async_sleep("duh"); },
-    CModuleError
-  );
 });
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
@@ -259,7 +240,7 @@ Deno.test("async_timer() Test", async () => {
   let timer_protocol = async_timer({id: "timer", task: task, interval: 250});
   assertEquals(timer_protocol.state(), PROTOCOL_STATE.Started);
   await async_sleep(1100);
-  assertEquals(timer_protocol.state(), PROTOCOL_STATE.TimerExpired);
+  assertEquals(timer_protocol.state(), PROTOCOL_STATE.Message);
   timer_protocol.terminate();
   assertEquals(timer_protocol.state(), PROTOCOL_STATE.Terminated);
   assertEquals(counter >= 4, true);
@@ -552,22 +533,6 @@ Deno.test("json_parse() / json_stringify() Test", () => {
   assertEquals(stringified, json_stringify(parsed));
 });
 
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("json_valid_url() Test", () => {
-  // API violations
-  // @ts-ignore TypeScript won't let this happen, JavaScript would
-  assertThrows(() => json_valid_url());
-  // @ts-ignore TypeScript won't let this happen, JavaScript would
-  assertThrows(() => json_valid_url({data: 42}));
-
-  // Thrown because told to
-  assertThrows(() => json_valid_url({data: "http://<>.com", should_throw: true}));
-
-  // Now tests
-  assertEquals(false, json_valid_url({data: "http://<>.com"}));
-  assertEquals(true, json_valid_url({data: "http://google.com"}));
-});
-
 // ============================================================================
 // [NPU UC FUNCTIONS VALIDATION] ==============================================
 // ============================================================================
@@ -638,7 +603,7 @@ Deno.test("runtime_defined() Test", () => {
   assertEquals(false, runtime_defined({request: DEFINED_REQUEST.TouchEnabled}));
   assertEquals(false, runtime_defined({request: DEFINED_REQUEST.USB}));
   assertEquals(true, runtime_defined({request: DEFINED_REQUEST.WorkerAvailable}));
-  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.WorkerRT}));
+  assertEquals(false, runtime_defined({request: DEFINED_REQUEST.WorkerRuntime}));
   assertEquals(true, runtime_defined({property: "navigator"}));
   assertEquals(false, runtime_defined({property: "navigator", obj: {}}));
 });

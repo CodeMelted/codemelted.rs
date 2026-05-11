@@ -52,7 +52,6 @@ import {
   json_has_key,
   json_parse,
   json_stringify,
-  json_valid_url,
   // LOGGER UC FUNCTIONS
   logger_handler,
   logger_level,

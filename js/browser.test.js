@@ -58,7 +58,6 @@ import {
   json_has_key,
   json_parse,
   json_stringify,
-  json_valid_url,
   // LOGGER UC FUNCTIONS
   logger_handler,
   logger_level,
@@ -224,7 +223,7 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
     let timer_protocol = async_timer({id: "timer", task: task, interval: 250});
     assert.equal(timer_protocol.state(), PROTOCOL_STATE.Started);
     await async_sleep(1100);
-    assert.equal(timer_protocol.state(), PROTOCOL_STATE.TimerExpired);
+    assert.equal(timer_protocol.state(), PROTOCOL_STATE.Message);
     timer_protocol.terminate();
     assert.equal(timer_protocol.state(), PROTOCOL_STATE.Terminated);
     assert.equal(counter >= 4, true);
@@ -515,19 +514,6 @@ describe("JSON UC FUNCTIONS VALIDATION", () => {
     parsed = json_parse(stringified);
     assert.equal(stringified, json_stringify(parsed));
   });
-
-  it("json_valid_url() Test", () => {
-    // API violations
-    assert.throws(() => json_valid_url());
-    assert.throws(() => json_valid_url({data: 42}));
-
-    // Thrown because told to
-    assert.throws(() => json_valid_url({data: "http://<>.com", should_throw: true}));
-
-    // Now tests
-    assert.equal(false, json_valid_url({data: "http://<>.com"}));
-    assert.equal(true, json_valid_url({data: "http://google.com"}));
-  });
 });
 
 // ============================================================================
@@ -593,7 +579,7 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
     assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.TouchEnabled})));
     assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.USB})));
     assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.WorkerAvailable})));
-    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.WorkerRT})));
+    assert.isTrue(is_true_or_false(runtime_defined({request: DEFINED_REQUEST.WorkerRuntime})));
     assert.isTrue(runtime_defined({property: "navigator"}));
     assert.isFalse(runtime_defined({property: "navigator", obj: {}}));
   });

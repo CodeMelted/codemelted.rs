@@ -57,7 +57,6 @@ import {
   json_has_key,
   json_parse,
   json_stringify,
-  json_valid_url,
   // LOGGER UC FUNCTIONS
   logger_handler,
   logger_level,
@@ -234,7 +233,7 @@ describe("ASYNC I/O UC FUNCTIONS VALIDATION", () => {
     let timer_protocol = async_timer({id: "timer", task: task, interval: 250});
     expect(timer_protocol.state()).toBe(PROTOCOL_STATE.Started);
     await async_sleep(1100);
-    expect(timer_protocol.state()).toBe(PROTOCOL_STATE.TimerExpired);
+    expect(timer_protocol.state()).toBe(PROTOCOL_STATE.Message);
     timer_protocol.terminate();
     expect(timer_protocol.state()).toBe(PROTOCOL_STATE.Terminated);
     expect(counter >= 4).toBe(true);
@@ -543,21 +542,6 @@ describe ("JSON UC FUNCTIONS VALIDATION", () => {
     parsed = json_parse(stringified);
     expect(json_stringify(parsed)).toBe(stringified);
   });
-
-  test("json_valid_url() Test", () => {
-    // API violations
-    // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_valid_url()).toThrow<CModuleError>();
-    // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => json_valid_url({data: 42})).toThrow<CModuleError>();
-
-    // Thrown because told to
-    expect(() => json_valid_url({data: "http://<>.com", should_throw: true})).toThrow<CModuleError>();
-
-    // Now tests
-    expect(json_valid_url({data: "http://<>.com"})).toBe(false);
-    expect(json_valid_url({data: "http://google.com"})).toBe(true);
-  });
 });
 
 // ============================================================================
@@ -629,7 +613,7 @@ describe("RUNTIME UC FUNCTIONS VALIDATION", () => {
     expect(runtime_defined({request: DEFINED_REQUEST.TouchEnabled})).toBe(false);
     expect(runtime_defined({request: DEFINED_REQUEST.USB})).toBe(false);
     expect(runtime_defined({request: DEFINED_REQUEST.WorkerAvailable})).toBe(true);
-    expect(runtime_defined({request: DEFINED_REQUEST.WorkerRT})).toBe(false);
+    expect(runtime_defined({request: DEFINED_REQUEST.WorkerRuntime})).toBe(false);
     expect(runtime_defined({property: "navigator"})).toBe(true);
     expect(runtime_defined({property: "navigator", obj: {}})).toBe(false);
   });
