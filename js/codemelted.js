@@ -445,15 +445,18 @@ export const MATH_FORMULA = Object.freeze({
  * @property {string} MessageError Signifies a onmessageerror listener
  * received MessageEvent containing an error accessible via its data
  * property.
+ * @property {string} Open Signifies a {@link CProtocol} has opened a
+ * connection to a distant system.
  * @property {string} Started Signifies a {@link CProtocol} object has been
  * constructed and is running.
  * @property {string} Terminated Signifies a {@link CProtocol} object has
  * been terminated and is no longer running.
  */
-export const PROTOCOL_STATE = Object.freeze({
+export const PROTOCOL_EVENT = Object.freeze({
+  Error: "error",
   Message: "message",
   MessageError: "message_error",
-  Error: "error",
+  Open: "open",
   Started: "started",
   Terminated: "terminated",
 });
@@ -545,7 +548,7 @@ export const STORAGE_TYPE = Object.freeze({
  * represents a global event handler that should suffice any JavaScript
  * event callback.
  * @callback CEventHandler
- * @param {Event} e The event object that was triggered
+ * @param {Event} evt The event object that was triggered
  * @returns {void}
  */
 
@@ -559,10 +562,8 @@ export const STORAGE_TYPE = Object.freeze({
 /**
  * Supports the {@link CProtocol} for data received as part of a
  * protocol.
- * @callback CProtocolHandler
- * @param {CProtocol} protocol Reference to the protocol receiving the
- * data.
- * @param {CResult} data The data received as part of protocol.
+ * @callback CProtocolEventHandler
+ * @param {CProtocolEvent} evt The event handled by a given protocol.
  */
 
 /**
@@ -1348,9 +1349,63 @@ export class CFetchResult extends CResult {
    * @param {any} [params.error] Any captured errors as a result of the
    * request.
    */
-  constructor({status, data, error=null}) {
-    super({value: data, error: error});
-    this.#status = status;
+  constructor({status, data=null, error=null}) {
+    try {
+      super({value: data, error: error});
+      json_check_type({type: "number", data: status, should_throw: true});
+      this.#status = status;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CFetchResult construction error.", err);
+    }
+  }
+}
+
+/**
+ * An event handled by a implementing {@link CProtocol} object via their
+ * individually implemented protocol specific handlers to bubble up events
+ * in a common manner via the {@link CProtocolEventHandler}.
+ * @extends {CResult}
+ */
+export class CProtocolEvent extends CResult {
+  /** @type {PROTOCOL_EVENT} */
+  #event_fired;
+  /** @type {CProtocol} */
+  #protocol;
+
+  /**
+   * Retrieves the event fired from within {@link CProtocol} that created
+   * this event.
+   * @returns {PROTOCOL_EVENT}
+   */
+  event_fired() { return this.#event_fired; }
+
+  /**
+   * Retrieves a reference to the protocol that fired the event.
+   * @returns {CProtocol}
+   */
+  protocol() { return this.#protocol; }
+
+  /**
+   * Constructor for the event.
+   * @param {object} params The named parameters.
+   * @param {CProtocol} params.protocol The protocol that handled the event.
+   * @param {PROTOCOL_EVENT} params.event_fired The event that fired
+   * that produced this event.
+   * @param {any} [params.value] The value associated with the result.
+   * @param {any} [params.error] The error associated with the result.
+   */
+  constructor({protocol, event_fired, error=null, value=null}) {
+    try {
+      super({error: error, value: value});
+      json_check_type({type: "string", data: event_fired, should_throw: true});
+      json_check_type({type: CProtocol, data: protocol, should_throw: true});
+      this.#event_fired = event_fired;
+      this.#protocol = protocol;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CProtocolEvent construction error.", err);
+    }
   }
 }
 
@@ -1367,25 +1422,34 @@ export class CFetchResult extends CResult {
 export class CProtocol {
   /** @type {string} */
   #id = "";
-  /** @type {CProtocolHandler} */
+  /** @type {CProtocolEventHandler} */
   #rx_handler;
-  /** @type {PROTOCOL_STATE} */
-  #state;
   /** @type {PROTOCOL_TYPE} */
   #type;
+  /** @type {boolean} */
+  #is_running = false;
 
   /**
    * Helper function to process received data on a protocol.
    * @protected
    * @param {object} params The named parameters for the object.
-   * @param {PROTOCOL_STATE} params.state The current state of the protocol.
-   * @param {any} [params.value] The value associated with the result
-   * @param {any} [params.error] The error associated with the result
+   * @param {boolean} [params.terminated=false] true if terminated, false
+   * otherwise.
+   * @param {PROTOCOL_EVENT} params.event_fired The event that occurred with
+   * the protocol.
+   * @param {any} [params.value] The value associated with the result.
+   * @param {any} [params.error] The error associated with the result.
    * @returns {void}
    */
-  on_data_rx({state, error = null, value = null}) {
-    this.#state = state;
-    this.#rx_handler(this, new CResult({error: error, value: value}));
+  on_data_rx({event_fired, error, value}) {
+    this.#is_running = event_fired != PROTOCOL_EVENT.Terminated;
+    let evt = new CProtocolEvent({
+      protocol: this,
+      event_fired: event_fired,
+      error: error,
+      value: value
+    });
+    this.#rx_handler(evt);
   }
 
   /**
@@ -1395,10 +1459,10 @@ export class CProtocol {
   id() { return this.#id; }
 
   /**
-   * Identifies the current state of the protocol.
-   * @returns {PROTOCOL_STATE}
+   * Determines if the protocol is running or terminated.
+   * @returns {boolean} true if running, false if terminated.
    */
-  state() { return this.#state; }
+  is_running() { return this.#is_running; }
 
   /**
    * Identifies the type of protocol.
@@ -1427,7 +1491,7 @@ export class CProtocol {
    * Constructor for the class.
    * @param {string} id Identification for the protocol for debugging
    * purposes.
-   * @param {CProtocolHandler} rx_handler The callback for received
+   * @param {CProtocolEventHandler} rx_handler The callback for received
    * data.
    * @param {PROTOCOL_TYPE} type The type of protocol.
    */
@@ -1443,8 +1507,8 @@ export class CProtocol {
       json_check_type({type: "string", data: type, should_throw: true});
       this.#id = id;
       this.#rx_handler = rx_handler;
-      this.#state = PROTOCOL_STATE.Started;
       this.#type = type;
+      this.#is_running = true;
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CProtocol construction error.", err);
@@ -1477,7 +1541,7 @@ export class CBroadcastChannelProtocol extends CProtocol {
    */
   post_message(data) {
     try {
-      if (this.state() === PROTOCOL_STATE.Terminated) {
+      if (!this.is_running()) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#channel.postMessage(data);
@@ -1493,11 +1557,11 @@ export class CBroadcastChannelProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() === PROTOCOL_STATE.Terminated) {
+      if (!this.is_running()) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#channel.close();
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+      this.on_data_rx({terminated: true, event_fired: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError(
@@ -1510,7 +1574,7 @@ export class CBroadcastChannelProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {string} url The URL to connect this broadcast channel on.
-   * @param {CProtocolHandler} rx_handler The handler to receive data
+   * @param {CProtocolEventHandler} rx_handler The handler to receive data
    * from the protocol.
    */
   constructor(url, rx_handler) {
@@ -1525,10 +1589,13 @@ export class CBroadcastChannelProtocol extends CProtocol {
       }
       this.#channel = new globalThis.BroadcastChannel(url);
       this.#channel.onmessage = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+        this.on_data_rx({event_fired: PROTOCOL_EVENT.Message, value: evt});
       };
       this.#channel.onmessageerror = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: evt});
+        this.on_data_rx({
+          event_fired: PROTOCOL_EVENT.MessageError,
+          error: evt
+        });
       };
     } catch (err) {
       CModuleError.handle_error(err);
@@ -1553,11 +1620,11 @@ export class CEventSourceProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() === PROTOCOL_STATE.Terminated) {
+      if (!this.is_running()) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#sse.close();
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+      this.on_data_rx({event_fired: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError(
@@ -1570,7 +1637,7 @@ export class CEventSourceProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {string} url URL of the server sending the events.
-   * @param {CProtocolHandler} rx_handler The protocol handler to receive
+   * @param {CProtocolEventHandler} rx_handler The protocol handler to receive
    * those events.
    */
   constructor(url, rx_handler) {
@@ -1581,13 +1648,13 @@ export class CEventSourceProtocol extends CProtocol {
       }
       this.#sse = new globalThis.EventSource(url);
       this.#sse.onerror = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.Error, value: evt});
+        this.on_data_rx({event_fired: PROTOCOL_EVENT.Error, error: evt});
       };
       this.#sse.onmessage = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+        this.on_data_rx({event_fired: PROTOCOL_EVENT.Message, value: evt});
       };
       this.#sse.onopen = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+        this.on_data_rx({event_fired: PROTOCOL_EVENT.Open, value: evt});
       };
     } catch (err) {
       CModuleError.handle_error(err);
@@ -1616,7 +1683,7 @@ export class COrientationProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() == PROTOCOL_STATE.Terminated) {
+      if (this.state() == PROTOCOL_EVENT.Terminated) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       // @ts-ignore Object exists in browser runtime.
@@ -1627,7 +1694,7 @@ export class COrientationProtocol extends CProtocol {
         "deviceorientation",
         this.#on_device_orientation
       );
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("COrientationProtocol.terminate() error.", err);
@@ -1637,7 +1704,7 @@ export class COrientationProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {string} id A unique ID for the protocol.
-   * @param {CProtocolHandler} rx_handler The handler to receive data.
+   * @param {CProtocolEventHandler} rx_handler The handler to receive data.
    * @param {object} [options={}]  Options specific to the  protocol.
    */
   constructor(id, rx_handler, options={}) {
@@ -1666,13 +1733,13 @@ export class COrientationProtocol extends CProtocol {
         (/** @type {GeolocationPosition} */ evt) => {
           this.#data.update(evt.coords);
           this.on_data_rx({
-            state: PROTOCOL_STATE.Message,
+            state: PROTOCOL_EVENT.Message,
             value: Object.assign({}, this.#data)
           });
         },
         // @ts-ignore This will work in Browser runtime.
         (/** @type {GeolocationPositionError} */evt) => {
-          this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: evt});
+          this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: evt});
         },
         options
       );
@@ -1707,7 +1774,7 @@ export class CSerialPortProtocol extends CProtocol {
    */
   async post_message({request, data}) {
     try {
-      if (this.state() === PROTOCOL_STATE.Terminated) {
+      if (this.state() === PROTOCOL_EVENT.Terminated) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       let resp = null;
@@ -1723,21 +1790,21 @@ export class CSerialPortProtocol extends CProtocol {
         case SERIAL_PORT_DATA_REQUEST.CarrierDetect:
           resp = await this.#port.getSignals();
           this.on_data_rx({
-            state: PROTOCOL_STATE.Message,
+            state: PROTOCOL_EVENT.Message,
             value: {carrier_detect: resp["carrierDetect"]}
           });
           break;
         case SERIAL_PORT_DATA_REQUEST.ClearToSend:
           resp = await this.#port.getSignals();
           this.on_data_rx({
-            state: PROTOCOL_STATE.Message,
+            state: PROTOCOL_EVENT.Message,
             value: {clear_to_send: resp["clearToSend"]}
           });
           break;
         case SERIAL_PORT_DATA_REQUEST.DataBytesRead:
           if (!this.#port.readable) {
             this.on_data_rx({
-              state: PROTOCOL_STATE.Message,
+              state: PROTOCOL_EVENT.Message,
               value: {data_bytes_read: new Uint8Array()}
             });
           }
@@ -1746,7 +1813,7 @@ export class CSerialPortProtocol extends CProtocol {
           const { value, done } = await reader.read();
           reader.releaseLock();
           this.on_data_rx({
-            state: PROTOCOL_STATE.Message,
+            state: PROTOCOL_EVENT.Message,
             value: {data_bytes_read: value}
           });
           break;
@@ -1763,7 +1830,7 @@ export class CSerialPortProtocol extends CProtocol {
         case SERIAL_PORT_DATA_REQUEST.DataSetReady:
           resp = await this.#port.getSignals();
           this.on_data_rx({
-            state: PROTOCOL_STATE.Message,
+            state: PROTOCOL_EVENT.Message,
             value: {data_set_ready: resp["dataSetReady"]}
           });
           break;
@@ -1786,7 +1853,7 @@ export class CSerialPortProtocol extends CProtocol {
         case SERIAL_PORT_DATA_REQUEST.RingIndicator:
           resp = await this.#port.getSignals();
           this.on_data_rx({
-            state: PROTOCOL_STATE.Message,
+            state: PROTOCOL_EVENT.Message,
             value: {ring_indicator: resp["ringIndicator"]}
           });
           break;
@@ -1797,7 +1864,7 @@ export class CSerialPortProtocol extends CProtocol {
       if (err instanceof CModuleError) {
         CModuleError.handle_error(err);
       }
-      this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: err});
+      this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: err});
     }
   }
 
@@ -1807,11 +1874,11 @@ export class CSerialPortProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() === PROTOCOL_STATE.Terminated) {
+      if (this.state() === PROTOCOL_EVENT.Terminated) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#port.close();
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError(
@@ -1823,7 +1890,7 @@ export class CSerialPortProtocol extends CProtocol {
 
   /**
    * Constructor for the protocol.
-   * @param {CProtocolHandler} rx_handler  The receive handler for data from
+   * @param {CProtocolEventHandler} rx_handler  The receive handler for data from
    * the protocol.
    * @param {SerialPort} port The physical serial port opened by the
    * protocol.
@@ -1870,12 +1937,12 @@ export class CTimerProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() == PROTOCOL_STATE.Terminated) {
+      if (this.state() == PROTOCOL_EVENT.Terminated) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       globalThis.clearInterval(this.#timer_id);
       this.#timer_id = -1;
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CTimerProtocol terminate error.", err);
@@ -1885,7 +1952,7 @@ export class CTimerProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {string} id Unique id for the protocol
-   * @param {CProtocolHandler} rx_handler Handler for the protocol.
+   * @param {CProtocolEventHandler} rx_handler Handler for the protocol.
    * @param {number} interval How often to fire the timer.
    */
   constructor(id, rx_handler, interval) {
@@ -1895,7 +1962,7 @@ export class CTimerProtocol extends CProtocol {
       // @ts-ignore node returns an object.
       this.#timer_id = globalThis.setInterval(() => {
         try {
-          this.on_data_rx({state: PROTOCOL_STATE.Message, value: "timer_expired"});
+          this.on_data_rx({state: PROTOCOL_EVENT.Message, value: "timer_expired"});
         } catch (err) {
           CModuleError.handle_error(err);
           throw new CModuleError("CTimerProtocol on_data_rx() error.", err);
@@ -1935,7 +2002,7 @@ export class CWebSocketProtocol extends CProtocol {
    */
   post_message(data) {
     try {
-      if (this.state() === PROTOCOL_STATE.Terminated) {
+      if (this.state() === PROTOCOL_EVENT.Terminated) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#socket.send(data);
@@ -1947,7 +2014,7 @@ export class CWebSocketProtocol extends CProtocol {
           err
         );
       }
-      this.on_data_rx({state: PROTOCOL_STATE.Error, error: err});
+      this.on_data_rx({state: PROTOCOL_EVENT.Error, error: err});
     }
   }
 
@@ -1957,11 +2024,11 @@ export class CWebSocketProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() === PROTOCOL_STATE.Terminated) {
+      if (this.state() === PROTOCOL_EVENT.Terminated) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#socket.close();
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CWebSocketProtocol.terminate() error.", err);
@@ -1975,13 +2042,13 @@ export class CWebSocketProtocol extends CProtocol {
     // @ts-ignore URL will not be null.
     this.#socket = new globalThis.WebSocket(this.#url);
     this.#socket.onmessage = (evt) => {
-      this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+      this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
     }
     this.#socket.onerror = (evt) => {
-      this.on_data_rx({state: PROTOCOL_STATE.Error, error: evt});
+      this.on_data_rx({state: PROTOCOL_EVENT.Error, error: evt});
     }
     this.#socket.onclose = (evt) => {
-      this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+      this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
       this.#socket.close();
       this.#connect_socket();
     }
@@ -1990,7 +2057,7 @@ export class CWebSocketProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {string} url The URL of the server to connect.
-   * @param {CProtocolHandler} rx_handler The handler for receiving data from
+   * @param {CProtocolEventHandler} rx_handler The handler for receiving data from
    * this protocol.
    */
   constructor(url, rx_handler) {
@@ -2034,7 +2101,7 @@ export class CWorkerProtocol extends CProtocol {
    */
   post_message(data) {
     try {
-      if (this.state() == PROTOCOL_STATE.Terminated) {
+      if (this.state() == PROTOCOL_EVENT.Terminated) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#worker.postMessage(data);
@@ -2050,11 +2117,11 @@ export class CWorkerProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() == PROTOCOL_STATE.Terminated) {
+      if (this.state() == PROTOCOL_EVENT.Terminated) {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#worker.terminate();
-      this.on_data_rx({state: PROTOCOL_STATE.Terminated});
+      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CWorkerProtocol.terminate() error.", err);
@@ -2065,7 +2132,7 @@ export class CWorkerProtocol extends CProtocol {
    * Constructs a worker protocol for asynchronous processing off the main
    * runtime thread.
    * @param {string} url A unique ID for the protocol.
-   * @param {CProtocolHandler} rx_handler The receive handler for data and
+   * @param {CProtocolEventHandler} rx_handler The receive handler for data and
    * state changes
    * @param {object} options Options for further configuration of the worker.
    */
@@ -2082,15 +2149,15 @@ export class CWorkerProtocol extends CProtocol {
         options
       );
       this.#worker.onerror = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.Error, error: evt});
+        this.on_data_rx({state: PROTOCOL_EVENT.Error, error: evt});
         evt.preventDefault();
       }
       this.#worker.onmessageerror = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.MessageError, error: evt});
+        this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: evt});
         evt.preventDefault();
       }
       this.#worker.onmessage = (evt) => {
-        this.on_data_rx({state: PROTOCOL_STATE.Message, value: evt});
+        this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
         evt.preventDefault();
       }
     } catch (err) {
@@ -2161,7 +2228,7 @@ export function async_task({task, data, delay = 0}) {
  * Creates an asynchronous timer protocol on the main thread.
  * @param {object} params The named parameters.
  * @param {string} params.id A unique ID for the timer.
- * @param {CProtocolHandler} params.task The task to run on the specified
+ * @param {CProtocolEventHandler} params.task The task to run on the specified
  * interval.
  * @param {number} params.interval The interval in milliseconds to repeat
  * the given task.
@@ -2191,7 +2258,7 @@ export function async_timer({id, task, interval}) {
  * Constructs a dedicated background worker off the main JS runtime thread.
  * @param {object} params The named parameters.
  * @param {string} params.url The URL of the dedicated worker.
- * @param {CProtocolHandler} params.rx_handler The receive handler to receive
+ * @param {CProtocolEventHandler} params.rx_handler The receive handler to receive
  * events back from the dedicated worker.
  * @param {object} [params.options={type: "module"}] Options to specify with
  * the construction of the worker. Defaults to ES6 module type worker.
@@ -2375,7 +2442,7 @@ export function hw_request_midi() {
  * geodetic orientation in 3D space.
  * @param {object} params The named parameters.
  * @param {string} params.id A unique identification for the protocol.
- * @param {CProtocolHandler} params.rx_handler The handler for received data.
+ * @param {CProtocolEventHandler} params.rx_handler The handler for received data.
  * @param {object} [params.options = {}] The options for tuning the protocol to
  * watch for geolocation position updates.
  * @return {COrientationProtocol} The protocol that handles
@@ -2395,7 +2462,7 @@ export function hw_request_orientation({id, rx_handler, options = {}}) {
 /**
  * Provides the mechanism to request permission to connect to an attached
  * serial port device.
- * @param {CProtocolHandler} rx_handler Handler to receive processed serial
+ * @param {CProtocolEventHandler} rx_handler Handler to receive processed serial
  * port data. See {@link SERIAL_PORT_DATA_REQUEST} for what the data would
  * look like when calling CSerialPortProtocol.post_message().
  * @returns {Promise<CSerialPortProtocol?>} The requested
@@ -2849,7 +2916,7 @@ export function network_beacon({url, data}) {
  * @param {object} params The named parameters.
  * @param {CONNECT_REQUEST} params.request The protocol to connect.
  * @param {string} params.url The server hosting the protocol to connect.
- * @param {CProtocolHandler} params.rx_handler The receive handler for
+ * @param {CProtocolEventHandler} params.rx_handler The receive handler for
  * the given protocol.
  * @returns {CBroadcastChannelProtocol | CEventSourceProtocol |
  * CWebSocketProtocol | CWebRtcProtocol} The protocol to communicate
