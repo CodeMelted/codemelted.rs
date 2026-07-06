@@ -1,96 +1,7 @@
 // @ts-check
-// TODO 1: Implement snackbar ui_action.
-// TODO 2: Implement copy of text.
 // ============================================================================
 /**
- * @file <br />
- * <center>
- * <img style="width: 100%; max-width: 375px;"
- *  src="https://codemelted.com/assets/images/logo-codemelted-rs.png"
- * /></center>
- * <h3>Introduction</h3>
- * <p>
- * The <code>codemelted.js</code> module is an ES6 module that mirrors the
- * <code>codemelted.rs</code> module. It's goal is to implement the domain
- * use cases wrapping the Web APIs exposed in a browser runtime. This provides
- * the client side single page app (SPA) / progressive web app (PWA)
- * development support utilizing web technologies. By supporting the SPA / PWA
- * client side development, the <code>codemelted.js</code> module will also
- * provide WASM bindings to support client side application development in
- * Rust whether a native desktop application or a web hosted client.
- * </p>
- * </p>
- * <table style="width: 100%;">
- * <tr>
- * <td style="width: 275px;">
- * <img style= "width: 275px;" src="https://codemelted.com/developer/mdbook/models/use-case-model.drawio.png" />
- * </td>
- * <td>
- * <ul>
- * <li> Implements the identified domain use cases as a series of exported functions. </li>
- * <li> Function names match that of the <code>codemelted.rs</code> rust function names. </li>
- * <li> Function parameters / returns are abstracted from JS runtime specific objects. </li>
- * <li> This provides for the support of multiple JS runtimes. </li>
- * <li> This provides support for TypeScript development / checking. </li>
- * </ul>
- * </td>
- * </tr>
- * <tr>
- * <td style="width: 275px;">
- * <img style= "width: 275px;" src="https://codemelted.com/developer/mdbook/models/wasm-build-process.drawio.png" />
- * </td>
- * <td>
- * <ul>
- * <li> The <code>codemelted.js</code> module is ran through the targeted runtime tests. </li>
- * <li> When all tests PASS, the <code>codemelted.rs</code> WASM build occurs. </li>
- * <li> When the cargo doc, build, and tests all PASS you end up with two build targets. </li>
- * <li> The ability to write a pure rust desktop / web app via the <code>codemelted.rs</code> crate. </li>
- * <li> The ability to write a JS / TS frontend / backend regardless frontend development framework. </li>
- * </ul>
- * </td>
- * </tr>
- * </table>
- * <table><br />
- * <h3>How To Use</h3>
- * <p>
- * <h4>URL</h4>
- * <ul>
- * <li>
- * <i>Latest codemelted.js Updates (Risky to Breaking Changes):&nbsp;&nbsp;</i>
- * <code>https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs/js/codemelted.js</code>
- * </li>
- * <li>
- * <i>Versioned codemelted.js Module (Safest):&nbsp;&nbsp;</i>
- * <code>https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs@X.Y.Z/js/codemelted.js</code>
- * </li>
- * </ul>
- * <h4>Import</h4>
- * <code>
- * // Import whole module statically via URL or local path     <br>
- * import * as codemelted from "path/to/codemelted.js";        <br><br>
- * // Import elements to use statically via URL or local path  <br>
- * import { exported_element } from "path/to/codemelted.js";   <br><br>
- * // Dynamically import all module elements to named variable <br>
- * let codemelted = await import("path/to/codemelted.js");     <br><br>
- * // What the import of an exported element looks like.       <br>
- * // This represents all the exported module functions.       <br>
- * import {                                                    <br>
- * &nbsp;&nbsp;// MODULE COMMON DATA C CLASSES / FUNCTIONS     <br>
- * &nbsp;&nbsp;API_MISUSE,                                     <br>
- * &nbsp;&nbsp;API_NOT_IMPLEMENTED,                            <br>
- * &nbsp;&nbsp;API_TYPE_VIOLATION,                             <br>
- * &nbsp;&nbsp;API_UNSUPPORTED_RUNTIME,                        <br>
- * &nbsp;&nbsp;CProtocol,                                      <br>
- * &nbsp;&nbsp;CResult,                                        <br>
- * &nbsp;&nbsp;runtime_defined,                                <br>
- * &nbsp;&nbsp;// ASYNC I/O UC CLASSES / FUNCTIONS             <br>
- * &nbsp;&nbsp;CFuture,                                        <br>
- * &nbsp;&nbsp;async_sleep,                                    <br>
- * &nbsp;&nbsp;async_task,                                     <br>
- * } from "path/to/codemelted.js";                             <br>
- * </code>
- * </p>
- * <h3>Test Results</h3>
+ * @file
  * <script>
  * function open_test(url) {
  *   let height = 600;
@@ -105,77 +16,11 @@
  * }
  * </script>
  * <p>
+ * <b>Test Results:</b>&nbsp;
  * <button style="cursor: pointer;" onclick="open_test('coverage-browser/index.html');">Browser</button>
  * <button style="cursor: pointer;" onclick="open_test('coverage-bun/js/index.html');">Bun</button>
  * <button style="cursor: pointer;" onclick="open_test('coverage-deno/js/index.html');">Deno</button>
  * <button style="cursor: pointer;" onclick="open_test('coverage-node/js/index.html');">NodeJS</button>
- * </p>
- * <h3>JS Runtime Support</h3>
- * <p>
- * The following table reflects the public facing functions implementing the
- * domain use cases for client side browser runtime development. It signals
- * what other backend V8 JS runtimes this module can be utilized within even
- * though its primary purpose is client side browser development.
- * </p>
- * <thead>
- * <tr><th>Function</th><th>Supported V8 Runtimes</tr>
- * </thead>
- * <tbody>
- * <tr><td>async_sleep             </td><td>Bun / Deno / Node / Worker</td></tr>
- * <tr><td>async_task              </td><td>Bun / Deno / Node / Worker</td></tr>
- * <tr><td>async_timer             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>async_worker            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>db_exists               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>db_manage               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>db_query                </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>db_update               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>db_version              </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_request_bluetooth    </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_request_midi         </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_request_orientation  </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_request_serial_port  </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>hw_request_usb          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_atob               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_btoa               </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_check_type         </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_create_array       </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_create_object      </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_has_key            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_parse              </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>json_stringify          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>logger_handler          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>logger_level            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>logger_log              </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>network_beacon          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>network_connect         </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>network_fetch           </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>npu_compute             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>npu_math                </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_cpu_count       </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_defined         </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_environment     </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_event           </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_hostname        </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_name            </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>runtime_online          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>storage_clear           </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>storage_get             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>storage_key             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>storage_length          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>storage_remove          </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>storage_set             </td><td><mark>UNDER DEVELOPMENT</mark></td></tr>
- * <tr><td>ui_action               </td><td>None</td></tr>
- * <tr><td>ui_audio                </td><td>None</td></tr>
- * <tr><td>ui_dialog               </td><td>None</td></tr>
- * <tr><td>ui_open                 </td><td>None</td></tr>
- * <tr><td>ui_screen               </td><td>None</td></tr>
- * <tr><td>ui_widget               </td><td>None</td></tr>
- * </tbody>
- * </table><br />
- * <h3>Design Notes</h3>
- * <h4>Async I/O Use Cases</h4>
- * <p><mark>TBD</mark></p>
- * <h3>About Module</h3>
  * @author Mark Shaffer
  * @copyright © 2024-26 Mark Shaffer. All Rights Reserved.
  * @version 26.1.2 (Last Modified 2026-mm-dd)
@@ -284,6 +129,71 @@
 // ============================================================================
 // [MODULE ENUMERATIONS] ======================================================
 // ============================================================================
+
+/**
+ * Provides the request actions for the {@link runtime_action} function call.
+ * @readonly
+ * @enum {string}
+ * @property {string} Alert Opens the browser alert dialog to alert the user
+ * to a condition.
+ * @property {string} Confirm Opens the browser confirm dialog to ask a
+ * question of the user.
+ * @property {string} Focus Makes a request to bring the window to the
+ * front. It may fail due to user settings and the window isn't guaranteed
+ * to be front most before this method returns.
+ * @property {string} MoveBy moves the current window by a specified
+ * amount.
+ * @property {string} MoveTo moves the current window to the specified
+ * coordinates.
+ * @property {string} PostMessage Posts a message to another window in
+ * the browser context.
+ * @property {string} Print Opens the print dialog to print the current
+ * document.
+ * @property {string} Prompt Opens a browser prompt dialog for user input.
+ * @property {string} ResizeBy resizes the current window by a specified
+ * amount.
+ * @property {string} ResizeTo dynamically resizes the window.
+ * @property {string} Scroll scrolls the window to a particular place in
+ * the document.
+ * @property {string} ScrollBy scrolls the document in the window by the
+ * given amount.
+ * @property {string} ScrollTo scrolls to a particular set of coordinates
+ * in the document.
+ * @property {string} Share invokes the native sharing mechanism of the
+ * device to share data such as text, URLs, or files. The available share
+ * targets depend on the device, but might include the clipboard, contacts
+ * and email applications, websites, Bluetooth, etc.
+ * @property {string} Vibrate Most modern mobile devices include vibration
+ * hardware, which lets software code provide physical feedback to the user
+ * by causing the device to shake. The Vibration API offers Web apps the
+ * ability to access this hardware, if it exists, and does nothing if the
+ * device doesn't support it.
+ */
+export const ACTION_REQUEST = Object.freeze({
+  Alert: "alert",
+  Confirm: "confirm",
+  Focus: "focus",
+  MoveBy: "move_by",
+  MoveTo: "move_to",
+  PostMessage: "post_message",
+  Print: "print",
+  Prompt: "prompt",
+  ResizeBy: "resize_by",
+  ResizeTo: "resize_to",
+  Scroll: "scroll",
+  ScrollBy: "scroll_by",
+  ScrollTo: "scroll_to",
+  Share: "share",
+  Vibrate: "vibrate",
+});
+
+/**
+ * FILL THIS IN
+ */
+export const AUDIO_REQUEST = Object.freeze({
+  AudioPlayer: "audio_player",
+  TextToSpeech: "text_to_speech",
+});
 
 /**
  * Provides the ability to connect to different server protocols via the
@@ -396,45 +306,6 @@ export const LOGGER = Object.freeze({
 });
 
 /**
- * The math formula to execute with the {@link npu_math} call.
- * @readonly
- * @enum {string}
- * @property {string} GeodeticDistance
- * Distance in meters between two WGS84 points. The parameters for the
- * formula are start_latitude / start_longitude / end_latitude / end_longitude
- * @property {string} GeodeticHeading
- * Heading in °N true North 0 - 359. The parameters for the
- * formula are start_latitude / start_longitude / end_latitude / end_longitude
- * @property {string} GeodeticSpeed
- * Speed in meters per second between two WGS84 points. The parameters for the
- * formula are start_milliseconds / start_latitude / start_longitude /
- * end_milliseconds / end_latitude / end_longitude
- * @property {string} TemperatureCelsiusToFahrenheit
- * °F = (°C x 9/5) + 32
- * @property {string} TemperatureCelsiusToKelvin
- * °K = °C + 273.15
- * @property {string} TemperatureFahrenheitToCelsius
- * °C = (°F − 32) × 5/9
- * @property {string} TemperatureFahrenheitToKelvin
- * °K = (°F − 32) × 5/9 + 273.15
- * @property {string} TemperatureKelvinToCelsius
- * °C = °K − 273.15
- * @property {string} TemperatureKelvinToFahrenheit
- * °F = (°K − 273.15) × 9/5 + 32
- */
-export const MATH_FORMULA = Object.freeze({
-  GeodeticDistance: "geodetic_distance",
-  GeodeticHeading: "geodetic_heading",
-  GeodeticSpeed: "geodetic_speed",
-  TemperatureCelsiusToFahrenheit: "temperature_celsius_to_fahrenheit",
-  TemperatureCelsiusToKelvin: "temperature_celsius_to_kelvin",
-  TemperatureFahrenheitToCelsius: "temperature_fahrenheit_to_celsius",
-  TemperatureFahrenheitToKelvin: "temperature_fahrenheit_to_kelvin",
-  TemperatureKelvinToCelsius: "temperature_kelvin_to_celsius",
-  TemperatureKelvinToFahrenheit: "temperature_kelvin_to_fahrenheit"
-});
-
-/**
  * Provides the current state of the {@link CProtocol.state()} object.
  * @readonly
  * @enum {string}
@@ -489,6 +360,101 @@ export const PROTOCOL_TYPE = Object.freeze({
 });
 
 /**
+ * Identifies the schema to {@link runtime_open} with the browser desktop
+ * services.
+ * @readonly
+ * @enum {string}
+ * @property {string} File Opens an item via the file protocol.
+ * @property {string} Http Opens a web resource with the HTTP protocol.
+ * @property {string} Https Same as Http but with security.
+ * @property {string} Mailto Opens the default mail provider.
+ * @property {string} Sms Opens the standard app for texting.
+ * @property {string} Tel Opens the default calling application.
+ */
+export const SCHEMA_TYPE = Object.freeze({
+  File: "file:",
+  Http: "http://",
+  Https: "https://",
+  Mailto: "mailto:",
+  Sms: "sms:",
+  Tel: "tel:",
+});
+
+/**
+ * Identifies queryable requests via {@link runtime_screen} discover more about
+ * your application running in the given browser.
+ * @readonly
+ * @enum {string}
+ * @property {string} AvailableHeight the height of the screen, in pixels,
+ * minus permanent or semipermanent user interface features displayed by
+ * the operating system, such as the Taskbar on Windows.
+ * @property {string} AvailableWidth the amount of horizontal space in
+ * pixels available to the window.
+ * @property {string} ColorDepth the color depth of the screen.
+ * @property {string} DevicePixelRatio the ratio of the resolution in
+ * physical pixels to the resolution in CSS pixels for the current display
+ * device.
+ * @property {string} Height the height of the screen in pixels.
+ * @property {string} InnerHeight the interior height of the window in
+ * pixels, including the height of the horizontal scroll bar, if present.
+ * @property {string} InnerWidth interior width of the window in pixels
+ * (that is, the width of the window's layout viewport). That includes the
+ * width of the vertical scroll bar, if one is present.
+ * @property {string} OuterHeight the height in pixels of the whole browser
+ * window, including any sidebar, window chrome, and window-resizing
+ * borders/handles.
+ * @property {string} OuterWidth the width of the outside of the browser
+ * window. It represents the width of the whole browser window including
+ * sidebar (if expanded), window chrome and window resizing borders /
+ * handles.
+ * @property {string} PixelDepth the bit depth of the screen.
+ * @property {string} ScreenLeft the horizontal distance, in CSS pixels,
+ * from the left border of the user's browser viewport to the left side of
+ * the screen.
+ * @property {string} ScreenOrientationAngle the document's current
+ * orientation angle.
+ * @property {string} ScreenOrientationType the document's current
+ * orientation type, one of portrait-primary, portrait-secondary,
+ * landscape-primary, or landscape-secondary.
+ * @property {string} ScreenTop the vertical distance, in CSS pixels, from
+ * the top border of the user's browser viewport to the top side of the
+ * screen.
+ * @property {string} ScreenX the horizontal distance, in CSS pixels, of the
+ * left border of the user's browser viewport to the left side of the
+ * screen.
+ * @property {string} ScreenY the vertical distance, in CSS pixels, of the
+ * top border of the user's browser viewport to the top edge of the screen.
+ * @property {string} ScrollX the number of pixels by which the document is
+ * currently scrolled horizontally. This value is subpixel precise in modern
+ * browsers, meaning that it isn't necessarily a whole number.
+ * @property {string} ScrollY the number of pixels by which the document is
+ * currently scrolled vertically. This value is subpixel precise in modern
+ * browsers, meaning that it isn't necessarily a whole number.
+ * @property {string} Width the width of the screen.
+ */
+export const SCREEN_REQUEST = Object.freeze({
+  AvailableHeight: "available_height",
+  AvailableWidth: "available_width",
+  ColorDepth: "color_depth",
+  DevicePixelRatio: "device_pixel_ratio",
+  Height: "height",
+  InnerHeight: "inner_height",
+  InnerWidth: "inner_width",
+  OuterHeight: "outer_height",
+  OuterWidth: "outer_width",
+  PixelDepth: "pixel_depth",
+  ScreenLeft: "screen_left",
+  ScreenOrientationAngle: "screen_orientation_angle",
+  ScreenOrientationType: "screen_orientation_type",
+  ScreenTop: "screen_top",
+  ScreenX: "screen_x",
+  ScreenY: "screen_y",
+  ScrollX: "scroll_x",
+  ScrollY: "scroll_y",
+  Width: "width",
+});
+
+/**
  * Provides the support to the {@link CSerialPortProtocol.post_message} serial
  * port communications.
  * @enum {string}
@@ -537,6 +503,24 @@ export const STORAGE_TYPE = Object.freeze({
   Cookie: "cookie",
   Local: "local",
   Session: "session",
+});
+
+/**
+ * Supports the target parameter of the {@link runtime_open} action which handles
+ * opening related apps based on the specified {@link SCHEMA_TYPE}.
+ * @readonly
+ * @enum {string}
+ * @property {string} Blank Opens the linked document in a new window or tab
+ * @property {string} Parent Opens the linked document in the same frame as
+ * it was clicked (this is default)
+ * @property {string} Self Opens the linked document in the parent frame
+ * @property {string} Top Opens the linked document in the full body of the window
+ */
+export const TARGET_TYPE = Object.freeze({
+  Blank: "_blank",
+  Parent: "_parent",
+  Self: "_self",
+  Top: "_top",
 });
 
 // ============================================================================
@@ -816,93 +800,6 @@ class ModuleUtils {
   }
 
   /**
-   * Calculate the geodetic distance. Supports the {@link npu_math} function.
-   * @param {number} start_latitude The starting latitude geographic position.
-   * @param {number} start_longitude The starting longitude geography position.
-   * @param {number} end_latitude The ending latitude geographic position.
-   * @param {number} end_longitude The ending latitude geographic position.
-   * @returns {number} The distance in meters.
-   */
-  static geodetic_distance(start_latitude, start_longitude,
-      end_latitude, end_longitude) {
-    // Convert degrees to radians
-    let lat1 = start_latitude * Math.PI / 180.0;
-    let lon1 = start_longitude * Math.PI / 180.0;
-
-    let lat2 = end_latitude * Math.PI / 180.0;
-    let lon2 = end_longitude * Math.PI / 180.0;
-
-    // radius of earth in metres
-    let r = 6378100.0;
-
-    // P
-    let rho1 = r * Math.cos(lat1);
-    let z1 = r * Math.sin(lat1);
-    let x1 = rho1 * Math.cos(lon1);
-    let y1 = rho1 * Math.sin(lon1);
-
-    // Q
-    let rho2 = r * Math.cos(lat2);
-    let z2 = r * Math.sin(lat2);
-    let x2 = rho2 * Math.cos(lon2);
-    let y2 = rho2 * Math.sin(lon2);
-
-    // Dot product
-    let dot = x1 * x2 + y1 * y2 + z1 * z2;
-    let cos_theta = dot / (r * r);
-    let theta = Math.acos(cos_theta);
-
-    // Distance in meters
-    return r * theta;
-  }
-
-  /**
-   * Calculates the geodetic heading. Supports the {@link npu_math} function.
-   * @param {number} start_latitude The starting latitude geographic position.
-   * @param {number} start_longitude The starting longitude geography position.
-   * @param {number} end_latitude The ending latitude geographic position.
-   * @param {number} end_longitude The ending latitude geographic position.
-   * @returns {number} Heading in °N true North 0 - 359
-   */
-  static geodetic_heading(start_latitude, start_longitude,
-      end_latitude, end_longitude) {
-    // Get the initial data from our variables:
-    let lat1 = start_latitude * (Math.PI / 180.0);
-    let lon1 = start_longitude * (Math.PI / 180.0);
-    let lat2 = end_latitude * (Math.PI  / 180.0);
-    let lon2 = end_longitude * (Math.PI  / 180.0);
-
-    // Set up our calculations
-    let y = Math.sin(lon2 - lon1) * Math.cos(lat2);
-    let x = (Math.cos(lat1) * Math.sin(lat2)) -
-      (Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1));
-    let rtnval = Math.atan2(y, x) * (180.0 / Math.PI);
-    return (rtnval + 360.0) % 360.0;
-  }
-
-  /**
-   * Calculates the geodetic speed. Supports the {@link npu_math} function.
-   * @param {number} start_milliseconds The timestamp of the starting
-   * position.
-   * @param {number} start_latitude The starting latitude geographic position.
-   * @param {number} start_longitude The starting longitude geography
-   * position.
-   * @param {number} end_milliseconds The timestamp of the ending position.
-   * @param {number} end_latitude The ending latitude geographic position.
-   * @param {number} end_longitude The ending latitude geographic position.
-   * @returns {number} The speed in meters per second.
-   */
-  static geodetic_speed(start_latitude, start_longitude,
-      start_milliseconds, end_latitude, end_longitude, end_milliseconds) {
-    let dist_meters = ModuleUtils.geodetic_distance(
-      start_latitude, start_longitude,
-      end_latitude, end_longitude
-    );
-    let time_s = (end_milliseconds - start_milliseconds) / 1000.0;
-    return dist_meters / time_s;
-  }
-
-  /**
    * Helper function for the {@link runtime_defined} to search for properties
    * within the runtime.
    * @param {string} property The name of the property to find on the given
@@ -1035,17 +932,18 @@ export class CGeodeticData {
    * device is facing. This value, specified in degrees, indicates how
    * far off from heading true north the device is. 0 degrees represents
    * true north, and the direction is determined clockwise (which means
-   * that east is 90 degrees and west is 270 degrees). If speed is 0,
-   * heading is NaN.
-   * @readonly
-   * @returns {number}
+   * that east is 90 degrees and west is 270 degrees). Null if heading could
+   * not be determined. Utilize the {@link calculate_heading} in this
+   * circumstance.
+   * @returns {number?}
    */
   heading() { return this.#heading; }
 
   /**
    * Returns a double representing the velocity of the device in meters
-   * per second.
-   * @return {number}
+   * per second or null if unable to be determined. Utilize the
+   * {@link calculate_speed} if this occurs.
+   * @return {number?}
    */
   speed() { return this.#speed; }
 
@@ -1076,17 +974,71 @@ export class CGeodeticData {
 
   /**
    * Determines the distance between two geodetic points.
-   * @param {CGeodeticData} d The secondary point to determine the distance
-   * between.
-   * @returns {number} in meters.
+   * @param {CGeodeticData} p The secondary point to determine the distance.
+   * @returns {number} The distance in meters.
    */
-  distance_in_meters(d) {
-    return ModuleUtils.geodetic_distance(
-      this.latitude(),
-      this.longitude(),
-      d.latitude(),
-      d.longitude()
-    );
+  calculate_distance(p) {
+    // Convert degrees to radians
+    let lat1 = this.latitude() * Math.PI / 180.0;
+    let lon1 = this.longitude() * Math.PI / 180.0;
+
+    let lat2 = p.latitude() * Math.PI / 180.0;
+    let lon2 = p.longitude() * Math.PI / 180.0;
+
+    // radius of earth in metres
+    let r = 6378100.0;
+
+    // P
+    let rho1 = r * Math.cos(lat1);
+    let z1 = r * Math.sin(lat1);
+    let x1 = rho1 * Math.cos(lon1);
+    let y1 = rho1 * Math.sin(lon1);
+
+    // Q
+    let rho2 = r * Math.cos(lat2);
+    let z2 = r * Math.sin(lat2);
+    let x2 = rho2 * Math.cos(lon2);
+    let y2 = rho2 * Math.sin(lon2);
+
+    // Dot product
+    let dot = x1 * x2 + y1 * y2 + z1 * z2;
+    let cos_theta = dot / (r * r);
+    let theta = Math.acos(cos_theta);
+
+    // Distance in meters
+    return r * theta;
+  }
+
+  /**
+   * Calculates the geodetic heading.
+   * @param {CGeodeticData} p The secondary point to determine heading.
+   * @returns {number} Heading in degrees between 0 (N) - 359
+   */
+  calculate_heading(p) {
+    // Get the initial data from our variables:
+    let lat1 = this.latitude() * (Math.PI / 180.0);
+    let lon1 = this.longitude() * (Math.PI / 180.0);
+    let lat2 = p.latitude() * (Math.PI  / 180.0);
+    let lon2 = p.longitude() * (Math.PI  / 180.0);
+
+    // Set up our calculations
+    let y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+    let x = (Math.cos(lat1) * Math.sin(lat2)) -
+      (Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1));
+    let rtnval = Math.atan2(y, x) * (180.0 / Math.PI);
+    return (rtnval + 360.0) % 360.0;
+  }
+
+  /**
+   * Calculates the geodetic speed.
+   * @param {CGeodeticData} p The secondary point to determine speed.
+   * @returns {number} The speed in meters per second.
+   */
+   calculate_speed(p) {
+    let dist_meters = this.calculate_distance(p);
+    let time_s = (p.timestamp().getMilliseconds() -
+                  this.timestamp().getMilliseconds()) / 1000.0;
+    return dist_meters / time_s;
   }
 
   /**
@@ -1109,34 +1061,11 @@ export class CGeodeticData {
       this.#gamma = data.gamma;
     // @ts-ignore GeolocationCoordinates part of browser runtime.
     } else if (data instanceof GeolocationCoordinates) {
-      // First see if we got null data where we can at least derive the values.
-      // @ts-ignore data will have specified property
-      this.#heading = data.heading
-        // @ts-ignore data will have specified property
-        ? data.heading
-        : ModuleUtils.geodetic_heading(
-            this.#latitude,
-            this.#longitude,
-            // @ts-ignore data will have specified property
-            data.latitude,
-            // @ts-ignore data will have specified property
-            data.longitude
-          );
-      // @ts-ignore data will have specified property
-      this.#speed = data.speed
-        // @ts-ignore data will have specified property
-        ?  data.speed
-        : ModuleUtils.geodetic_speed(
-            this.#latitude,
-            this.#longitude,
-            this.#timestamp.getTime(),
-            // @ts-ignore data will have specified property
-            data.latitude,
-            // @ts-ignore data will have specified property
-            data.longitude,
-            now.getTime()
-          );
       this.#timestamp = now;
+      // @ts-ignore data will have specified property
+      this.#heading = data.heading;
+      // @ts-ignore data will have specified property
+      this.#speed = data.speed;
       // @ts-ignore data will have specified property
       this.#latitude = data.latitude;
       // @ts-ignore data will have specified property
@@ -2978,81 +2907,129 @@ export async function network_fetch({url, options}) {
 }
 
 // ============================================================================
-// [NPU UC IMPLEMENTATION] ====================================================
-// ============================================================================
-
-/**
- * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @example
- * // TBD
- */
-export function npu_compute() {
-  // TBD: This will implement complicated items and utilize JSON for the API
-  //      to setup requests.
-  try {
-    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("npu_compute() error.", err);
-  }
-}
-
-/**
- * Function to execute the {@link MATH_FORMULA} specified within the named
- * parameters to get the calculated answer.
- * @param {object} params The named parameters.
- * @param {MATH_FORMULA} params.formula The formula to run.
- * @param {number[]} params.args The arguments to use with the formula.
- * @returns {number} The calculated answer or NaN if division by 0 or sqrt of
- * a negative number.
- * @example
- * // Convert from Celsius to Fahrenheit
- * let f = npu_math({
- *   formula: MATH_FORMULA.TemperatureCelsiusToFahrenheit
- *   args: [ 0.0 ]
- * });
- */
-export function npu_math({formula, args}) {
-  try {
-    json_check_type({type: "string", data: formula, should_throw: true});
-    json_check_type({type: Array, data: args, should_throw: true});
-    args.forEach((v) => {
-      json_check_type({type: "number", data: v, should_throw: true});
-    });
-    switch (formula) {
-      case MATH_FORMULA.GeodeticDistance:
-        return ModuleUtils.geodetic_distance(args[0], args[1], args[2],
-          args[3]);
-      case MATH_FORMULA.GeodeticHeading:
-        return ModuleUtils.geodetic_heading(args[0], args[1], args[2],
-          args[3]);
-      case MATH_FORMULA.GeodeticSpeed:
-        return ModuleUtils.geodetic_speed(args[0], args[1], args[2],
-          args[3], args[4], args[5]);
-      case MATH_FORMULA.TemperatureCelsiusToFahrenheit:
-        return (args[0] * 9.0 / 5.0) + 32.0;
-      case MATH_FORMULA.TemperatureCelsiusToKelvin:
-        return args[0] + 273.15;
-      case MATH_FORMULA.TemperatureFahrenheitToCelsius:
-        return (args[0] - 32.0) * (5.0 / 9.0);
-      case MATH_FORMULA.TemperatureFahrenheitToKelvin:
-        return (args[0] - 32.0) * (5.0 / 9.0) + 273.15;
-      case MATH_FORMULA.TemperatureKelvinToCelsius:
-        return args[0] - 273.15;
-      case MATH_FORMULA.TemperatureKelvinToFahrenheit:
-        return (args[0] - 273.15) * (9.0 / 5.0) + 32.0;
-      default:
-        throw new CModuleError(CModuleError.MISUSE);
-    }
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("npu_math() error.", err);
-  }
-}
-
-// ============================================================================
 // [RUNTIME UC FUNCTIONS] =====================================================
 // ============================================================================
+
+// /**
+//  * Provides the ability to carry out actions with the open browser window.
+//  * @param {object} params The named parameters.
+//  * @param {ACTION_REQUEST} params.request The enumerated value to carry
+//  * out with the open browser window.
+//  * @param {object} [params.data] The optional data associated with the
+//  * {@link ACTION_REQUEST.Share} or {@link ACTION_REQUEST.PostMessage}
+//  * requests.
+//  * https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share#data
+//  * @param {string} [params.target_origin="*"] Specifies the target origin
+//  * when posting a message to a window or frame.
+//  * @param {number[]} [params.pattern] Provides a pattern of vibration and
+//  * pause intervals. Each value indicates a number of milliseconds to
+//  * vibrate or pause, in alternation.
+//  * @param {number} [params.x] An X coordinate or delta coordinate for a
+//  * given action that moves / sets position of the browser window or item
+//  * on the browser window.
+//  * @param {number} [params.y] An X coordinate or delta coordinate for a
+//  * given action that moves / sets position of the browser window or item
+//  * on the browser window.
+//  * @returns {Promise<CResult>} Reflecting success or failure of the given
+//  * request.
+//  * @example
+//  * // TBD
+//  */
+// export async function runtime_action({
+//   request,
+//   data,
+//   target_origin="*",
+//   pattern=[],
+//   x,
+//   y
+// }) {
+//   if (!runtime_is_browser()) {
+//     throw API_UNSUPPORTED_RUNTIME;
+//   }
+//   let value = null;
+//   switch (request) {
+//     case ACTION_REQUEST.Focus:
+//       // @ts-ignore This is in a browser context
+//       globalThis.focus();
+//       break;
+//     case ACTION_REQUEST.MoveBy:
+//       json_check_type({type: "number", data: x, should_throw: true});
+//       json_check_type({type: "number", data: y, should_throw: true});
+//       // @ts-ignore check types above will validate number is not null.
+//       globalThis.moveBy(x, y);
+//       break;
+//     case ACTION_REQUEST.MoveTo:
+//       json_check_type({type: "number", data: x, should_throw: true});
+//       json_check_type({type: "number", data: y, should_throw: true});
+//       // @ts-ignore check types above will validate number is not null.
+//       globalThis.moveTo(x, y);
+//       break;
+//     case ACTION_REQUEST.PostMessage:
+//       // @ts-ignore This is in a browser context
+//       globalThis.postMessage(data, target_origin);
+//       break;
+//     case ACTION_REQUEST.Print:
+//       // @ts-ignore This is in a browser context
+//       globalThis.print();
+//       break;
+//     case ACTION_REQUEST.ResizeBy:
+//       json_check_type({type: "number", data: x, should_throw: true});
+//       json_check_type({type: "number", data: y, should_throw: true});
+//       // @ts-ignore check types above will validate number is not null.
+//       globalThis.resizeBy(x, y);
+//       break;
+//     case ACTION_REQUEST.ResizeTo:
+//       json_check_type({type: "number", data: x, should_throw: true});
+//       json_check_type({type: "number", data: y, should_throw: true});
+//       // @ts-ignore check types above will validate number is not null.
+//       globalThis.resizeTo(x, y);
+//       break;
+//     case ACTION_REQUEST.Scroll:
+//       json_check_type({type: "number", data: x, should_throw: true});
+//       json_check_type({type: "number", data: y, should_throw: true});
+//       // @ts-ignore check types above will validate number is not null.
+//       globalThis.scroll(x, y);
+//       break;
+//     case ACTION_REQUEST.ScrollBy:
+//       json_check_type({type: "number", data: x, should_throw: true});
+//       json_check_type({type: "number", data: y, should_throw: true});
+//       // @ts-ignore check types above will validate number is not null.
+//       globalThis.scrollBy(x, y);
+//       break;
+//     case ACTION_REQUEST.ScrollTo:
+//       json_check_type({type: "number", data: x, should_throw: true});
+//       json_check_type({type: "number", data: y, should_throw: true});
+//       // @ts-ignore check types above will validate number is not null.
+//       globalThis.scrollTo(x, y);
+//       break;
+//     case ACTION_REQUEST.Share:
+//       try {
+//         // @ts-ignore This is in a browser context
+//         await globalThis.navigator.share(data);
+//       } catch (err) {
+//         logger_log({
+//           level: LOGGER.Error,
+//           data: `runtime_action() share failed. ${err}`
+//         });
+//         return new CResult({error: err});
+//       }
+//     case ACTION_REQUEST.Vibrate:
+//       json_check_type({type: Array, data: pattern, should_throw: true});
+//       try {
+//         // @ts-ignore Will exist in the browser context
+//         globalThis.navigator.vibrate(pattern);
+//       } catch (err) {
+//         logger_log({
+//           level: LOGGER.Error,
+//           data: `runtime_action() vibrate failed. ${err}`
+//         });
+//         return new CResult({error: err});
+//       }
+//     default:
+//       throw API_MISUSE;
+//   }
+//   return new CResult({value: value});
+// }
 
 /**
  * Determines the available CPU processors for background workers.
@@ -3345,6 +3322,222 @@ export function runtime_online() {
   }
 }
 
+/**
+ * Opens the specified protocol to a browser window or native app
+ * configured to handle the given specified schema.
+ * @param {object} params The named parameters
+ * @param {SCHEMA_TYPE} params.schema The schema to open.
+ * @param {boolean} [params.popup_window=false] Whether to open the protocol in
+ * a separate browser window.
+ * @param {string} [params.url] The url of the protocol unless utilizing
+ * "mailto:" schema with [params.mailtoParams] which will already be
+ * formatted.
+ * @param {string[]} [params.mailto=[]] The primary addresses to send the
+ * email.
+ * @param {string[]} [params.cc=[]] The carbon copy email addresses to send
+ * the email.
+ * @param {string[]} [params.bcc=[]] The people you don't want others to know
+ * about on the email.
+ * @param {string} [params.subject=""] The subject of the email.
+ * @param {string} [params.body=""] The actual email message.
+ * @param {TARGET_TYPE} [params.target=TARGET_TYPE.Self] The type of a tab
+ * behavior.
+ * @param {number} [params.width=900] The width of a popup window. Defaulted
+ * to 900.0 when not set.
+ * @param {number} [params.height=600] The height of a popup window.
+ * Defaulted  to 600.0 when not set.
+ * @returns {Window | null} Reference to the newly opened browser window.
+ * @example
+ * // TBD
+ */
+export function runtime_open({
+  schema,
+  popup_window = false,
+  url,
+  mailto = [],
+  cc = [],
+  bcc = [],
+  subject = "",
+  body = "",
+  target = TARGET_TYPE.Self,
+  width=900,
+  height=600
+}) {
+  try {
+    // Ensure the runtime function is available
+    if (!ModuleUtils.is_defined("open")) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
+
+    // Basic validation of runtime and required parameters.
+    json_check_type({type: "boolean", data: popup_window, should_throw: true});
+    json_check_type({type: "string", data: target, should_throw: true});
+    json_check_type({type: "number", data: width, should_throw: true});
+    json_check_type({type: "number", data: height, should_throw: true});
+    json_check_type({type: Array, data: mailto, should_throw: true});
+    json_check_type({type: Array, data: cc, should_throw: true});
+    json_check_type({type: Array, data: bcc, should_throw: true});
+    json_check_type({type: "string", data: subject, should_throw: true});
+    json_check_type({type: "string", data: body, should_throw: true});
+
+    // Now go build the URL to open.
+    let urlToLaunch = schema;
+    if (schema === "file:" ||
+        schema === "http://" ||
+        schema === "https://" ||
+        schema === "sms:" ||
+        schema === "tel:") {
+      json_check_type({type: "string", data: url, should_throw: true});
+      urlToLaunch += url;
+    } else if (schema === "mailto:") {
+      if (url) {
+        json_check_type({type: "string", data: url, should_throw: true});
+        urlToLaunch += url;
+      } else {
+        // Form the mailto parameters to better control the URL formatting.
+        if (mailto.length > 0) {
+          mailto.forEach((addr) => {
+            urlToLaunch += `${addr};`;
+          });
+          urlToLaunch.substring(0, urlToLaunch.length - 1);
+        }
+
+        let delimiter = "?";
+        if (cc.length > 0) {
+          urlToLaunch += `${delimiter}cc=`;
+          delimiter = "&";
+          cc.forEach((addr) => {
+            urlToLaunch += `${addr};`;
+          });
+          urlToLaunch.substring(0, urlToLaunch.length - 1);
+        }
+
+        if (bcc.length > 0) {
+          urlToLaunch += `${delimiter}bcc=`;
+          delimiter = "&";
+          bcc.forEach((addr) => {
+            urlToLaunch += `${addr};`;
+          });
+          urlToLaunch.substring(0, urlToLaunch.length - 1);
+        }
+
+        if (subject.trim().length > 0) {
+          urlToLaunch += `${delimiter}subject=${subject.trim()}`;
+          delimiter = "&";
+        }
+
+        if (body.trim().length > 0) {
+          urlToLaunch += `${delimiter}body=${body.trim()}`;
+          delimiter = "&";
+        }
+      }
+    } else {
+      throw new CModuleError(CModuleError.MISUSE);
+    }
+
+    // Determine how we are opening the item.
+    if (popup_window) {
+      // @ts-ignore Will return a number.
+      let top = (runtime_screen(SCREEN_REQUEST.Height) - height) / 2;
+      // @ts-ignore Will return a number.
+      let left = (runtime_screen(SCREEN_REQUEST.Width) - width) / 2;
+      let settings = `toolbar=no, location=no, ` +
+        `directories=no, status=no, menubar=no, ` +
+        `scrollbars=no, resizable=yes, copyhistory=no, ` +
+        `width=${width}, height=${height}, top=${top}, left=${left}`;
+      // @ts-ignore Property exists in a browser runtime.
+      return globalThis.open(urlToLaunch, "_blank", settings);
+    }
+    // @ts-ignore Property exists in a browser runtime.
+    return globalThis.open(urlToLaunch, target);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_online() error.", err);
+  }
+}
+
+/**
+ * Provides a mechanism for discovering information about the current
+ * browser screen the web app is running in.
+ * @param {SCREEN_REQUEST} request The enumerated value identifying the
+ * different aspects to request information about.
+ * @returns {number | string} Number for all requests except
+ * ScreenOrientationType request.
+ * @example
+ * // TBD
+ */
+export function runtime_screen(request) {
+  try {
+    if (!runtime_defined({request: DEFINED_REQUEST.Browser})) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
+    switch (request) {
+      case SCREEN_REQUEST.AvailableHeight:
+        // @ts-ignore This is in a browser context
+        return globalThis.screen.availHeight;
+      case SCREEN_REQUEST.AvailableWidth:
+        // @ts-ignore This is in a browser context
+        return globalThis.screen.availWidth;
+      case SCREEN_REQUEST.ColorDepth:
+        // @ts-ignore This is in a browser context
+        return globalThis.screen.colorDepth;
+      case SCREEN_REQUEST.DevicePixelRatio:
+        // @ts-ignore This is in a browser context
+        return globalThis.devicePixelRatio;
+      case SCREEN_REQUEST.Height:
+        // @ts-ignore This is in a browser context
+        return globalThis.screen.height;
+      case SCREEN_REQUEST.InnerHeight:
+        // @ts-ignore This is in a browser context
+        return globalThis.innerHeight;
+      case SCREEN_REQUEST.InnerWidth:
+        // @ts-ignore This is in a browser context
+        return globalThis.innerWidth;
+      case SCREEN_REQUEST.OuterHeight:
+        // @ts-ignore This is in a browser context
+        return globalThis.outerHeight;
+      case SCREEN_REQUEST.OuterWidth:
+        // @ts-ignore This is in a browser context
+        return globalThis.outerWidth;
+      case SCREEN_REQUEST.PixelDepth:
+        // @ts-ignore This is in a browser context
+        return globalThis.screen.pixelDepth;
+      case SCREEN_REQUEST.ScreenLeft:
+        // @ts-ignore This is in a browser context
+        return globalThis.screenLeft;
+      case SCREEN_REQUEST.ScreenOrientationAngle:
+        // @ts-ignore This is in a browser context
+        return globalThis.screen.orientation.angle;
+      case SCREEN_REQUEST.ScreenOrientationType:
+        // @ts-ignore This is in a browser context
+        return globalThis.screen.orientation.type;
+      case SCREEN_REQUEST.ScreenTop:
+        // @ts-ignore This is in a browser context
+        return globalThis.screenTop;
+      case SCREEN_REQUEST.ScreenX:
+        // @ts-ignore This is in a browser context
+        return globalThis.screenX
+      case SCREEN_REQUEST.ScreenY:
+        // @ts-ignore This is in a browser context
+        return globalThis.screenY
+      case SCREEN_REQUEST.ScrollX:
+        // @ts-ignore This is in a browser context
+        return globalThis.scrollX;
+      case SCREEN_REQUEST.ScrollY:
+        // @ts-ignore This is in a browser context
+        return globalThis.scrollY;
+      case SCREEN_REQUEST.Width:
+        // @ts-ignore This is in a browser context
+        return globalThis.screen.width;
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_screen() error.", err);
+  }
+}
+
 // ============================================================================
 // [STORAGE UC IMPLEMENTATION] ================================================
 // ============================================================================
@@ -3588,1000 +3781,9 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
   }
 }
 
-// ===== REFACTOR BELOW ======
+// ============================================================================
+// [UI UC DEFINITION] =========================================================
+// ============================================================================
 
-// // ============================================================================
-// // [UI UC IMPLEMENTATION] =====================================================
-// // ============================================================================
-
-// /**
-//  * Provides the request actions for the {@link ui_action} function call.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} Audio Will construct a {@link CAudioPlayer} object to
-//  * either playback a URL sound file or perform text-to-speech. Utilize the
-//  * load() function of the audio player.
-//  * @property {string} Focus Makes a request to bring the window to the
-//  * front. It may fail due to user settings and the window isn't guaranteed
-//  * to be front most before this method returns.
-//  * @property {string} MoveBy moves the current window by a specified
-//  * amount.
-//  * @property {string} MoveTo moves the current window to the specified
-//  * coordinates.
-//  * @property {string} PostMessage Posts a message to another window in
-//  * the browser context.
-//  * @property {string} Print Opens the print dialog to print the current
-//  * document.
-//  * @property {string} ResizeBy resizes the current window by a specified
-//  * amount.
-//  * @property {string} ResizeTo dynamically resizes the window.
-//  * @property {string} Scroll scrolls the window to a particular place in
-//  * the document.
-//  * @property {string} ScrollBy scrolls the document in the window by the
-//  * given amount.
-//  * @property {string} ScrollTo scrolls to a particular set of coordinates
-//  * in the document.
-//  * @property {string} Share invokes the native sharing mechanism of the
-//  * device to share data such as text, URLs, or files. The available share
-//  * targets depend on the device, but might include the clipboard, contacts
-//  * and email applications, websites, Bluetooth, etc.
-//  * @property {string} Vibrate Most modern mobile devices include vibration
-//  * hardware, which lets software code provide physical feedback to the user
-//  * by causing the device to shake. The Vibration API offers Web apps the
-//  * ability to access this hardware, if it exists, and does nothing if the
-//  * device doesn't support it.
-//  */
-// export const ACTION_REQUEST = Object.freeze({
-//   Audio: "Audio",
-//   Focus: "Focus",
-//   MoveBy: "MoveBy",
-//   MoveTo: "MoveTo",
-//   Print: "Print",
-//   PostMessage: "PostMessage",
-//   ResizeBy: "ResizeBy",
-//   ResizeTo: "ResizeTo",
-//   Scroll: "Scroll",
-//   ScrollBy: "ScrollBy",
-//   ScrollTo: "ScrollTo",
-//   Share: "Share",
-//   Vibrate: "Vibrate",
-// });
-
-// /**
-//  * Object created from a call to the [ui_audio] function to allow for audio
-//  * playback on a document. This object is only valid with the data it is
-//  * created with. Once playback is completed or stopped, it can only be
-//  * started (i.e. played) again. To change the audio source requires a call
-//  * to [ui_audio] to get a new audio player.
-//  */
-// export class CAudioPlayer {
-//   /** @type {string} */
-//   #not_loaded_err = "No loaded src detected. You must call load() before " +
-//     "using CAudioPlayer.";
-//   /** @type {HTMLAudioElement | null} */
-//   #audio_player = null;
-//   /** @type {SpeechSynthesisUtterance | null} */
-//   #tts_utterance = null;
-//   /** @type {string} */
-//   #state;
-//   /** @type {CEventHandler | null} */
-//   #handler = null;
-
-//   /**
-//    * Indicates the ability to loop 'audio' types. Not valid for 'tts' types.
-//    * @type {boolean}
-//    */
-//   get loop() {
-//     try {
-//       if (this.#audio_player) {
-//         return this.#audio_player.loop;
-//       } else if (this.#tts_utterance) {
-//         throw "loop property not supported by 'tts' type"
-//       } else {
-//         logger_log({
-//           level: LOGGER.Error,
-//           data: this.#not_loaded_err
-//         })
-//         throw API_MISUSE;
-//       }
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::loop - ${err}`
-//       })
-//       throw API_MISUSE;
-//     }
-//    }
-//   set loop(v) {
-//     json_check_type({type: "boolean", data: v, should_throw: true});
-//     try {
-//       if (this.#audio_player) {
-//         this.#audio_player.loop = v;
-//       } else if (this.#tts_utterance) {
-//         throw "loop property not supported by 'tts' type"
-//       } else {
-//         throw this.#not_loaded_err
-//       }
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::loop - ${err}`
-//       });
-//       throw API_MISUSE;
-//     }
-//   }
-
-//   /**
-//    * Sets / gets the playback rate of the audio player.
-//    * @type {number}
-//    */
-//   get rate() {
-//     try {
-//       if (this.#audio_player) {
-//         return this.#audio_player.playbackRate;
-//       } else if (this.#tts_utterance) {
-//         return this.#tts_utterance.rate;
-//       } else {
-//         throw this.#not_loaded_err;
-//       }
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::rate - ${err}`
-//       });
-//       throw API_MISUSE;
-//     }
-//   }
-//   set rate(v) {
-//     json_check_type({type: "number", data: v, should_throw: true});
-//     let rate = v > 11
-//       ? 11
-//       : v < 0.1
-//         ? 0.1
-//         : v;
-//     try {
-//       if (this.#audio_player) {
-//         this.#audio_player.playbackRate = rate;
-//       } else if (this.#tts_utterance) {
-//         this.#tts_utterance.rate = rate;
-//       } else {
-//         throw this.#not_loaded_err;
-//       }
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::rate - ${err}`
-//       });
-//       throw API_MISUSE;
-//     }
-//   }
-
-//   /**
-//    * Signal fired when the audio player has completed the audio source.
-//    * @param {CEventHandler} handler Handler that signals the
-//    * audio player has completed playing the data source.
-//     */
-//   set onended(handler) {
-//     if (handler) {
-//       json_check_type({type: "function", data: handler, should_throw: true});
-//       this.#handler = handler;
-//     } else {
-//       this.#handler = null;
-//     }
-//   }
-
-//   /**
-//    * Either "stopped" / "paused" / "playing" / "looping".
-//    * @readonly
-//    * @type {string}
-//    */
-//   get state() {
-//     return this.#state;
-//   }
-
-//   /**
-//    * Sets / gets the volume of the audio player.
-//    * @type {number}
-//    */
-//   get volume() {
-//     try {
-//       if (this.#audio_player) {
-//         return this.#audio_player.volume;
-//       } else if (this.#tts_utterance) {
-//         return this.#tts_utterance.volume;
-//       } else {
-//         throw this.#not_loaded_err;
-//       }
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::volume - ${err}`
-//       })
-//       throw API_MISUSE;
-//     }
-//   }
-//   set volume(v) {
-//     json_check_type({type: "number", data: v, should_throw: true});
-//     let volume = v < 0
-//       ? 0
-//       : v > 1
-//         ? 1
-//         : v;
-//     try {
-//       if (this.#audio_player) {
-//         this.#audio_player.volume = volume;
-//       } else if (this.#tts_utterance) {
-//         this.#tts_utterance.volume = volume;
-//       } else {
-//         throw this.#not_loaded_err;
-//       }
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::volume - ${err}`
-//       })
-//       throw API_MISUSE;
-//     }
-//   }
-
-//   /**
-//    * Loads audio content for playback via the audio player.
-//    * @param {string} type 'audio' / 'tts'
-//    * @param {string} data Either raw text for text-to-speech or a url to a
-//    * sound file for playback. Once constructed it can only work with that
-//    * type of data.
-//    * @returns {void}
-//    */
-//   load(type, data) {
-//     json_check_type({type: "string", data: data, should_throw: true});
-//     json_check_type({type: "string", data: data, should_throw: true});
-//     this.#audio_player = null;
-//     this.#tts_utterance = null;
-//     if (type === "audio") {
-//       // @ts-ignore This is in a browser context.
-//       this.#audio_player = new Audio(data);
-//       // @ts-ignore The audio player was created above.
-//       this.#audio_player.onended = () => {
-//         this.#state = "stopped";
-//         if (this.#handler) {
-//           this.#handler(new Event("stopped"));
-//         }
-//       }
-//     } else if (type === "tts") {
-//       // @ts-ignore This is proper form. Fake definition for deno has issues.
-//       this.#tts_utterance = new SpeechSynthesisUtterance(data);
-//       // @ts-ignore The utterance is created above.
-//       this.#tts_utterance.onend = () => {
-//         this.#state = "stopped";
-//         if (this.#handler) {
-//           this.#handler(new Event("stopped"));
-//         }
-//       }
-//       // @ts-ignore This is proper form. Fake definition for deno has issues.
-//       globalThis.speechSynthesis.cancel();
-//     } else {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: "CAudioPlayer::load() - valid types are 'audio' / 'tts'"
-//       });
-//       throw API_MISUSE;
-//     }
-//   }
-
-//   /**
-//    * Will pause the audio player from a playing state.
-//    * @returns {Promise<CResult>} Identifying success / failure of
-//    * transitioning to the new audio state.
-//    */
-//   async pause() {
-//     try {
-//       if (this.#state != "playing") {
-//         throw "not in a 'playing' state";
-//       } else if (this.#audio_player) {
-//         this.#audio_player.pause();
-//       } else if (this.#tts_utterance) {
-//         // @ts-ignore This is in a browser context
-//         globalThis.speechSynthesis.pause();
-//       } else {
-//         throw this.#not_loaded_err;
-//       }
-//       this.#state = "paused";
-//       return new CResult();
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::pause() - ${err}`
-//       });
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * Will play the audio player from a stopped state.
-//    * @returns {Promise<CResult>} Identifying success / failure of
-//    * transitioning to the new audio state.
-//    */
-//   async play() {
-//     try {
-//       if (this.#state != "stopped") {
-//         throw "not in a 'stopped' state"
-//       } else if (this.#audio_player) {
-//         await this.#audio_player.play();
-//       } else if (this.#tts_utterance) {
-//         // @ts-ignore This is in a browser context
-//         globalThis.speechSynthesis.speak(this.#tts_utterance);
-//       } else {
-//         throw this.#not_loaded_err;
-//       }
-//       this.#state = "playing";
-//       return new CResult();
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::play() - ${err}`
-//       });
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * Will resume the audio player from a paused state.
-//    * @returns {Promise<CResult>} Identifying success / failure of
-//    * transitioning to the new audio state.
-//    */
-//   async resume() {
-//     try {
-//       if (this.#state != "paused") {
-//         throw "not in a 'paused' state";
-//       } else if (this.#audio_player) {
-//         await this.#audio_player.play();
-//       } else if (this.#tts_utterance) {
-//         // @ts-ignore This is in a browser context
-//         globalThis.speechSynthesis.resume();
-//       } else {
-//         throw this.#not_loaded_err;
-//       }
-//       this.#state = "playing";
-//       return new CResult();
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::resume() - ${err}`
-//       });
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * Will stop the audio player from a paused or playing state.
-//    * @returns {CResult} Identifying success / failure of
-//    * transitioning to the new audio state.
-//    */
-//   stop() {
-//     if (this.#state === "stopped") {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: "CAudioPlayer::stop() already in a stop stopped state"
-//       });
-//       throw API_MISUSE;
-//     }
-//     try {
-//       if (this.#audio_player) {
-//         this.#audio_player.load();
-//         this.#audio_player.currentTime = 0;
-//       } else if (this.#tts_utterance) {
-//         // @ts-ignore This is in a browser context
-//         globalThis.speechSynthesis.cancel();
-//       } else {
-//         throw this.#not_loaded_err;
-//       }
-//       this.#state = "stopped";
-//       return new CResult();
-//     } catch (err) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `CAudioPlayer::stop() - ${err}`
-//       });
-//       return new CResult({error: err});
-//     }
-//   }
-
-//   /**
-//    * Constructor for the class.
-//    * try-catch these as they serve as asserts to the developer.
-//    */
-//   constructor() {
-//     if (!runtime_is_browser()) {
-//       throw API_UNSUPPORTED_RUNTIME;
-//     }
-//     this.#state = "stopped";
-//   }
-// }
-
-// /**
-//  * Provides the request to render a {@link ui_dialog} to support
-//  * a Single Page Application (SPA) document to get information from the
-//  * user.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} Alert Displays an alert to the user.
-//  * @property {string} Choose Provides a half page selection of options.
-//  * @property {string} Close Will asynchronously close an open page.
-//  * @property {string} Confirm Provides a Yes/No confirmation to the user.
-//  * @property {string} Loading Provides a loading dialog closed via the Close
-//  * request.
-//  * @property {string} Prompt Provides a half-page text field prompt input
-//  * box.
-//  */
-// export const DIALOG_REQUEST = Object.freeze({
-//   Alert: "alert",
-//   Choose: "choose",
-//   Close: "close",
-//   Confirm: "confirm",
-//   Loading: "loading",
-//   Prompt: "prompt",
-// });
-
-// /**
-//  * Interface adds to HTMLElement the properties and methods needed to
-//  * support basic media-related capabilities that are common to audio and
-//  * video.
-//  * NOTE: Defined to support proper typing in the JSDocs when type checking
-//  *       in a TypeScript environment.
-//  * @typedef {object} HTMLAudioElement
-//  * @property {number} currentTime specifies the current playback time in
-//  * seconds.
-//  * @property {number} playbackRate property sets the rate at which the
-//  * media is being played back. This is used to implement user controls for
-//  * fast forward, slow motion, and so forth. The normal playback rate is
-//  * multiplied by this value to obtain the current rate, so a value of 1.0
-//  * indicates normal speed.
-//  * @property {number} volume sets the volume at which the media will be
-//  * played.
-//  * @property {boolean} loop indicates if audio element will loop or not.
-//  * @property {function} load resets the media element to its initial state
-//  * and begins the process of selecting a media source and loading the media
-//  * in preparation for playback to begin at the beginning.
-//  * @property {function} pause will pause playback of the media, if the
-//  * media is already in a paused state this method will have no effect.
-//  * @property {function} play method attempts to begin playback of the
-//  * media. It returns a Promise which is resolved when playback has been
-//  * successfully started.
-//  * @property {function} onerror Handles the error events.
-//  * @property {function} onended Handles the onended events.
-//  * @property {Event} error event is fired when the resource could not be
-//  * loaded due to an error (for example, a network connectivity problem).
-//  * @property {Event} ended event is fired when playback or streaming has
-//  * stopped because the end of the media was reached or because no further
-//  * data is available.
-//  */
-
-// /**
-//  * NOTE: Defined to support proper typing in the JSDocs when type checking
-//  *       in a TypeScript environment.
-//  * @typedef {object} HTMLElement
-//  */
-
-// /**
-//  * Identifies the schema to {@link ui_open} with the browser desktop
-//  * services.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} File Opens an item via the file protocol.
-//  * @property {string} Http Opens a web resource with the HTTP protocol.
-//  * @property {string} Https Same as Http but with security.
-//  * @property {string} Mailto Opens the default mail provider.
-//  * @property {string} Sms Opens the standard app for texting.
-//  * @property {string} Tel Opens the default calling application.
-//  */
-// export const SCHEMA_TYPE = Object.freeze({
-//   File: "file:",
-//   Http: "http://",
-//   Https: "https://",
-//   Mailto: "mailto:",
-//   Sms: "sms:",
-//   Tel: "tel:",
-// });
-
-// /**
-//  * Identifies queryable requests via {@link ui_screen} discover more about
-//  * your application running in the given browser.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} AvailableHeight the height of the screen, in pixels,
-//  * minus permanent or semipermanent user interface features displayed by
-//  * the operating system, such as the Taskbar on Windows.
-//  * @property {string} AvailableWidth the amount of horizontal space in
-//  * pixels available to the window.
-//  * @property {string} ColorDepth the color depth of the screen.
-//  * @property {string} DevicePixelRatio the ratio of the resolution in
-//  * physical pixels to the resolution in CSS pixels for the current display
-//  * device.
-//  * @property {string} Height the height of the screen in pixels.
-//  * @property {string} InnerHeight the interior height of the window in
-//  * pixels, including the height of the horizontal scroll bar, if present.
-//  * @property {string} InnerWidth interior width of the window in pixels
-//  * (that is, the width of the window's layout viewport). That includes the
-//  * width of the vertical scroll bar, if one is present.
-//  * @property {string} OuterHeight the height in pixels of the whole browser
-//  * window, including any sidebar, window chrome, and window-resizing
-//  * borders/handles.
-//  * @property {string} OuterWidth the width of the outside of the browser
-//  * window. It represents the width of the whole browser window including
-//  * sidebar (if expanded), window chrome and window resizing borders /
-//  * handles.
-//  * @property {string} PixelDepth the bit depth of the screen.
-//  * @property {string} ScreenLeft the horizontal distance, in CSS pixels,
-//  * from the left border of the user's browser viewport to the left side of
-//  * the screen.
-//  * @property {string} ScreenOrientationAngle the document's current
-//  * orientation angle.
-//  * @property {string} ScreenOrientationType the document's current
-//  * orientation type, one of portrait-primary, portrait-secondary,
-//  * landscape-primary, or landscape-secondary.
-//  * @property {string} ScreenTop the vertical distance, in CSS pixels, from
-//  * the top border of the user's browser viewport to the top side of the
-//  * screen.
-//  * @property {string} ScreenX the horizontal distance, in CSS pixels, of the
-//  * left border of the user's browser viewport to the left side of the
-//  * screen.
-//  * @property {string} ScreenY the vertical distance, in CSS pixels, of the
-//  * top border of the user's browser viewport to the top edge of the screen.
-//  * @property {string} ScrollX the number of pixels by which the document is
-//  * currently scrolled horizontally. This value is subpixel precise in modern
-//  * browsers, meaning that it isn't necessarily a whole number.
-//  * @property {string} ScrollY the number of pixels by which the document is
-//  * currently scrolled vertically. This value is subpixel precise in modern
-//  * browsers, meaning that it isn't necessarily a whole number.
-//  * @property {string} Width the width of the screen.
-//  */
-// export const SCREEN_REQUEST = Object.freeze({
-//   AvailableHeight: "availHeight",
-//   AvailableWidth: "availWidth",
-//   ColorDepth: "colorDepth",
-//   DevicePixelRatio: "devicePixelRatio",
-//   Height: "height",
-//   InnerHeight: "innerHeight",
-//   InnerWidth: "innerWidth",
-//   OuterHeight: "outerHeight",
-//   OuterWidth: "outerWidth",
-//   PixelDepth: "pixelDepth",
-//   ScreenLeft: "screenLeft",
-//   ScreenOrientationAngle: "screenOrientationAngle",
-//   ScreenOrientationType: "screenOrientationType",
-//   ScreenTop: "screenTop",
-//   ScreenX: "screenX",
-//   ScreenY: "screenY",
-//   ScrollX: "scrollX",
-//   ScrollY: "scrollY",
-//   Width: "width",
-// });
-
-// /**
-//  * Represents a speech request. It contains the content the speech service
-//  * should read and information about how to read it (e.g., language,
-//  * pitch and volume.)
-//  * NOTE: Defined to support proper typing in the JSDocs when type checking
-//  *       in a TypeScript environment.
-//  * @typedef {object} SpeechSynthesisUtterance
-//  * @property {number} rate gets and sets the speed at which the utterance
-//  * will be spoken.
-//  * @property {number} volume gets and sets the volume that the utterance
-//  * will be spoken.
-//  * @property {Event} end fired when the utterance has finished being
-//  * spoken.
-//  * @property {Event} error fired when an error occurs that prevents the
-//  * utterance from being successfully spoken.
-//  */
-
-// /**
-//  * Supports the target parameter of the {@link ui_open} action which handles
-//  * opening related apps based on the specified {@link SCHEMA_TYPE}.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} Blank Opens the linked document in a new window or tab
-//  * @property {string} Parent Opens the linked document in the same frame as
-//  * it was clicked (this is default)
-//  * @property {string} Self Opens the linked document in the parent frame
-//  * @property {string} Top Opens the linked document in the full body of the window
-//  */
-// export const TARGET_TYPE = Object.freeze({
-//   Blank: "_blank",
-//   Parent: "_parent",
-//   Self: "_self",
-//   Top: "_top",
-// });
-
-// /**
-//  * Identifies actionable requests via {@link ui_widget} to define HTML user
-//  * interfaces for SPA / PWA.
-//  * @readonly
-//  * @enum {string}
-//  * @property {string} CssVariable Retrieves a custom defined CSS variable
-//  * in a :root definition.
-//  * @property {string} Define Defines the custom HTMLElements for defining a
-//  * codemelted SPA / PWA user interface.
-//  * @property {string} ElementById Executes a window.getElementById.
-//  */
-// export const WIDGET_REQUEST = Object.freeze({
-//   CssVariable: "CssVariable",
-//   Define: "Define",
-//   ElementById: "ElementById",
-// });
-
-// /**
-//  * Provides the ability to carry out actions with the open browser window.
-//  * @param {object} params The named parameters.
-//  * @param {ACTION_REQUEST} params.request The enumerated value to carry
-//  * out with the open browser window.
-//  * @param {object} [params.data] The optional data associated with the
-//  * {@link ACTION_REQUEST.Share} or {@link ACTION_REQUEST.PostMessage}
-//  * requests.
-//  * https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share#data
-//  * @param {string} [params.target_origin="*"] Specifies the target origin
-//  * when posting a message to a window or frame.
-//  * @param {number[]} [params.pattern] Provides a pattern of vibration and
-//  * pause intervals. Each value indicates a number of milliseconds to
-//  * vibrate or pause, in alternation.
-//  * @param {number} [params.x] An X coordinate or delta coordinate for a
-//  * given action that moves / sets position of the browser window or item
-//  * on the browser window.
-//  * @param {number} [params.y] An X coordinate or delta coordinate for a
-//  * given action that moves / sets position of the browser window or item
-//  * on the browser window.
-//  * @returns {Promise<CResult>} Reflecting success or failure of the given
-//  * request.
-//  * @example
-//  * // TBD
-//  */
-// export async function ui_action({
-//   request,
-//   data,
-//   target_origin="*",
-//   pattern=[],
-//   x,
-//   y
-// }) {
-//   if (!runtime_is_browser()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   let value = null;
-//   switch (request) {
-//     case ACTION_REQUEST.Audio:
-//       value = new CAudioPlayer();
-//       break;
-//     case ACTION_REQUEST.Focus:
-//       // @ts-ignore This is in a browser context
-//       globalThis.focus();
-//       break;
-//     case ACTION_REQUEST.MoveBy:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.moveBy(x, y);
-//       break;
-//     case ACTION_REQUEST.MoveTo:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.moveTo(x, y);
-//       break;
-//     case ACTION_REQUEST.PostMessage:
-//       // @ts-ignore This is in a browser context
-//       globalThis.postMessage(data, target_origin);
-//       break;
-//     case ACTION_REQUEST.Print:
-//       // @ts-ignore This is in a browser context
-//       globalThis.print();
-//       break;
-//     case ACTION_REQUEST.ResizeBy:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.resizeBy(x, y);
-//       break;
-//     case ACTION_REQUEST.ResizeTo:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.resizeTo(x, y);
-//       break;
-//     case ACTION_REQUEST.Scroll:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.scroll(x, y);
-//       break;
-//     case ACTION_REQUEST.ScrollBy:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.scrollBy(x, y);
-//       break;
-//     case ACTION_REQUEST.ScrollTo:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.scrollTo(x, y);
-//       break;
-//     case ACTION_REQUEST.Share:
-//       try {
-//         // @ts-ignore This is in a browser context
-//         await globalThis.navigator.share(data);
-//       } catch (err) {
-//         logger_log({
-//           level: LOGGER.Error,
-//           data: `ui_action() share failed. ${err}`
-//         });
-//         return new CResult({error: err});
-//       }
-//     case ACTION_REQUEST.Vibrate:
-//       json_check_type({type: Array, data: pattern, should_throw: true});
-//       try {
-//         // @ts-ignore Will exist in the browser context
-//         globalThis.navigator.vibrate(pattern);
-//       } catch (err) {
-//         logger_log({
-//           level: LOGGER.Error,
-//           data: `ui_action() vibrate failed. ${err}`
-//         });
-//         return new CResult({error: err});
-//       }
-//     default:
-//       throw API_MISUSE;
-//   }
-//   return new CResult({value: value});
-// }
-
-
-// /**
-//  * Opens the specified protocol to a browser window or native app
-//  * configured to handle the given specified schema.
-//  * @param {object} params The named parameters
-//  * @param {SCHEMA_TYPE} params.schema The schema to open.
-//  * @param {boolean} [params.popup_window=false] Whether to open the protocol in
-//  * a separate browser window.
-//  * @param {string} [params.url] The url of the protocol unless utilizing
-//  * "mailto:" schema with [params.mailtoParams] which will already be
-//  * formatted.
-//  * @param {string[]} [params.mailto=[]] The primary addresses to send the
-//  * email.
-//  * @param {string[]} [params.cc=[]] The carbon copy email addresses to send
-//  * the email.
-//  * @param {string[]} [params.bcc=[]] The people you don't want others to know
-//  * about on the email.
-//  * @param {string} [params.subject=""] The subject of the email.
-//  * @param {string} [params.body=""] The actual email message.
-//  * @param {TARGET_TYPE} [params.target=TARGET_TYPE.Self] The type of a tab
-//  * behavior.
-//  * @param {number} [params.width=900] The width of a popup window. Defaulted
-//  * to 900.0 when not set.
-//  * @param {number} [params.height=600] The height of a popup window.
-//  * Defaulted  to 600.0 when not set.
-//  * @returns {Window | null} Reference to the newly opened browser window.
-//  * @example
-//  * // TBD
-//  */
-// export function ui_open({
-//   schema,
-//   popup_window = false,
-//   url,
-//   mailto = [],
-//   cc = [],
-//   bcc = [],
-//   subject = "",
-//   body = "",
-//   target = TARGET_TYPE.Self,
-//   width=900,
-//   height=600
-// }) {
-//   // Basic validation of runtime and required parameters.
-//   if (!runtime_is_browser()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   json_check_type({type: "boolean", data: popup_window, should_throw: true});
-//   json_check_type({type: "string", data: target, should_throw: true});
-//   json_check_type({type: "number", data: width, should_throw: true});
-//   json_check_type({type: "number", data: height, should_throw: true});
-//   json_check_type({type: Array, data: mailto, should_throw: true});
-//   json_check_type({type: Array, data: cc, should_throw: true});
-//   json_check_type({type: Array, data: bcc, should_throw: true});
-//   json_check_type({type: "string", data: subject, should_throw: true});
-//   json_check_type({type: "string", data: body, should_throw: true});
-
-//   // Now go build the URL to open.
-//   let urlToLaunch = schema;
-//   if (schema === "file:" ||
-//       schema === "http://" ||
-//       schema === "https://" ||
-//       schema === "sms:" ||
-//       schema === "tel:") {
-//     json_check_type({type: "string", data: url, should_throw: true});
-//     urlToLaunch += url;
-//   } else if (schema === "mailto:") {
-//     if (url) {
-//       json_check_type({type: "string", data: url, should_throw: true});
-//       urlToLaunch += url;
-//     } else {
-//       // Form the mailto parameters to better control the URL formatting.
-//       if (mailto.length > 0) {
-//         mailto.forEach((addr) => {
-//           urlToLaunch += `${addr};`;
-//         });
-//         urlToLaunch.substring(0, urlToLaunch.length - 1);
-//       }
-
-//       let delimiter = "?";
-//       if (cc.length > 0) {
-//         urlToLaunch += `${delimiter}cc=`;
-//         delimiter = "&";
-//         cc.forEach((addr) => {
-//           urlToLaunch += `${addr};`;
-//         });
-//         urlToLaunch.substring(0, urlToLaunch.length - 1);
-//       }
-
-//       if (bcc.length > 0) {
-//         urlToLaunch += `${delimiter}bcc=`;
-//         delimiter = "&";
-//         bcc.forEach((addr) => {
-//           urlToLaunch += `${addr};`;
-//         });
-//         urlToLaunch.substring(0, urlToLaunch.length - 1);
-//       }
-
-//       if (subject.trim().length > 0) {
-//         urlToLaunch += `${delimiter}subject=${subject.trim()}`;
-//         delimiter = "&";
-//       }
-
-//       if (body.trim().length > 0) {
-//         urlToLaunch += `${delimiter}body=${body.trim()}`;
-//         delimiter = "&";
-//       }
-//     }
-//   } else {
-//     throw API_MISUSE;
-//   }
-
-//   // Determine how we are opening the item.
-//   if (popup_window) {
-//     // @ts-ignore Will return a number.
-//     let top = (ui_screen(SCREEN_REQUEST.Height) - height) / 2;
-//     // @ts-ignore Will return a number.
-//     let left = (ui_screen(SCREEN_REQUEST.Width) - width) / 2;
-//     let settings = `toolbar=no, location=no, ` +
-//       `directories=no, status=no, menubar=no, ` +
-//       `scrollbars=no, resizable=yes, copyhistory=no, ` +
-//       `width=${width}, height=${height}, top=${top}, left=${left}`;
-//     // @ts-ignore Property exists in a browser runtime.
-//     return globalThis.open(urlToLaunch, "_blank", settings);
-//   }
-//   // @ts-ignore Property exists in a browser runtime.
-//   return globalThis.open(urlToLaunch, target);
-// }
-
-// /**
-//  * Provides a mechanism for discovering information about the current
-//  * browser screen the web app is running in.
-//  * @param {SCREEN_REQUEST} request The enumerated value identifying the
-//  * different aspects to request information about.
-//  * @returns {number | string} Number for all requests except
-//  * ScreenOrientationType request.
-//  * @example
-//  * // TBD
-//  */
-// export function ui_screen(request) {
-//   if (!runtime_is_browser()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   switch (request) {
-//     case SCREEN_REQUEST.AvailableHeight:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screen.availHeight;
-//     case SCREEN_REQUEST.AvailableWidth:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screen.availWidth;
-//     case SCREEN_REQUEST.ColorDepth:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screen.colorDepth;
-//     case SCREEN_REQUEST.DevicePixelRatio:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.devicePixelRatio;
-//     case SCREEN_REQUEST.Height:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screen.height;
-//     case SCREEN_REQUEST.InnerHeight:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.innerHeight;
-//     case SCREEN_REQUEST.InnerWidth:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.innerWidth;
-//     case SCREEN_REQUEST.OuterHeight:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.outerHeight;
-//     case SCREEN_REQUEST.OuterWidth:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.outerWidth;
-//     case SCREEN_REQUEST.PixelDepth:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screen.pixelDepth;
-//     case SCREEN_REQUEST.ScreenLeft:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screenLeft;
-//     case SCREEN_REQUEST.ScreenOrientationAngle:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screen.orientation.angle;
-//     case SCREEN_REQUEST.ScreenOrientationType:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screen.orientation.type;
-//     case SCREEN_REQUEST.ScreenTop:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screenTop;
-//     case SCREEN_REQUEST.ScreenX:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screenX
-//     case SCREEN_REQUEST.ScreenY:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screenY
-//     case SCREEN_REQUEST.ScrollX:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.scrollX;
-//     case SCREEN_REQUEST.ScrollY:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.scrollY;
-//     case SCREEN_REQUEST.Width:
-//       // @ts-ignore This is in a browser context
-//       return globalThis.screen.width;
-//     default:
-//       throw API_MISUSE;
-//   }
-// }
-
-// /**
-//  * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
-//  * @param {object} params The named parameters.
-//  * @param {WIDGET_REQUEST} params.request The request to carry out.
-//  * @param {string} [params.data] The optional data associated with the
-//  * request.
-//  * @returns {HTMLElement | string | undefined} One of the following depending
-//  * on the request. {@link WIDGET_REQUEST.CssVariable} string value or empty
-//  * string of the queried variable, {@link WIDGET_REQUEST.Define} undefined,
-//  * and {@link WIDGET_REQUEST.ElementById} the HTMLElement of the queried ID.
-//  */
-// export function ui_widget({request, data}) {
-//   // Check if we are in a supported runtime or not.
-//   if (!runtime_defined("HTMLElement")) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-
-//   // We are supported, go carry out the request.
-//   if (request === WIDGET_REQUEST.CssVariable) {
-//     json_check_type({type: "string", data: data, should_throw: true});
-//     // @ts-ignore exists in a browser context
-//     let cs = globalThis.window.getComputedStyle(
-//       // @ts-ignore exists in a browser context
-//       globalThis.document.documentElement
-//     );
-//     // @ts-ignore json_check_type will throw if not set properly
-//     return cs.getPropertyValue(data);
-//   } else if (request === WIDGET_REQUEST.ElementById) {
-//     json_check_type({type: "string", data: data, should_throw: true});
-//     // @ts-ignore type checked above
-//     let widget = globalThis.document.getElementById(data);
-//     if (!widget) {
-//       logger_log({
-//         level: LOGGER.Error,
-//         data: `codemelted::ui_widget() did not find ${data} element by id`
-//       });
-//       throw API_MISUSE;
-//     }
-//     return widget;
-//   } else {
-//     logger_log({
-//       level: LOGGER.Error,
-//       data: `codemelted::ui_widget() unknown ${request}`
-//     });
-//     throw API_MISUSE;
-//   }
-// }
+// TBD - Will have an auto detecting defining of custom HTML components.
+//       Need to determine best way to do this and still work in V8 runtime.

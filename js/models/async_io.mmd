@@ -1,0 +1,15 @@
+---
+title: codemelted.js Async I/O API
+---
+classDiagram
+  direction LR
+  note "<b>SUPPORTED RUNTIMES:</b><br>- Bun<br>- Deno<br>- Worker"
+  class codemelted {
+    +async_sleep(delay: number) void
+    +async_task(task: CTaskCB, data: any, delay: number) CFuture
+    +async_timer(id: string, task: CTaskCB, interval: number) CTimerProtocol
+    +async_worker(url: string, rx_handler: CProtocolEventHandler, options: object) CWorkerProtocol
+  }
+  codemelted --> CFuture: creates
+  codemelted --> CTimerProtocol: creates
+  codemelted --> CWorkerProtocol: creates
