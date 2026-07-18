@@ -275,6 +275,25 @@ export const DEFINED_REQUEST = Object.freeze({
 });
 
 /**
+ * Provides the request actions of the {@link runtime_document} function.
+ * @readonly
+ * @enum {string}
+ * @property {string} CssVariable Will query the document for a CSS variable.
+ * @property {string} ElementById Will query the document for a particular
+ * HTMLElement.
+ * @property {string} ElementsByClassName Will query for a collection of
+ * HTMLElements by class name.
+ * @property {string} ElementsByTagName Will query for a collection of
+ * HTMLElements by tag name.
+ */
+export const DOCUMENT_REQUEST = Object.freeze({
+  CssVariable: "css_variable",
+  ElementById: "element_by_id",
+  ElementsByClassName: "elements_by_class_name",
+  ElementsByTagName: "elements_by_tag_name",
+});
+
+/**
  * Provides the request actions of the {@link runtime_event} function.
  * @readonly
  * @enum {string}
@@ -826,48 +845,92 @@ class ModuleUtils {
  * promise of the future {@link CResult}.
  */
 export class CFuture {
-  /** @type {Promise<CResult>} */
-  #task
-  /** @type {boolean} */
-  #has_task_completed = false;
+  /** @type {any} */
+  #data;
+  /** @type {number} */
+  #delay;
+  /** @type {CTaskCB} */
+  #task;
+  /** @type {Promise<CResult>?} */
+  #result = null;
+  /** @type {number} */
+  #timeout_id = -1;
+
+  /**
+   * Will cancel a currently running task. If no task is running then this
+   * action is a no-op.
+   */
+  cancel() {
+    if (!this.has_completed()) {
+      globalThis.clearTimeout(this.#timeout_id);
+      this.#timeout_id = -1;
+    }
+  }
+
+  /**
+   * Allows for re-execution of the CFuture wrapped task. If previous wrapped
+   * task has not completed, then it is a no-op
+   * @param {any} [data] The optional data to pass if necessary when
+   * re-executing the task.
+   * @returns {void}
+   */
+  execute(data) {
+    if (!this.has_completed()) {
+      this.#data = data;
+      this.#result = new Promise((resolve) => {
+      try {
+        this.#timeout_id = setTimeout(() => {
+          let answer = this.#task(this.#data);
+          this.#timeout_id = -1;
+          resolve(new CResult({value: answer}));
+        }, this.#delay);
+      } catch (err) {
+        this.#timeout_id = -1;
+        resolve(new CResult({error: err}));
+      }
+    });
+    }
+  }
 
   /**
    * Determines if the task has completed or not.
    * @returns {boolean} true if completed, false otherwise.
    */
-  has_completed() { return this.#has_task_completed; }
+  has_completed() { return this.#timeout_id === -1; }
 
   /**
    * Holds the result of the {@link async_task} function call.
-   * @returns {Promise<CResult>} The result of the asynchronous processing.
+   * @returns {Promise<CResult>} The result of the asynchronous processing or
+   * null if task has not been executed yet.
    */
-  async result() {
-    let result = await this.#task;
-    return result;
+  result() {
+    try {
+      if (this.#result === null) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      return this.#result;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CFuture::result() error.", err);
+    }
   }
 
   /**
-   * Result for the {@link async_task} function call.
-   * @param {CTaskCB} task The task to run.
-   * @param {any} [data] The optional data to pass to the task.
-   * @param {number} [delay=0] The delay to schedule the task in the
+   * Result for the {@link async_task} function call. Must call execute() to
+   * kick-off the future task.
+   * @param {object} params The named parameters.
+   * @param {CTaskCB} params.task The task to run.
+   * @param {any} [params.data] The optional data to pass to the task.
+   * @param {number} [params.delay=0] The delay to schedule the task in the
    * future.
    */
-  constructor(task, data, delay = 0) {
+  constructor({task, data, delay = 0}) {
     try {
       json_check_type({type: "function", data: task, should_throw: true});
       json_check_type({type: "number", data: delay, should_throw: true});
-      this.#task = new Promise((resolve) => {
-        try {
-          setTimeout(() => {
-            let answer = task(data);
-            resolve(new CResult({value: answer}));
-          }, delay);
-        } catch (err) {
-          this.#has_task_completed = true;
-          resolve(new CResult({error: err}));
-        }
-      });
+      this.#task = task;
+      this.#data = data;
+      this.#delay = delay;
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CFuture construction error.", err);
@@ -1191,13 +1254,14 @@ export class CResult {
 }
 
 /**
- * The result object from a {@link network_fetch} call containing any data
- * from the call along with the HTTP Status Code of the transaction.
- * @extends {CResult}
+ * The result of a  {@link network_fetch} call containing any data from the
+ * call along with the HTTP Status Code  of the transaction.
  */
-export class CFetchResult extends CResult {
+export class CFetchResult {
   /** @type {number} */
   #status = -1;
+  /** @type {any} */
+  #data;
 
   /**
    * Will get the data if it is a Uint8Array or null if not that object
@@ -1205,20 +1269,18 @@ export class CFetchResult extends CResult {
    * @returns {Uint8Array?}
    */
   as_binary() {
-    return json_check_type({type: Uint8Array,
-      data: this.value()})
-        ? this.value()
+    return json_check_type({type: Uint8Array, data: this.#data})
+        ? this.#data
         : null;
   }
 
   /**
    * Will get the data if it is a Blob or null if not that object type.
-   * @readonly
    * @returns {Blob?}
    */
   as_blob() {
-    return json_check_type({type: Blob, data: this.value()})
-      ? this.value()
+    return json_check_type({type: Blob, data: this.#data})
+      ? this.#data
       : null;
   }
 
@@ -1228,8 +1290,8 @@ export class CFetchResult extends CResult {
    * @returns {FormData?}
    */
   as_form_data() {
-    return json_check_type({type: FormData, data: this.value()})
-      ? this.value()
+    return json_check_type({type: FormData, data: this.#data})
+      ? this.#data
       : null;
   }
 
@@ -1239,8 +1301,8 @@ export class CFetchResult extends CResult {
    * @returns {object?}
    */
   as_object() {
-    return json_check_type({type: "object", data: this.value()})
-      ? this.value()
+    return json_check_type({type: "object", data: this.#data})
+      ? this.#data
       : null;
   }
 
@@ -1250,18 +1312,9 @@ export class CFetchResult extends CResult {
    * @returns {string?}
    */
   as_string() {
-    return json_check_type({type: "string", data: this.value()})
-      ? this.value()
+    return json_check_type({type: "string", data: this.#data})
+      ? this.#data
       : null;
-  }
-
-  /**
-   * Provides additional check of status code along with super property.
-   * @override
-   * @returns {boolean} true if an error was captured, false otherwise.
-   */
-  is_error() {
-    return super.is_error() || this.status() < 200 || this.status() > 299;
   }
 
   /**
@@ -1278,11 +1331,11 @@ export class CFetchResult extends CResult {
    * @param {any} [params.error] Any captured errors as a result of the
    * request.
    */
-  constructor({status, data=null, error=null}) {
+  constructor({status, data=null}) {
     try {
-      super({value: data, error: error});
       json_check_type({type: "number", data: status, should_throw: true});
       this.#status = status;
+      this.#data = data;
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CFetchResult construction error.", err);
@@ -2130,8 +2183,11 @@ export function async_sleep(delay) {
  * @param {any} [params.data] The optional data to pass to the task.
  * @param {number} [params.delay=0] The delay to schedule the task in the
  * future.
- * @returns {CFuture} A future promise with the result of the
- * task.
+ * @param {boolean} [params.execute=true] Flag to indicate to immediately
+ * execute the future or not to execute it and leave it to developer's
+ * choice.
+ * @returns {CFuture} An object to execute the asynchronous task. You can
+ * also re-execute the future by calling the {@link CFuture.execute} method.
  * @example
  * // Schedule a task for getting a future result and write it to the
  * // console.
@@ -2139,13 +2195,17 @@ export function async_sleep(delay) {
  *   task: (data) => { return data + 20; },
  *   data: 22,
  *   delay: 1000,
+ *   execute: true,
  * });
  * let result = await future.result();
  * console.log("result = ", result.value());
  */
-export function async_task({task, data, delay = 0}) {
+export function async_task({task, data, delay = 0, execute=true}) {
   try {
-    let future = new CFuture(task, data, delay);
+    let future = new CFuture({task: task, data: data, delay: delay});
+    if (execute) {
+      future.execute();
+    }
     return future;
   } catch (err) {
     CModuleError.handle_error(err);
@@ -2404,10 +2464,10 @@ export function hw_request_orientation({id, rx_handler, options = {}}) {
  * };
  * const supported = runtime_defined({request: DEFINED_REQUEST.SerialPort});
  * if (supported) {
- *    const port = await hw_request_serial_port(handler);
- *    if (port) {
- *      // Do something with port
- *    }
+ *   const port = await hw_request_serial_port(handler);
+ *   if (port) {
+ *     // Do something with port
+ *   }
  * }
  */
 export async function hw_request_serial_port(rx_handler) {
@@ -2415,15 +2475,18 @@ export async function hw_request_serial_port(rx_handler) {
     if (!runtime_defined({request: DEFINED_REQUEST.SerialPort})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
-    // @ts-ignore This is available in some web browsers
-    const port = await globalThis.navigator.serial.requestPort();
-    return new CSerialPortProtocol(rx_handler, port);
+    let future = async_task({
+      task: async () => {
+        // @ts-ignore This is available in some web browsers
+        const port = await globalThis.navigator.serial.requestPort();
+        return new CSerialPortProtocol(rx_handler, port);
+      },
+      execute: true
+    });
+    return (await future.result()).value();
   } catch (err) {
-    if (err instanceof CModuleError) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("hw_request_serial_port() error.", err);
-    }
-    return null;
+    CModuleError.handle_error(err);
+    throw new CModuleError("hw_request_serial_port() error.", err);
   }
 }
 
@@ -2886,23 +2949,30 @@ export function network_connect({request, url, rx_handler}) {
  */
 export async function network_fetch({url, options}) {
   try {
-    const resp = await globalThis.fetch(url, options);
-    const contentType = resp.headers.get("Content-Type") ?? "";
-    const status = resp.status;
-    const data = contentType.includes("application/json")
-      ? await resp.json()
-      : contentType.includes("form-data")
-        ? await resp.formData()
-        : contentType.includes("application/octet-stream")
-          ? await resp.blob()
-          : contentType.includes("text/")
-            ? await resp.text()
-            : "";
-    return status > 199 && status < 300
-      ? new CFetchResult({status: status, data: data})
-      : new CFetchResult({status: status, error: data})
+    json_check_type({type: "string", data: url, should_throw: true});
+    json_check_type({type: "object", data: options, should_throw: true});
+    let future = async_task({
+      task: async () => {
+        const resp = await globalThis.fetch(url, options);
+        const contentType = resp.headers.get("Content-Type") ?? "";
+        const status = resp.status;
+        const data = contentType.includes("application/json")
+          ? await resp.json()
+          : contentType.includes("form-data")
+            ? await resp.formData()
+            : contentType.includes("application/octet-stream")
+              ? await resp.blob()
+              : contentType.includes("text/")
+                ? await resp.text()
+                : "";
+        return new CFetchResult({status: status, data: data});
+      },
+      execute: true,
+    });
+    return (await future.result()).value();
   } catch (err) {
-    return new CFetchResult({status: 418, error: err});
+    CModuleError.handle_error(err);
+    throw new CModuleError("network_connect() error.", err);
   }
 }
 
@@ -2910,126 +2980,145 @@ export async function network_fetch({url, options}) {
 // [RUNTIME UC FUNCTIONS] =====================================================
 // ============================================================================
 
-// /**
-//  * Provides the ability to carry out actions with the open browser window.
-//  * @param {object} params The named parameters.
-//  * @param {ACTION_REQUEST} params.request The enumerated value to carry
-//  * out with the open browser window.
-//  * @param {object} [params.data] The optional data associated with the
-//  * {@link ACTION_REQUEST.Share} or {@link ACTION_REQUEST.PostMessage}
-//  * requests.
-//  * https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share#data
-//  * @param {string} [params.target_origin="*"] Specifies the target origin
-//  * when posting a message to a window or frame.
-//  * @param {number[]} [params.pattern] Provides a pattern of vibration and
-//  * pause intervals. Each value indicates a number of milliseconds to
-//  * vibrate or pause, in alternation.
-//  * @param {number} [params.x] An X coordinate or delta coordinate for a
-//  * given action that moves / sets position of the browser window or item
-//  * on the browser window.
-//  * @param {number} [params.y] An X coordinate or delta coordinate for a
-//  * given action that moves / sets position of the browser window or item
-//  * on the browser window.
-//  * @returns {Promise<CResult>} Reflecting success or failure of the given
-//  * request.
-//  * @example
-//  * // TBD
-//  */
-// export async function runtime_action({
-//   request,
-//   data,
-//   target_origin="*",
-//   pattern=[],
-//   x,
-//   y
-// }) {
-//   if (!runtime_is_browser()) {
-//     throw API_UNSUPPORTED_RUNTIME;
-//   }
-//   let value = null;
-//   switch (request) {
-//     case ACTION_REQUEST.Focus:
-//       // @ts-ignore This is in a browser context
-//       globalThis.focus();
-//       break;
-//     case ACTION_REQUEST.MoveBy:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.moveBy(x, y);
-//       break;
-//     case ACTION_REQUEST.MoveTo:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.moveTo(x, y);
-//       break;
-//     case ACTION_REQUEST.PostMessage:
-//       // @ts-ignore This is in a browser context
-//       globalThis.postMessage(data, target_origin);
-//       break;
-//     case ACTION_REQUEST.Print:
-//       // @ts-ignore This is in a browser context
-//       globalThis.print();
-//       break;
-//     case ACTION_REQUEST.ResizeBy:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.resizeBy(x, y);
-//       break;
-//     case ACTION_REQUEST.ResizeTo:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.resizeTo(x, y);
-//       break;
-//     case ACTION_REQUEST.Scroll:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.scroll(x, y);
-//       break;
-//     case ACTION_REQUEST.ScrollBy:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.scrollBy(x, y);
-//       break;
-//     case ACTION_REQUEST.ScrollTo:
-//       json_check_type({type: "number", data: x, should_throw: true});
-//       json_check_type({type: "number", data: y, should_throw: true});
-//       // @ts-ignore check types above will validate number is not null.
-//       globalThis.scrollTo(x, y);
-//       break;
-//     case ACTION_REQUEST.Share:
-//       try {
-//         // @ts-ignore This is in a browser context
-//         await globalThis.navigator.share(data);
-//       } catch (err) {
-//         logger_log({
-//           level: LOGGER.Error,
-//           data: `runtime_action() share failed. ${err}`
-//         });
-//         return new CResult({error: err});
-//       }
-//     case ACTION_REQUEST.Vibrate:
-//       json_check_type({type: Array, data: pattern, should_throw: true});
-//       try {
-//         // @ts-ignore Will exist in the browser context
-//         globalThis.navigator.vibrate(pattern);
-//       } catch (err) {
-//         logger_log({
-//           level: LOGGER.Error,
-//           data: `runtime_action() vibrate failed. ${err}`
-//         });
-//         return new CResult({error: err});
-//       }
-//     default:
-//       throw API_MISUSE;
-//   }
-//   return new CResult({value: value});
-// }
+/**
+ * Provides the ability to carry out actions with the open browser window.
+ * @param {object} params The named parameters.
+ * @param {ACTION_REQUEST} params.request The enumerated value to carry
+ * out with the open browser window.
+ * @param {object} [params.data] The optional data associated with the
+ * {@link ACTION_REQUEST.Share} or {@link ACTION_REQUEST.PostMessage}
+ * requests.
+ * https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share#data
+ * @param {string} [params.message] The optional message to specify for
+ * the {@link ACTION_REQUEST.Alert} {@link ACTION_REQUEST.Confirm} and
+ * {@link ACTION_REQUEST.Prompt} options.
+ * @param {string} [params.target_origin="*"] Specifies the target origin
+ * when posting a message to a window or frame.
+ * @param {number[]} [params.pattern] Provides a pattern of vibration and
+ * pause intervals. Each value indicates a number of milliseconds to
+ * vibrate or pause, in alternation.
+ * @param {number} [params.x] An X coordinate or delta coordinate for a
+ * given action that moves / sets position of the browser window or item
+ * on the browser window.
+ * @param {number} [params.y] An X coordinate or delta coordinate for a
+ * given action that moves / sets position of the browser window or item
+ * on the browser window.
+ * @returns {Promise<CResult>} Reflecting success or failure of the given
+ * request.
+ * @example
+ * // TBD
+ */
+export async function runtime_action({
+  request,
+  data,
+  message,
+  target_origin="*",
+  pattern=[],
+  x,
+  y
+}) {
+  try {
+    if (!runtime_defined({request: DEFINED_REQUEST.Browser})) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
+    if (!Object.hasOwn(ACTION_REQUEST, request)) {
+      throw new CModuleError(CModuleError.MISUSE);
+    }
+    let future = async_task({
+      task: () => {
+        let value = null;
+        switch (request) {
+          case ACTION_REQUEST.Alert:
+            json_check_type({type: "string", data: message, should_throw: true});
+            // @ts-ignore This is in a browser context
+            globalThis.alert(message);
+            break;
+          case ACTION_REQUEST.Confirm:
+            json_check_type({type: "string", data: message, should_throw: true});
+            // @ts-ignore This is in a browser context
+            value = globalThis.confirm(message);
+            break;
+          case ACTION_REQUEST.Focus:
+            // @ts-ignore This is in a browser context
+            globalThis.focus();
+            break;
+          case ACTION_REQUEST.MoveBy:
+            json_check_type({type: "number", data: x, should_throw: true});
+            json_check_type({type: "number", data: y, should_throw: true});
+            // @ts-ignore check types above will validate number is not null.
+            globalThis.moveBy(x, y);
+            break;
+          case ACTION_REQUEST.MoveTo:
+            json_check_type({type: "number", data: x, should_throw: true});
+            json_check_type({type: "number", data: y, should_throw: true});
+            // @ts-ignore check types above will validate number is not null.
+            globalThis.moveTo(x, y);
+            break;
+          case ACTION_REQUEST.PostMessage:
+            // @ts-ignore This is in a browser context
+            globalThis.postMessage(data, target_origin);
+            break;
+          case ACTION_REQUEST.Print:
+            // @ts-ignore This is in a browser context
+            globalThis.print();
+            break;
+          case ACTION_REQUEST.Prompt:
+            json_check_type({type: "string", data: message, should_throw: true});
+            // @ts-ignore This is in a browser context
+            value = globalThis.prompt(message);
+            break;
+          case ACTION_REQUEST.ResizeBy:
+            json_check_type({type: "number", data: x, should_throw: true});
+            json_check_type({type: "number", data: y, should_throw: true});
+            // @ts-ignore check types above will validate number is not null.
+            globalThis.resizeBy(x, y);
+            break;
+          case ACTION_REQUEST.ResizeTo:
+            json_check_type({type: "number", data: x, should_throw: true});
+            json_check_type({type: "number", data: y, should_throw: true});
+            // @ts-ignore check types above will validate number is not null.
+            globalThis.resizeTo(x, y);
+            break;
+          case ACTION_REQUEST.Scroll:
+            json_check_type({type: "number", data: x, should_throw: true});
+            json_check_type({type: "number", data: y, should_throw: true});
+            // @ts-ignore check types above will validate number is not null.
+            globalThis.scroll(x, y);
+            break;
+          case ACTION_REQUEST.ScrollBy:
+            json_check_type({type: "number", data: x, should_throw: true});
+            json_check_type({type: "number", data: y, should_throw: true});
+            // @ts-ignore check types above will validate number is not null.
+            globalThis.scrollBy(x, y);
+            break;
+          case ACTION_REQUEST.ScrollTo:
+            json_check_type({type: "number", data: x, should_throw: true});
+            json_check_type({type: "number", data: y, should_throw: true});
+            // @ts-ignore check types above will validate number is not null.
+            globalThis.scrollTo(x, y);
+            break;
+          case ACTION_REQUEST.Share:
+            // @ts-ignore This is in a browser context
+            await globalThis.navigator.share(data);
+            break;
+          case ACTION_REQUEST.Vibrate:
+            json_check_type({type: Array, data: pattern, should_throw: true});
+            // @ts-ignore Will exist in the browser context
+            value = globalThis.navigator.vibrate(pattern);
+            break;
+          default:
+            break;
+        }
+        return value;
+      },
+      execute: true,
+    });
+    return future.result();
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_defined() error.", err);
+  }
+}
 
 /**
  * Determines the available CPU processors for background workers.
@@ -3149,6 +3238,68 @@ export function runtime_defined({
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("runtime_defined() error.", err);
+  }
+}
+
+/**
+ * Provides a queryable interface to the browser runtime loaded document or
+ * in this case, the User Interface.
+ * @param {object} params The named parameters.
+ * @param {DOCUMENT_REQUEST} params.request The enumerated request of
+ * the document.
+ * @param {string} params.name The name of the element to access. It is
+ * assumed that an element will be found or an API MISUSE will be thrown.
+ * @returns {string | HTMLElement | HTMLElement[]} CssVariable will return
+ * the value of the given CSS variable or an empty string if no CSS variable
+ * exists. This allows for swapping out with custom CSS with the modules
+ * custom components set via attributes and not CSS files. The remaining
+ * objects are guaranteed to be returned or a API violation occurs.
+ * @example
+ * // TBD
+ */
+export function runtime_document({request, name}) {
+  try {
+    if (!runtime_defined({request: DEFINED_REQUEST.Browser})) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
+    json_check_type({type: "string", data: name, should_throw: true});
+    switch (request) {
+      case DOCUMENT_REQUEST.CssVariable:
+        // @ts-ignore exists in a browser context
+        let cs = globalThis.window.getComputedStyle(
+          // @ts-ignore exists in a browser context
+          globalThis.document.documentElement
+        );
+        // @ts-ignore json_check_type will throw if not set properly
+        return cs.getPropertyValue(name) ?? "";
+      case DOCUMENT_REQUEST.ElementById:
+        let el = globalThis.document.getElementById(name);
+        if (!el) {
+          throw new CModuleError(CModuleError.MISUSE + name + " not found");
+        }
+        return el;
+      case DOCUMENT_REQUEST.ElementsByClassName:
+        // @ts-ignore exists in a browser context
+        let col1 = globalThis.document.getElementsByClassName(name);
+        if (col1.length === 0) {
+          throw new CModuleError(CModuleError.MISUSE + name + " not found");
+        }
+        // @ts-ignore This will be a collection of HTMLElement objects.
+        return Array.from(col1);
+      case DOCUMENT_REQUEST.ElementsByTagName:
+        // @ts-ignore exists in a browser context
+        let col2 = globalThis.document.getElementsByTagName(name);
+        if (col2.length === 0) {
+          throw new CModuleError(CModuleError.MISUSE + name + " not found");
+        }
+        // @ts-ignore This will be a collection of HTMLElement objects.
+        return Array.from(col2);
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_document() error.", err);
   }
 }
 
@@ -3785,5 +3936,10 @@ export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 // [UI UC DEFINITION] =========================================================
 // ============================================================================
 
-// TBD - Will have an auto detecting defining of custom HTML components.
-//       Need to determine best way to do this and still work in V8 runtime.
+// The following code only runs if we are in a browser runtime and our custom
+// HTML components have not been defined. If those conditions are met, then our
+// custom components are created for defining HTML / CSS based frontend code.
+if (runtime_defined({request: DEFINED_REQUEST.Browser}) &&
+    !globalThis.customElements.get("codemelted-dialog")) {
+
+}
