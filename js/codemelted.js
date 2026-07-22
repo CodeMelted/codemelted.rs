@@ -138,6 +138,7 @@
  * to a condition.
  * @property {string} Confirm Opens the browser confirm dialog to ask a
  * question of the user.
+ * @property {string} Copy Copies the specified text to the system clipboard.
  * @property {string} Focus Makes a request to bring the window to the
  * front. It may fail due to user settings and the window isn't guaranteed
  * to be front most before this method returns.
@@ -145,6 +146,7 @@
  * amount.
  * @property {string} MoveTo moves the current window to the specified
  * coordinates.
+ * @property {string} Paste Retrieves the data from the system clipboard.
  * @property {string} PostMessage Posts a message to another window in
  * the browser context.
  * @property {string} Print Opens the print dialog to print the current
@@ -172,9 +174,11 @@
 export const ACTION_REQUEST = Object.freeze({
   Alert: "alert",
   Confirm: "confirm",
+  Copy: "copy",
   Focus: "focus",
   MoveBy: "move_by",
   MoveTo: "move_to",
+  Paste: "paste",
   PostMessage: "post_message",
   Print: "print",
   Prompt: "prompt",
@@ -691,7 +695,8 @@ class ModuleUtils {
    */
   static cookie_clear() {
     // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+    if (!ModuleUtils.is_defined({property: "cookie",
+                                 obj: globalThis["document"]})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     // @ts-ignore Will exist in the browser context
@@ -711,7 +716,8 @@ class ModuleUtils {
    */
   static cookie_get_item(key) {
     // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+    if (!ModuleUtils.is_defined({property: "cookie",
+                                 obj: globalThis["document"]})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     let name = `${key}=`;
@@ -736,7 +742,8 @@ class ModuleUtils {
    */
   static cookie_length() {
     // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+    if (!ModuleUtils.is_defined({property: "cookie",
+                                 obj: globalThis["document"]})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     return ModuleUtils.key_list.length;
@@ -750,7 +757,8 @@ class ModuleUtils {
    */
   static cookie_key(index) {
     // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+    if (!ModuleUtils.is_defined({property: "cookie",
+                                 obj: globalThis["document"]})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     return index < ModuleUtils.key_list.length
@@ -765,7 +773,8 @@ class ModuleUtils {
    */
   static cookie_remove_item(key) {
     // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+    if (!ModuleUtils.is_defined({property: "cookie",
+                                 obj: globalThis["document"]})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     // @ts-ignore Will exist in the browser context
@@ -779,13 +788,15 @@ class ModuleUtils {
 
   /**
    * Sets an item within cookie storage.
-   * @param {string} key The key entry in the cooke storage.
-   * @param {string} value The value to set with the cookie.
+   * @param {object} params The named parameters.
+   * @param {string} params.key The key entry in the cooke storage.
+   * @param {string} params.value The value to set with the cookie.
    * @returns {void}
    */
-  static cookie_set_item(key, value) {
+  static cookie_set_item({key, value}) {
     // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+    if (!ModuleUtils.is_defined({property: "cookie",
+                                 obj: globalThis["document"]})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     const d = new Date();
@@ -803,7 +814,8 @@ class ModuleUtils {
    */
   static cookie_init_key_list() {
     // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined("cookie", globalThis["document"])) {
+    if (!ModuleUtils.is_defined({property: "cookie",
+                                 obj: globalThis["document"]})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     ModuleUtils.key_list = [];
@@ -821,13 +833,14 @@ class ModuleUtils {
   /**
    * Helper function for the {@link runtime_defined} to search for properties
    * within the runtime.
-   * @param {string} property The name of the property to find on the given
+   * @param {object} params The named parameters.
+   * @param {string} params.property The name of the property to find on the given
    * object.
-   * @param {object} [obj = globalThis] The object to identify if the given
+   * @param {object} [params.obj = globalThis] The object to identify if the given
    * property exists on it.
    * @returns true if property defined on object, false otherwise.
    */
-  static is_defined(property, obj = globalThis) {
+  static is_defined({property, obj = globalThis}) {
     json_check_type({type: "string", data: property, should_throw: true});
     if (json_check_type({type: "object", data: obj})) {
       return property in obj;
@@ -878,17 +891,17 @@ export class CFuture {
     if (!this.has_completed()) {
       this.#data = data;
       this.#result = new Promise((resolve) => {
-      try {
-        this.#timeout_id = setTimeout(() => {
-          let answer = this.#task(this.#data);
+        try {
+          this.#timeout_id = setTimeout(() => {
+            let answer = this.#task(this.#data);
+            this.#timeout_id = -1;
+            resolve(new CResult({value: answer}));
+          }, this.#delay);
+        } catch (err) {
           this.#timeout_id = -1;
-          resolve(new CResult({value: answer}));
-        }, this.#delay);
-      } catch (err) {
-        this.#timeout_id = -1;
-        resolve(new CResult({error: err}));
-      }
-    });
+          resolve(new CResult({error: err}));
+        }
+      });
     }
   }
 
@@ -1175,10 +1188,11 @@ export class CLogRecord {
 
   /**
    * Constructor for the class.
-   * @param {LOGGER} level object information.
-   * @param {any} data The data to log.
+   * @param {object} params The named parameters.
+   * @param {LOGGER} params.level object information.
+   * @param {any} params.data The data to log.
    */
-  constructor(level, data) {
+  constructor({level, data}) {
     try {
       json_check_type({type: "object", data: level, should_throw: true});
       json_has_key({data: level, key: "level", should_throw: true});
@@ -1227,7 +1241,7 @@ export class CResult {
   is_ok() { return !this.is_error(); }
 
   /**
-   * Hold the value of the given result or nothing if the [CResult] is
+   * Hold the value of the given result or nothing if the CResult is
    * being used to signal there was no error.
    * @returns {any}
    */
@@ -1471,13 +1485,14 @@ export class CProtocol {
 
   /**
    * Constructor for the class.
-   * @param {string} id Identification for the protocol for debugging
+   * @param {object} params The named parameters.
+   * @param {string} params.id Identification for the protocol for debugging
    * purposes.
-   * @param {CProtocolEventHandler} rx_handler The callback for received
-   * data.
-   * @param {PROTOCOL_TYPE} type The type of protocol.
+   * @param {CProtocolEventHandler} params.rx_handler The callback for
+   * received data.
+   * @param {PROTOCOL_TYPE} params.type The type of protocol.
    */
-  constructor(id, rx_handler, type) {
+  constructor({id, rx_handler, type}) {
     try {
       json_check_type({type: "string", data: id, should_throw: true});
       json_check_type({
@@ -1543,7 +1558,10 @@ export class CBroadcastChannelProtocol extends CProtocol {
         throw new CModuleError(CModuleError.MISUSE);
       }
       this.#channel.close();
-      this.on_data_rx({terminated: true, event_fired: PROTOCOL_EVENT.Terminated});
+      this.on_data_rx({
+        terminated: true,
+        event_fired: PROTOCOL_EVENT.Terminated
+      });
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError(
@@ -1555,18 +1573,19 @@ export class CBroadcastChannelProtocol extends CProtocol {
 
   /**
    * Constructor for the protocol.
-   * @param {string} url The URL to connect this broadcast channel on.
-   * @param {CProtocolEventHandler} rx_handler The handler to receive data
-   * from the protocol.
+   * @param {object} params The named parameters.
+   * @param {string} params.url The URL to connect this broadcast channel on.
+   * @param {CProtocolEventHandler} params.rx_handler The handler to receive
+   * data from the protocol.
    */
-  constructor(url, rx_handler) {
-    super(
-      `CBroadcastChannel-${url}`,
-      rx_handler,
-      PROTOCOL_TYPE.BroadcastChannel
-    );
+  constructor({url, rx_handler}) {
+    super({
+      id: `CBroadcastChannel-${url}`,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.BroadcastChannel
+    });
     try {
-      if (!ModuleUtils.is_defined("BroadcastChannel")) {
+      if (!ModuleUtils.is_defined({property: "BroadcastChannel"})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       this.#channel = new globalThis.BroadcastChannel(url);
@@ -1618,14 +1637,18 @@ export class CEventSourceProtocol extends CProtocol {
 
   /**
    * Constructor for the protocol.
-   * @param {string} url URL of the server sending the events.
-   * @param {CProtocolEventHandler} rx_handler The protocol handler to receive
-   * those events.
+   * @param {object} params The named parameters.
+   * @param {string} params.url URL of the server sending the events.
+   * @param {CProtocolEventHandler} params.rx_handler The protocol handler
+   * to receive those events.
    */
-  constructor(url, rx_handler) {
-    super(`CEventSourceProtocol-${url}`, rx_handler, PROTOCOL_TYPE.EventSource);
+  constructor({url, rx_handler}) {
+    super({
+      id: `CEventSourceProtocol-${url}`,
+      rx_handler: rx_handler, type: PROTOCOL_TYPE.EventSource
+    });
     try {
-      if (!ModuleUtils.is_defined("EventSource")) {
+      if (!ModuleUtils.is_defined({property: "EventSource"})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       this.#sse = new globalThis.EventSource(url);
@@ -1685,17 +1708,20 @@ export class COrientationProtocol extends CProtocol {
 
   /**
    * Constructor for the protocol.
-   * @param {string} id A unique ID for the protocol.
-   * @param {CProtocolEventHandler} rx_handler The handler to receive data.
-   * @param {object} [options={}]  Options specific to the  protocol.
+   * @param {object} params The named parameters.
+   * @param {CProtocolEventHandler} params.rx_handler The handler to receive
+   * data.
+   * @param {object} [params.options={}] Options specific to the  protocol.
    */
-  constructor(id, rx_handler, options={}) {
-    super(id, rx_handler, PROTOCOL_TYPE.Orientation);
+  constructor({rx_handler, options={}}) {
+    super({
+      id: "COrientationProtocol",
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.Orientation
+    });
     try {
-      let supported = ModuleUtils.is_defined("navigator") &&
-        // @ts-ignore We are checking to see if this is defined
-        ModuleUtils.is_defined("geolocation", globalThis["navigator"]);
-      if (!supported) {
+      if (!ModuleUtils.is_defined({property: "geolocation",
+                                   obj: globalThis["navigator"]})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({type: "object", data: options, should_throw: true});
@@ -1872,23 +1898,22 @@ export class CSerialPortProtocol extends CProtocol {
 
   /**
    * Constructor for the protocol.
-   * @param {CProtocolEventHandler} rx_handler  The receive handler for data from
-   * the protocol.
-   * @param {SerialPort} port The physical serial port opened by the
+   * @param {object} params The named parameters.
+   * @param {CProtocolEventHandler} params.rx_handler  The receive handler
+   * for data from the protocol.
+   * @param {SerialPort} params.port The physical serial port opened by the
    * protocol.
    */
-  constructor(rx_handler, port) {
-    super(
-      `CSerialPortProtocol_${port.getInfo().usbVendorId}` +
+  constructor({rx_handler, port}) {
+    super({
+      id: `CSerialPortProtocol_${port.getInfo().usbVendorId}` +
       `_${[port.getInfo().usbProductId]}`,
-      rx_handler,
-      PROTOCOL_TYPE.SerialPort
-    );
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.SerialPort
+    });
     try {
-      let supported = ModuleUtils.is_defined("navigator") &&
-        // @ts-check This will exist in the browser runtime.
-        ModuleUtils.is_defined("serial", globalThis["navigator"]);
-      if (!supported) {
+      if (!ModuleUtils.is_defined({property: "serial",
+                                   obj: globalThis["navigator"]})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       // @ts-ignore SerialPort exists as a type in Browser context.
@@ -1933,18 +1958,24 @@ export class CTimerProtocol extends CProtocol {
 
   /**
    * Constructor for the protocol.
-   * @param {string} id Unique id for the protocol
-   * @param {CProtocolEventHandler} rx_handler Handler for the protocol.
-   * @param {number} interval How often to fire the timer.
+   * @param {object} params The named parameters.
+   * @param {CProtocolEventHandler} params.rx_handler Handler for the
+   * protocol.
+   * @param {number} params.interval How often to fire the timer.
    */
-  constructor(id, rx_handler, interval) {
-    super(id, rx_handler, PROTOCOL_TYPE.Timer);
+  constructor({rx_handler, interval}) {
+    super({
+      id: `CTimerProtocol-${interval}`,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.Timer
+    });
     try {
       json_check_type({type: "number", data: interval, should_throw: true});
       // @ts-ignore node returns an object.
       this.#timer_id = globalThis.setInterval(() => {
         try {
-          this.on_data_rx({state: PROTOCOL_EVENT.Message, value: "timer_expired"});
+          this.on_data_rx({state: PROTOCOL_EVENT.Message,
+                           value: "timer_expired"});
         } catch (err) {
           CModuleError.handle_error(err);
           throw new CModuleError("CTimerProtocol on_data_rx() error.", err);
@@ -2038,14 +2069,19 @@ export class CWebSocketProtocol extends CProtocol {
 
   /**
    * Constructor for the protocol.
-   * @param {string} url The URL of the server to connect.
-   * @param {CProtocolEventHandler} rx_handler The handler for receiving data from
-   * this protocol.
+   * @param {object} params The named parameters.
+   * @param {string} params.url The URL of the server to connect.
+   * @param {CProtocolEventHandler} params.rx_handler The handler for
+   * receiving data from this protocol.
    */
-  constructor(url, rx_handler) {
-    super(`CWebSocketProtocol-${url}`, rx_handler, PROTOCOL_TYPE.WebSocket);
+  constructor({url, rx_handler}) {
+    super({
+      id: `CWebSocketProtocol-${url}`,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.WebSocket
+    });
     try {
-      if (!ModuleUtils.is_defined("WebSocket")) {
+      if (!ModuleUtils.is_defined({property: "WebSocket"})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({type: "string", data: url, should_throw: true});
@@ -2113,15 +2149,21 @@ export class CWorkerProtocol extends CProtocol {
   /**
    * Constructs a worker protocol for asynchronous processing off the main
    * runtime thread.
-   * @param {string} url A unique ID for the protocol.
-   * @param {CProtocolEventHandler} rx_handler The receive handler for data and
-   * state changes
-   * @param {object} options Options for further configuration of the worker.
+   * @param {object} params The named parameters.
+   * @param {string} params.url A unique ID for the protocol.
+   * @param {CProtocolEventHandler} params.rx_handler The receive handler
+   * for data and state changes
+   * @param {object} [params.options] Options for further configuration of
+   * the worker.
    */
-  constructor(url, rx_handler, options = {type: "module"}) {
-    super(`Worker-${url}`, rx_handler, PROTOCOL_TYPE.Worker);
+  constructor({url, rx_handler, options = {type: "module"}}) {
+    super({
+      id: `Worker-${url}`,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.Worker
+    });
     try {
-      if (!ModuleUtils.is_defined("Worker")) {
+      if (!ModuleUtils.is_defined({property: "Worker"})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({type: "string", data: url, should_throw: true});
@@ -2216,9 +2258,8 @@ export function async_task({task, data, delay = 0, execute=true}) {
 /**
  * Creates an asynchronous timer protocol on the main thread.
  * @param {object} params The named parameters.
- * @param {string} params.id A unique ID for the timer.
- * @param {CProtocolEventHandler} params.task The task to run on the specified
- * interval.
+ * @param {CProtocolEventHandler} params.rx_handler The handler to run when
+ * the timer expires on the interval.
  * @param {number} params.interval The interval in milliseconds to repeat
  * the given task.
  * @returns {CTimerProtocol} The timer that runs the task on
@@ -2234,9 +2275,9 @@ export function async_task({task, data, delay = 0, execute=true}) {
  * console.log("counter = ", counter); // Should be roughly 4
  * timer.terminate();
  */
-export function async_timer({id, task, interval}) {
+export function async_timer({rx_handler, interval}) {
   try {
-    return new CTimerProtocol(id, task, interval);
+    return new CTimerProtocol({rx_handler: rx_handler, interval: interval});
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("async_timer() error.", err);
@@ -2270,7 +2311,11 @@ export function async_timer({id, task, interval}) {
  */
 export function async_worker({url, rx_handler, options = {type: "module"}}) {
   try {
-    return new CWorkerProtocol(url, rx_handler, options);
+    return new CWorkerProtocol({
+      url: url,
+      rx_handler: rx_handler,
+      options: options
+    });
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("async_worker() error.", err);
@@ -2430,7 +2475,6 @@ export function hw_request_midi() {
  * Requests a device orientation protocol to retrieve the devices current
  * geodetic orientation in 3D space.
  * @param {object} params The named parameters.
- * @param {string} params.id A unique identification for the protocol.
  * @param {CProtocolEventHandler} params.rx_handler The handler for received data.
  * @param {object} [params.options = {}] The options for tuning the protocol to
  * watch for geolocation position updates.
@@ -2439,9 +2483,12 @@ export function hw_request_midi() {
  * @example
  * // TBD
  */
-export function hw_request_orientation({id, rx_handler, options = {}}) {
+export function hw_request_orientation({rx_handler, options = {}}) {
   try {
-    return new COrientationProtocol(id, rx_handler, options);
+    return new COrientationProtocol({
+      rx_handler: rx_handler,
+      options: options
+    });
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("hw_request_bluetooth() error.", err);
@@ -2479,7 +2526,10 @@ export async function hw_request_serial_port(rx_handler) {
       task: async () => {
         // @ts-ignore This is available in some web browsers
         const port = await globalThis.navigator.serial.requestPort();
-        return new CSerialPortProtocol(rx_handler, port);
+        return new CSerialPortProtocol({
+          rx_handler: rx_handler,
+          port: port
+        });
       },
       execute: true
     });
@@ -2830,7 +2880,7 @@ export function logger_log({level, data}) {
     }
 
     // It's on, go create the log record and go log some stuff.
-    const record = new CLogRecord(level, data);
+    const record = new CLogRecord({level: level, data: data});
     // @ts-ignore Property exists on the struct.
     if (record.level().level >= ModuleUtils.logger_level.level) {
       // @ts-ignore Property exists on the struct.
@@ -2887,10 +2937,9 @@ export function logger_log({level, data}) {
  */
 export function network_beacon({url, data}) {
   try {
-    let supported = ModuleUtils.is_defined("navigator") &&
-      // @ts-ignore Should exist in browser runtime
-      ModuleUtils.is_defined("sendBeacon", globalThis["navigator"]);
-    if (!supported) {
+
+    if (!ModuleUtils.is_defined({property: "sendBeacon",
+                                 obj: globalThis["navigator"]})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: url, should_throw: true});
@@ -2920,11 +2969,20 @@ export function network_connect({request, url, rx_handler}) {
   try {
     switch (request) {
       case CONNECT_REQUEST.BroadcastChannel:
-        return new CBroadcastChannelProtocol(url, rx_handler);
+        return new CBroadcastChannelProtocol({
+          url: url,
+          rx_handler: rx_handler
+        });
       case CONNECT_REQUEST.EventSource:
-        return new CEventSourceProtocol(url, rx_handler);
+        return new CEventSourceProtocol({
+          url: url,
+          rx_handler: rx_handler
+        });
       case CONNECT_REQUEST.WebSocket:
-        return new CWebSocketProtocol(url, rx_handler);
+        return new CWebSocketProtocol({
+          url: url,
+          rx_handler: rx_handler
+        });
       case CONNECT_REQUEST.WebRTC:
         throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
       default:
@@ -2985,13 +3043,11 @@ export async function network_fetch({url, options}) {
  * @param {object} params The named parameters.
  * @param {ACTION_REQUEST} params.request The enumerated value to carry
  * out with the open browser window.
- * @param {object} [params.data] The optional data associated with the
- * {@link ACTION_REQUEST.Share} or {@link ACTION_REQUEST.PostMessage}
- * requests.
- * https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share#data
- * @param {string} [params.message] The optional message to specify for
- * the {@link ACTION_REQUEST.Alert} {@link ACTION_REQUEST.Confirm} and
- * {@link ACTION_REQUEST.Prompt} options.
+ * @param {object | string} [params.data] The optional object data associated
+ * with the {@link ACTION_REQUEST.Share} or {@link ACTION_REQUEST.PostMessage}
+ * requests or string data for the  {@link ACTION_REQUEST.Alert},
+ * {@link ACTION_REQUEST.Confirm}, {@link ACTION_REQUEST.Prompt}, and
+ * {@link ACTION_REQUEST.Copy} options.
  * @param {string} [params.target_origin="*"] Specifies the target origin
  * when posting a message to a window or frame.
  * @param {number[]} [params.pattern] Provides a pattern of vibration and
@@ -3011,7 +3067,6 @@ export async function network_fetch({url, options}) {
 export async function runtime_action({
   request,
   data,
-  message,
   target_origin="*",
   pattern=[],
   x,
@@ -3025,18 +3080,23 @@ export async function runtime_action({
       throw new CModuleError(CModuleError.MISUSE);
     }
     let future = async_task({
-      task: () => {
+      task: async () => {
         let value = null;
         switch (request) {
           case ACTION_REQUEST.Alert:
-            json_check_type({type: "string", data: message, should_throw: true});
+            json_check_type({type: "string", data: data, should_throw: true});
             // @ts-ignore This is in a browser context
-            globalThis.alert(message);
+            globalThis.alert(data);
+            break;
+          case ACTION_REQUEST.Copy:
+            json_check_type({type: "string", data: data, should_throw: true});
+            // @ts-ignore This is in a browser context
+            await globalThis.navigator.clipboard.writeText(data);
             break;
           case ACTION_REQUEST.Confirm:
-            json_check_type({type: "string", data: message, should_throw: true});
+            json_check_type({type: "string", data: data, should_throw: true});
             // @ts-ignore This is in a browser context
-            value = globalThis.confirm(message);
+            value = globalThis.confirm(data);
             break;
           case ACTION_REQUEST.Focus:
             // @ts-ignore This is in a browser context
@@ -3054,6 +3114,10 @@ export async function runtime_action({
             // @ts-ignore check types above will validate number is not null.
             globalThis.moveTo(x, y);
             break;
+          case ACTION_REQUEST.Paste:
+            // @ts-ignore This is in a browser context
+            value = await globalThis.navigator.clipboard.readText();
+            break;
           case ACTION_REQUEST.PostMessage:
             // @ts-ignore This is in a browser context
             globalThis.postMessage(data, target_origin);
@@ -3063,9 +3127,9 @@ export async function runtime_action({
             globalThis.print();
             break;
           case ACTION_REQUEST.Prompt:
-            json_check_type({type: "string", data: message, should_throw: true});
+            json_check_type({type: "string", data: data, should_throw: true});
             // @ts-ignore This is in a browser context
-            value = globalThis.prompt(message);
+            value = globalThis.prompt(data);
             break;
           case ACTION_REQUEST.ResizeBy:
             json_check_type({type: "number", data: x, should_throw: true});
@@ -3180,58 +3244,58 @@ export function runtime_defined({
     switch (request) {
       case DEFINED_REQUEST.AskRuntime:
         // @ts-ignore This is in a browser context
-        return ModuleUtils.is_defined(property, obj);
+        return ModuleUtils.is_defined({property: property, obj: obj});
       case DEFINED_REQUEST.Audio:
-        return ModuleUtils.is_defined("HTMLAudioElement");
+        return ModuleUtils.is_defined({property: "HTMLAudioElement"});
       case DEFINED_REQUEST.Bluetooth:
-        return ModuleUtils.is_defined("navigator") &&
-          ModuleUtils.is_defined("bluetooth", globalThis["navigator"]);
+        return ModuleUtils.is_defined({property: "bluetooth",
+                                       obj: globalThis["navigator"]});
       case DEFINED_REQUEST.Browser:
-        return ModuleUtils.is_defined("HTMLElement");
+        return ModuleUtils.is_defined({property: "HTMLElement"});
       case DEFINED_REQUEST.Bun:
-        return ModuleUtils.is_defined("Bun");
+        return ModuleUtils.is_defined({property: "Bun"});
       case DEFINED_REQUEST.Deno:
-        return ModuleUtils.is_defined("Deno");
+        return ModuleUtils.is_defined({property: "Deno"});
       case DEFINED_REQUEST.MIDI:
-        return ModuleUtils.is_defined("navigator") &&
-          ModuleUtils.is_defined("requestMIDIAccess",
-          globalThis["navigator"]);
+        return ModuleUtils.is_defined({property: "requestMIDIAccess",
+                                       obj: globalThis["navigator"]});
       case DEFINED_REQUEST.Node:
-        return ModuleUtils.is_defined("process") &&
-          !ModuleUtils.is_defined("Deno") &&
-          !ModuleUtils.is_defined("Bun");
+        return ModuleUtils.is_defined({property: "process"}) &&
+          !ModuleUtils.is_defined({property: "Deno"}) &&
+          !ModuleUtils.is_defined({property: "Bun"});
       case DEFINED_REQUEST.Orientation:
-        return ModuleUtils.is_defined("navigator") &&
-          ModuleUtils.is_defined("geolocation", globalThis["navigator"]);
+        return ModuleUtils.is_defined({property: "geolocation",
+                                       obj: globalThis["navigator"]});
       case DEFINED_REQUEST.PWA:
-        return ModuleUtils.is_defined("matchMedia") &&
+        return ModuleUtils.is_defined({property: "matchMedia"}) &&
           // @ts-ignore This is in a browser context
           globalThis.matchMedia("(display-mode: standalone)"
         ).matches;
       case DEFINED_REQUEST.SecureContext:
-        return ModuleUtils.is_defined("isSecureContext") &&
+        return ModuleUtils.is_defined({property: "isSecureContext"}) &&
           // @ts-ignore This is in a browser context
           globalThis.isSecureContext;
       case DEFINED_REQUEST.SerialPort:
-        return ModuleUtils.is_defined("navigator") &&
-          ModuleUtils.is_defined("serial", globalThis["navigator"]);
+        return ModuleUtils.is_defined({property: "serial",
+                                       obj: globalThis["navigator"]});
       case DEFINED_REQUEST.Share:
-        return ModuleUtils.is_defined("navigator") &&
-          ModuleUtils.is_defined("share", globalThis["navigator"]);
+        return ModuleUtils.is_defined({property: "share",
+                                       obj: globalThis["navigator"]});
       case DEFINED_REQUEST.TextToSpeech:
-        return ModuleUtils.is_defined("SpeechSynthesisUtterance");
+        return ModuleUtils.is_defined({property: "SpeechSynthesisUtterance"});
       case DEFINED_REQUEST.TouchEnabled:
-        return ModuleUtils.is_defined("navigator") &&
-          ModuleUtils.is_defined("maxTouchPoints", navigator) &&
+        return ModuleUtils.is_defined({property: "maxTouchPoints",
+                                       obj: globalThis["navigator"]}) &&
           // @ts-ignore This is in a browser context
           globalThis.navigator.maxTouchPoints > 0;
       case DEFINED_REQUEST.USB:
-        return ModuleUtils.is_defined("navigator") &&
-          ModuleUtils.is_defined("usb", globalThis["navigator"]);
+        return ModuleUtils.is_defined({property: "navigator"}) &&
+          ModuleUtils.is_defined({property: "usb",
+                                  obj: globalThis["navigator"]});
       case DEFINED_REQUEST.WorkerAvailable:
-        return ModuleUtils.is_defined("Worker");
+        return ModuleUtils.is_defined({property: "Worker"});
       case DEFINED_REQUEST.WorkerRuntime:
-        return ModuleUtils.is_defined("WorkerGlobalScope");
+        return ModuleUtils.is_defined({property: "WorkerGlobalScope"});
       default:
         throw new CModuleError(CModuleError.MISUSE);
     }
@@ -3516,7 +3580,7 @@ export function runtime_open({
 }) {
   try {
     // Ensure the runtime function is available
-    if (!ModuleUtils.is_defined("open")) {
+    if (!ModuleUtils.is_defined({property: "open"})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
 
@@ -3706,7 +3770,7 @@ export function runtime_screen(request) {
  */
 export function storage_clear(type = STORAGE_TYPE.Local) {
   try {
-    if (!ModuleUtils.is_defined("localStorage")) {
+    if (!ModuleUtils.is_defined({property: "localStorage"})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     switch (type) {
@@ -3746,7 +3810,7 @@ export function storage_clear(type = STORAGE_TYPE.Local) {
  */
 export function storage_get({type = STORAGE_TYPE.Local, key}) {
   try {
-    if (!ModuleUtils.is_defined("localStorage")) {
+    if (!ModuleUtils.is_defined({property: "localStorage"})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: key, should_throw: true});
@@ -3785,7 +3849,7 @@ export function storage_get({type = STORAGE_TYPE.Local, key}) {
  */
 export function storage_key({type = STORAGE_TYPE.Local, index}) {
   try {
-    if (!ModuleUtils.is_defined("localStorage")) {
+    if (!ModuleUtils.is_defined({property: "localStorage"})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "number", data: index, should_throw: true});
@@ -3827,7 +3891,7 @@ export function storage_key({type = STORAGE_TYPE.Local, index}) {
  */
 export function storage_length(type = STORAGE_TYPE.Local) {
   try {
-    if (!ModuleUtils.is_defined("localStorage")) {
+    if (!ModuleUtils.is_defined({property: "localStorage"})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     switch (type) {
@@ -3864,7 +3928,7 @@ export function storage_length(type = STORAGE_TYPE.Local) {
  */
 export function storage_remove({type = STORAGE_TYPE.Local, key}) {
   try {
-    if (!ModuleUtils.is_defined("localStorage")) {
+    if (!ModuleUtils.is_defined({property: "localStorage"})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: key, should_throw: true});
@@ -3906,14 +3970,14 @@ export function storage_remove({type = STORAGE_TYPE.Local, key}) {
  */
 export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
   try {
-    if (!ModuleUtils.is_defined("localStorage")) {
+    if (!ModuleUtils.is_defined({property: "localStorage"})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: key, should_throw: true});
     json_check_type({type: "string", data: value, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        ModuleUtils.cookie_set_item(key, value);
+        ModuleUtils.cookie_set_item({key: key, value: value});
         break;
       case STORAGE_TYPE.Local:
         // @ts-ignore Will exist in browser context
