@@ -700,158 +700,6 @@ class ModuleUtils {
   static logger_handler = null;
 
   /**
-   * Days a cookie will live
-   * @type {number}
-   */
-  static expire_days = 365;
-
-  /**
-   * List to hold keys from cookies.
-   * @type {string[]}
-   */
-  static key_list = [];
-
-  /**
-   * Clears the cookie storage entries.
-   */
-  static cookie_clear() {
-    // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined({property: "cookie",
-                                 obj: globalThis["document"]})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-    // @ts-ignore Will exist in the browser context
-    let cookies = globalThis.document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      // @ts-ignore Will exist in the browser context
-      globalThis.document.cookie =
-        `${cookies[i]}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
-    }
-    ModuleUtils.key_list = [];
-  }
-
-  /**
-   * Retrieves an entry from cookie storage.
-   * @param {string} key The key to lookup.
-   * @returns {string?} The found entry or null if not found.
-   */
-  static cookie_get_item(key) {
-    // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined({property: "cookie",
-                                 obj: globalThis["document"]})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-    let name = `${key}=`;
-    // @ts-ignore Will exist in a browser context.
-    let decoded_cookie = decodeURIComponent(globalThis.document.cookie);
-    let ca = decoded_cookie.split(";");
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) == " ") {
-        c = c.substring(1);
-      }
-      if (c.indexOf(name) == 0) {
-        return c.substring(name.length, c.length);
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Retrieves the number of entries in cookie storage.
-   * @returns {number}
-   */
-  static cookie_length() {
-    // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined({property: "cookie",
-                                 obj: globalThis["document"]})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-    return ModuleUtils.key_list.length;
-  }
-
-  /**
-   * Retrieves the key name at the specified index.
-   * @param {number} index The key to retrieve from the given index
-   * @returns {string | null} The key entry or null if index went beyond
-   * length.
-   */
-  static cookie_key(index) {
-    // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined({property: "cookie",
-                                 obj: globalThis["document"]})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-    return index < ModuleUtils.key_list.length
-      ? ModuleUtils.key_list[index]
-      : null;
-  }
-
-  /**
-   * Removes an item from cookie storage.
-   * @param {string} key The key to remove
-   * @returns {void}
-   */
-  static cookie_remove_item(key) {
-    // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined({property: "cookie",
-                                 obj: globalThis["document"]})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-    // @ts-ignore Will exist in the browser context
-    globalThis.document.cookie =
-      `${key}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
-    const index = ModuleUtils.key_list.indexOf(key);
-    if (index > -1) {
-      ModuleUtils.key_list.splice(index, 1);
-    }
-  }
-
-  /**
-   * Sets an item within cookie storage.
-   * @param {object} params The named parameters.
-   * @param {string} params.key The key entry in the cooke storage.
-   * @param {string} params.value The value to set with the cookie.
-   * @returns {void}
-   */
-  static cookie_set_item({key, value}) {
-    // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined({property: "cookie",
-                                 obj: globalThis["document"]})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-    const d = new Date();
-    d.setTime(d.getTime() + (ModuleUtils.expire_days * 24 * 60 * 60 * 1000));
-    let expires = `expires=${d.toUTCString()}`;
-    // @ts-ignore Will exist in the browser context
-    globalThis.document.cookie = `${key}=${value};${expires};path=/`;
-    ModuleUtils.cookie_init_key_list();
-  }
-
-  /**
-   * Provides the ability to get a list of keys to support the length
-   * property and key method of the Storage interface.
-   * @returns {void}
-   */
-  static cookie_init_key_list() {
-    // @ts-ignore "document" will exist in browser context
-    if (!ModuleUtils.is_defined({property: "cookie",
-                                 obj: globalThis["document"]})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-    ModuleUtils.key_list = [];
-    // @ts-ignore Will exist in the browser context
-    let decoded_cookie = decodeURIComponent(globalThis.document.cookie);
-    let ca = decoded_cookie.split(";");
-    for (let i = 0; i < ca.length; i++) {
-      let key = ca[i].split("=");
-      if (!key[0].includes("expires") && !key[0].includes("path")) {
-        ModuleUtils.key_list.push((key[0]));
-      }
-    }
-  }
-
-  /**
    * Helper function for the {@link runtime_defined} to search for properties
    * within the runtime.
    * @param {object} params The named parameters.
@@ -2243,22 +2091,23 @@ export class CWorkerProtocol extends CProtocol {
  * in milliseconds.
  * @param {number} delay Time is milliseconds to delay the task.
  * @returns {Promise<void>} The promise to await on for the delay.
+ * A rejected promise represents an API violation.
  * @example
  * // From within an async function, sleep 2 seconds.
  * await codemelted.async_sleep(2000);
  */
 export function async_sleep(delay) {
-  try {
-    json_check_type({type: "number", data: delay, should_throw: true});
-    return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    try {
+      json_check_type({type: "number", data: delay, should_throw: true});
       setTimeout(() => {
         resolve();
       }, delay);
-    });
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("async_sleep() error.", err);
-  }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      reject(`async_sleep() error. ${err}`);
+    }
+  });
 }
 
 /**
@@ -3153,7 +3002,8 @@ export function network_connect({request, url, rx_handler}) {
  * communicate.
  * @param {object} params.options The data to configure / go along with
  * the request. See the attached URL for detailed
- * @returns {Promise<CFetchResult>} The result of the request.
+ * @returns {Promise<CFetchResult>} The result of the request. A rejected
+ * promise is an API violation.
  * @example
  * // TBD
  */
@@ -3209,7 +3059,7 @@ export async function network_fetch({url, options}) {
  * given action that moves / sets position of the browser window or item
  * on the browser window.
  * @returns {Promise<CResult<string | boolean | null>>} Reflecting success
- * or failure of the given request.
+ * or failure of the given request. A rejected promise is an API violation.
  * @example
  * // TBD
  */
@@ -3914,28 +3764,42 @@ export function runtime_screen(request) {
 /**
  * Clears the local storage of the module.
  * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act upon.
- * @returns {void}
+ * @returns {Promise<void>} A rejected promise represents an API violation.
  * @example
  * // To clear all elements in the specified storage type
  * // Defaults to STORAGE_TYPE.Local
- * storage_clear();
+ * await storage_clear();
  * // To specify type
- * storage_clear(STORAGE_TYPE.Session);
+ * await storage_clear(STORAGE_TYPE.Session);
  */
-export function storage_clear(type = STORAGE_TYPE.Local) {
+export async function storage_clear(type = STORAGE_TYPE.Local) {
   try {
-    if (!ModuleUtils.is_defined({property: "localStorage"})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        ModuleUtils.cookie_clear();
+        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
+        // @ts-ignore Will exist in browser context
+        const cookies = await globalThis.cookieStore.getAll();
+        for (const cookie of cookies) {
+          let name = cookie.name;
+          if (name) {
+            // @ts-ignore Will exist in browser context
+            await globalThis.cookieStore.delete(name);
+          }
+        }
         break;
       case STORAGE_TYPE.Local:
+        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         globalThis.localStorage.clear();
         break;
       case STORAGE_TYPE.Session:
+        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         globalThis.sessionStorage.clear();
         break;
@@ -3954,27 +3818,40 @@ export function storage_clear(type = STORAGE_TYPE.Local) {
  * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
  * upon.
  * @param {string} params.key The key to search.
- * @returns {string?} The value associated with the key if found.
+ * @returns {Promise<string?>} The value associated with the key if found. A
+ * rejected promise represents an API violation.
  * @example
  * // To get an element from storage. Either string or null if not found
  * // Defaults to STORAGE_TYPE.Local
- * let value = storage_get({key: "cool"});
+ * let value = await storage_get({key: "cool"});
  * // To specify type
- * let value = storage_get({type: STORAGE_TYPE.Session, key: "cool"});
+ * let value = await storage_get({type: STORAGE_TYPE.Session, key: "cool"});
  */
-export function storage_get({type = STORAGE_TYPE.Local, key}) {
+export async function storage_get({type = STORAGE_TYPE.Local, key}) {
   try {
-    if (!ModuleUtils.is_defined({property: "localStorage"})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
     json_check_type({type: "string", data: key, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        return ModuleUtils.cookie_get_item(key);
+        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
+        // @ts-ignore Will exist in browser context
+        let entry = await globalThis.cookieStore.get(key)
+        return entry
+          ? entry.value != undefined
+            ? entry.value
+            : null
+          : null;
       case STORAGE_TYPE.Local:
+        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         return globalThis.localStorage.getItem(key);
       case STORAGE_TYPE.Session:
+        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         return globalThis.sessionStorage.getItem(key);
       default:
@@ -3992,31 +3869,43 @@ export function storage_get({type = STORAGE_TYPE.Local, key}) {
  * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
  * upon.
  * @param {number} params.index The key entry to look up.
- * @returns {string?} The key at the specified index or null if beyond the
- * storage capacity.
+ * @returns {Promise<string?>} The key at the specified index or null if
+ * beyond the storage capacity. A rejected promise represents an API
+ * violation.
  * @example
  * // To get a key at an index. Either string or null if not found
  * // Defaults to STORAGE_TYPE.Local
- * let value = storage_key({index: 0});
+ * let key = await storage_key({index: 0});
  * // To specify type
- * let value = storage_key({type: STORAGE_TYPE.Session, index: 0});
+ * let key = await storage_key({type: STORAGE_TYPE.Session, index: 0});
  */
-export function storage_key({type = STORAGE_TYPE.Local, index}) {
+export async function storage_key({type = STORAGE_TYPE.Local, index}) {
   try {
-    if (!ModuleUtils.is_defined({property: "localStorage"})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
     json_check_type({type: "number", data: index, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        return ModuleUtils.cookie_key(index);
+        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
+        // @ts-ignore Will exist in browser context
+        const cookies = await globalThis.cookieStore.getAll();
+        const key = cookies.at(index)?.name;
+        return key != undefined
+          ? key
+          : null;
       case STORAGE_TYPE.Local:
+        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         return index < globalThis.localStorage.length
           // @ts-ignore Will exist in browser context
           ? globalThis.localStorage.key(index)
           : null;
       case STORAGE_TYPE.Session:
+        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         return index < globalThis.sessionStorage.length
           // @ts-ignore Will exist in browser context
@@ -4035,26 +3924,35 @@ export function storage_key({type = STORAGE_TYPE.Local, index}) {
  * Retrieves the number of entries within the module's local storage.
  * @param {STORAGE_TYPE} [type=STORAGE_TYPE.Local] The storage to act
  * upon.
- * @returns {number} The number of entries.
+ * @returns {Promise<number>} The number in storage. A rejected promise
+ * represents an API violation.
  * @example
  * // To get the number of elements in storage
+ * // Assumes no errors with the CResult.
  * // Defaults to STORAGE_TYPE.Local
- * let length = storage_length();
+ * let length = await storage_length());
  * // To specify type
- * let length = storage_length(type: STORAGE_TYPE.Session);
+ * let length = await storage_length(type: STORAGE_TYPE.Session));
  */
-export function storage_length(type = STORAGE_TYPE.Local) {
+export async function storage_length(type = STORAGE_TYPE.Local) {
   try {
-    if (!ModuleUtils.is_defined({property: "localStorage"})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        return ModuleUtils.cookie_length();
+        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
+        // @ts-ignore Will exist in browser context
+        return (await globalThis.cookieStore.getAll()).length;
       case STORAGE_TYPE.Local:
+        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         return globalThis.localStorage.length;
       case STORAGE_TYPE.Session:
+        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         return globalThis.sessionStorage.length;
       default:
@@ -4072,29 +3970,36 @@ export function storage_length(type = STORAGE_TYPE.Local) {
  * @param {STORAGE_TYPE} [params.type=STORAGE_TYPE.Local] The storage to act
  * upon.
  * @param {string} params.key The key to remove.
- * @returns {void}
+ * @returns {Promise<void>} Rejected promise represents an API violation.
  * @example
  * // To remove an element from storage.
  * // Defaults to STORAGE_TYPE.Local
- * storage_remove({key: "cool"});
+ * await storage_remove({key: "cool"});
  * // To specify type
- * storage_remove({type: STORAGE_TYPE.Session, key: "cool"});
+ * await storage_remove({type: STORAGE_TYPE.Session, key: "cool"});
  */
-export function storage_remove({type = STORAGE_TYPE.Local, key}) {
+export async function storage_remove({type = STORAGE_TYPE.Local, key}) {
   try {
-    if (!ModuleUtils.is_defined({property: "localStorage"})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
     json_check_type({type: "string", data: key, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        ModuleUtils.cookie_remove_item(key);
+        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
+        // @ts-ignore Will exist in browser context
+        await globalThis.cookieStore.delete(key, value);
         break;
       case STORAGE_TYPE.Local:
+        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         globalThis.localStorage.removeItem(key);
         break;
       case STORAGE_TYPE.Session:
+        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         globalThis.sessionStorage.removeItem(key);
         break;
@@ -4114,30 +4019,37 @@ export function storage_remove({type = STORAGE_TYPE.Local, key}) {
  * upon.
  * @param {string} params.value The storage entry.
  * @param {string} params.key The key to store.
- * @returns {void}
+ * @returns {Promise<void>} Rejected promise represents an API violation.
  * @example
  * // To add an element to storage.
  * // Defaults to STORAGE_TYPE.Local
- * storage_set({key: "cool", value: "guy"});
+ * await storage_set({key: "cool", value: "guy"});
  * // To specify type
- * storage_set({type: STORAGE_TYPE.Session, key: "cool", value: "guy"});
+ * await storage_set({type: STORAGE_TYPE.Session, key: "cool", value: "guy"});
  */
-export function storage_set({type = STORAGE_TYPE.Local, key, value}) {
+export async function storage_set({type = STORAGE_TYPE.Local, key, value}) {
   try {
-    if (!ModuleUtils.is_defined({property: "localStorage"})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
     json_check_type({type: "string", data: key, should_throw: true});
     json_check_type({type: "string", data: value, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        ModuleUtils.cookie_set_item({key: key, value: value});
+        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
+        // @ts-ignore Will exist in browser context
+        await globalThis.cookieStore.set(key, value);
         break;
       case STORAGE_TYPE.Local:
+        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         globalThis.localStorage.setItem(key, value);
         break;
       case STORAGE_TYPE.Session:
+        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore Will exist in browser context
         globalThis.sessionStorage.setItem(key, value);
         break;
