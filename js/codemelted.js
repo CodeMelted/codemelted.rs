@@ -134,10 +134,6 @@
  * Provides the request actions for the {@link runtime_action} function call.
  * @readonly
  * @enum {string}
- * @property {string} Alert Opens the browser alert dialog to alert the user
- * to a condition.
- * @property {string} Confirm Opens the browser confirm dialog to ask a
- * question of the user.
  * @property {string} Copy Copies the specified text to the system clipboard.
  * @property {string} Focus Makes a request to bring the window to the
  * front. It may fail due to user settings and the window isn't guaranteed
@@ -151,7 +147,6 @@
  * the browser context.
  * @property {string} Print Opens the print dialog to print the current
  * document.
- * @property {string} Prompt Opens a browser prompt dialog for user input.
  * @property {string} ResizeBy resizes the current window by a specified
  * amount.
  * @property {string} ResizeTo dynamically resizes the window.
@@ -172,8 +167,6 @@
  * device doesn't support it.
  */
 export const ACTION_REQUEST = Object.freeze({
-  Alert: "alert",
-  Confirm: "confirm",
   Copy: "copy",
   Focus: "focus",
   MoveBy: "move_by",
@@ -181,7 +174,6 @@ export const ACTION_REQUEST = Object.freeze({
   Paste: "paste",
   PostMessage: "post_message",
   Print: "print",
-  Prompt: "prompt",
   ResizeBy: "resize_by",
   ResizeTo: "resize_to",
   Scroll: "scroll",
@@ -189,42 +181,6 @@ export const ACTION_REQUEST = Object.freeze({
   ScrollTo: "scroll_to",
   Share: "share",
   Vibrate: "vibrate",
-});
-
-/**
- * FILL THIS IN
- * @readonly
- * @enum {string}
- */
-export const AUDIO_REQUEST = Object.freeze({
-  AudioPlayer: "audio_player",
-  TextToSpeech: "text_to_speech",
-});
-
-/**
- * Provides the ability to connect to different server protocols via the
- * {@link network_connect} function.
- * @readonly
- * @enum {string}
- * @property {string} BroadcastChannel Creates a
- * {@link CBroadcastChannelProtocol} that allows
- * basic communication between browsing contexts (that is, windows, tabs,
- * frames, or iframes) and workers on the same origin.
- * @property {string} EventSource Creates a {@link CEventSourceProtocol}
- * that opens a persistent connection to an HTTP server, which sends events
- * in text/event-stream format.
- * @property {string} WebSocket Creates a {@link CWebSocketProtocol}
- * connection to a server supporting a bi-directional exchange of
- * information.
- * @property {string} WebRTC Creates a {@link CWebRtcProtocol} connecting
- * to allow for peer-to-peer communication (voice, video, etc) with other
- * users.
- */
-export const CONNECT_REQUEST = Object.freeze({
-  BroadcastChannel: "broadcast_channel",
-  EventSource: "event_source",
-  WebSocket: "web_socket",
-  WebRTC: "web_rtc",
 });
 
 /**
@@ -254,6 +210,31 @@ export const DISK_DATA_TYPE = Object.freeze({
 export const EVENT_REQUEST = Object.freeze({
   Add: "add",
   Remove: "remove",
+});
+
+/**
+ * Provides the request actions of the {@link runtime_feedback} function.
+ * @readonly
+ * @enum {string}
+ * @property {string} Alert Alert a user to a condition.
+ * @property {string} Choose Provides a selection to the user.
+ * @property {string} Close Closes any given prompt to the user.
+ * @property {string} Confirm Get confirmation from a user.
+ * @property {string} Custom Provides a custom feedback mechanism to the
+ * user.
+ * @property {string} Prompt Prompt the user for input.
+ * @property {string} SnackBar Tell the user something happened passively.
+ * @property {string} Wait Tell the user to wait for an action to complete.
+ */
+export const FEEDBACK_REQUEST = Object.freeze({
+  Alert: "alert",
+  Choose: "choose",
+  Close: "close",
+  Confirm: "confirm",
+  Custom: "custom",
+  Prompt: "prompt",
+  SnackBar: "snackbar",
+  Wait: "wait",
 });
 
 /**
@@ -2144,73 +2125,6 @@ export function async_task({task, data, delay = 0, execute=true}) {
   }
 }
 
-/**
- * Creates an asynchronous timer protocol on the main thread.
- * @param {object} params The named parameters.
- * @param {CProtocolEventHandler} params.rx_handler The handler to run when
- * the timer expires on the interval.
- * @param {number} params.interval The interval in milliseconds to repeat
- * the given task.
- * @returns {CTimerProtocol} The timer that runs the task on
- * the specified interval.
- * @example
- * // Schedule a repeating task on a quarter second interval.
- * let counter = 0;
- * let timer = async_timer({
- *   task: (protocol, result) => { counter += 1; },
- *   interval: 250,
- * });
- * await async_sleep(1000);
- * console.log("counter = ", counter); // Should be roughly 4
- * timer.terminate();
- */
-export function async_timer({rx_handler, interval}) {
-  try {
-    return new CTimerProtocol({rx_handler: rx_handler, interval: interval});
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("async_timer() error.", err);
-  }
-}
-
-/**
- * Constructs a dedicated background worker off the main JS runtime thread.
- * @param {object} params The named parameters.
- * @param {string} params.url The URL of the dedicated worker.
- * @param {CProtocolEventHandler} params.rx_handler The receive handler to receive
- * events back from the dedicated worker.
- * @param {object} [params.options={type: "module"}] Options to specify with
- * the construction of the worker. Defaults to ES6 module type worker.
- * @returns {CWorkerProtocol}
- * @example
- * // Construct a dedicated background worker
- * let rx_handler = (protocol, result) => {
- *   // Do your processing.
- * };
- * let protocol = async_worker({
- *  url: "path/to/worker.js",
- *  rx_handler: rx_handler,
- * });
- *
- * // During processing
- * protocol.post_message({data: 42});
- *
- * // Terminate it
- * protocol.terminate();
- */
-export function async_worker({url, rx_handler, options = {type: "module"}}) {
-  try {
-    return new CWorkerProtocol({
-      url: url,
-      rx_handler: rx_handler,
-      options: options
-    });
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("async_worker() error.", err);
-  }
-}
-
 // ============================================================================
 // [DB UC FUNCTIONS] ==========================================================
 // ============================================================================
@@ -2434,121 +2348,6 @@ export function disk_write_file({data, filename}) {
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("disk_write_file() error.", err);
-  }
-}
-
-// ============================================================================
-// [HW UC FUNCTIONS] ==========================================================
-// ============================================================================
-
-/**
- * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @example
- * // TBD
- */
-export function hw_request_bluetooth() {
-  // TODO: Develop actual protocol against CProtocol
-  try {
-    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("hw_request_bluetooth() error.", err);
-  }
-}
-
-/**
- * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @example
- * // TBD
- */
-export function hw_request_midi() {
-  // TODO: Develop actual protocol against CProtocol
-  try {
-    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("hw_request_midi() error.", err);
-  }
-}
-
-/**
- * Requests a device orientation protocol to retrieve the devices current
- * geodetic orientation in 3D space.
- * @param {object} params The named parameters.
- * @param {CProtocolEventHandler} params.rx_handler The handler for received data.
- * @param {object} [params.options = {}] The options for tuning the protocol to
- * watch for geolocation position updates.
- * @return {COrientationProtocol} The protocol that handles
- * device orientation changes until terminated.
- * @example
- * // TBD
- */
-export function hw_request_orientation({rx_handler, options = {}}) {
-  try {
-    return new COrientationProtocol({
-      rx_handler: rx_handler,
-      options: options
-    });
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("hw_request_bluetooth() error.", err);
-  }
-}
-
-/**
- * Provides the mechanism to request permission to connect to an attached
- * serial port device.
- * @param {CProtocolEventHandler} rx_handler Handler to receive processed serial
- * port data. See {@link SERIAL_PORT_DATA_REQUEST} for what the data would
- * look like when calling CSerialPortProtocol.post_message().
- * @returns {Promise<CSerialPortProtocol?>} The requested
- * connected serial port or null if request was canceled or could not be
- * connected.
- * @example
- * // Determine if serial port processing is supported.
- * const handler = (protocol, data) => {
- *  // Do something with received data.
- * };
- * const supported = runtime_query({request: QUERY_REQUEST.IsSerialPort});
- * if (supported) {
- *   const port = await hw_request_serial_port(handler);
- *   if (port) {
- *     // Do something with port
- *   }
- * }
- */
-export async function hw_request_serial_port(rx_handler) {
-  try {
-    if (!runtime_query({request: QUERY_REQUEST.IsSerialPort})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-    // @ts-ignore This is available in some web browsers
-    const port = await globalThis.navigator.serial.requestPort();
-    return new CSerialPortProtocol({
-      rx_handler: rx_handler,
-      port: port
-    });
-   } catch (err) {
-    if (err instanceof CModuleError) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("hw_request_serial_port() error.", err);
-    }
-    return null;
-  }
-}
-
-/**
- * <mark>FUTURE DEVELOPMENT. DO NOT USE!</mark>
- * @example
- * // TBD
- */
-export function hw_request_usb() {
-  // TODO: Develop actual protocol against CProtocol
-  try {
-    throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("hw_request_bluetooth() error.", err);
   }
 }
 
@@ -2949,49 +2748,6 @@ export function network_beacon({url, data}) {
 }
 
 /**
- * Provides the ability to create client side protocols to send / receive
- * data with other items within the network / Internet.
- * @param {object} params The named parameters.
- * @param {CONNECT_REQUEST} params.request The protocol to connect.
- * @param {string} params.url The server hosting the protocol to connect.
- * @param {CProtocolEventHandler} params.rx_handler The receive handler for
- * the given protocol.
- * @returns {CBroadcastChannelProtocol | CEventSourceProtocol |
- * CWebSocketProtocol | CWebRtcProtocol} The protocol to communicate
- * with the connected server.
- * @example
- * // TBD
- */
-export function network_connect({request, url, rx_handler}) {
-  try {
-    switch (request) {
-      case CONNECT_REQUEST.BroadcastChannel:
-        return new CBroadcastChannelProtocol({
-          url: url,
-          rx_handler: rx_handler
-        });
-      case CONNECT_REQUEST.EventSource:
-        return new CEventSourceProtocol({
-          url: url,
-          rx_handler: rx_handler
-        });
-      case CONNECT_REQUEST.WebSocket:
-        return new CWebSocketProtocol({
-          url: url,
-          rx_handler: rx_handler
-        });
-      case CONNECT_REQUEST.WebRTC:
-        throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
-      default:
-        throw new CModuleError(CModuleError.MISUSE);
-    }
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("network_connect() error.", err);
-  }
-}
-
-/**
  * Provides the ability to make requests from a hosted server REST API.
  * @param {object} params The named parameters
  * @param {string} params.url The URL to the server REST API to
@@ -3030,6 +2786,12 @@ export async function network_fetch({url, options}) {
 }
 
 // ============================================================================
+// [PROTOCOL UC FUNCTIONS] ====================================================
+// ============================================================================
+
+// TBD
+
+// ============================================================================
 // [RUNTIME UC FUNCTIONS] =====================================================
 // ============================================================================
 
@@ -3040,9 +2802,7 @@ export async function network_fetch({url, options}) {
  * out with the open browser window.
  * @param {object | string} [params.data] The optional object data associated
  * with the {@link ACTION_REQUEST.Share} or {@link ACTION_REQUEST.PostMessage}
- * requests or string data for the  {@link ACTION_REQUEST.Alert},
- * {@link ACTION_REQUEST.Confirm}, {@link ACTION_REQUEST.Prompt}, and
- * {@link ACTION_REQUEST.Copy} options.
+ * requests or string data for the  {@link ACTION_REQUEST.Copy} option.
  * @param {string} [params.target_origin="*"] Specifies the target origin
  * when posting a message to a window or frame.
  * @param {number[]} [params.pattern] Provides a pattern of vibration and
@@ -3074,20 +2834,10 @@ export async function runtime_action({
 
     let value = null;
     switch (request) {
-      case ACTION_REQUEST.Alert:
-        json_check_type({type: "string", data: data, should_throw: true});
-        // @ts-ignore This is in a browser context
-        globalThis.alert(data);
-        break;
       case ACTION_REQUEST.Copy:
         json_check_type({type: "string", data: data, should_throw: true});
         // @ts-ignore This is in a browser context
         await globalThis.navigator.clipboard.writeText(data);
-        break;
-      case ACTION_REQUEST.Confirm:
-        json_check_type({type: "string", data: data, should_throw: true});
-        // @ts-ignore This is in a browser context
-        value = globalThis.confirm(data);
         break;
       case ACTION_REQUEST.Focus:
         // @ts-ignore This is in a browser context
@@ -3116,11 +2866,6 @@ export async function runtime_action({
       case ACTION_REQUEST.Print:
         // @ts-ignore This is in a browser context
         globalThis.print();
-        break;
-      case ACTION_REQUEST.Prompt:
-        json_check_type({type: "string", data: data, should_throw: true});
-        // @ts-ignore This is in a browser context
-        value = globalThis.prompt(data);
         break;
       case ACTION_REQUEST.ResizeBy:
         json_check_type({type: "number", data: x, should_throw: true});
@@ -3227,6 +2972,49 @@ export function runtime_event({
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("runtime_event() error.", err);
+  }
+}
+
+/**
+ * Provides a mechanism for interacting with a user by gather data or
+ * useful information.
+ * @param {object} params The named parameters
+ * @param {FEEDBACK_REQUEST} params.request The request to carry out.
+ * @param {string} params.message The message to associate with the request.
+ * @returns {Promise<boolean | string | void>} The data associated with the
+ * feedback request. Any rejected promise is an API violation.
+ */
+export async function runtime_feedback({request, message}) {
+  try {
+    if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
+
+    let value;
+    switch (request) {
+      case FEEDBACK_REQUEST.Alert:
+        json_check_type({type: "string", data: message, should_throw: true});
+        // @ts-ignore This is in a browser context
+        globalThis.alert(data);
+        break;
+      case FEEDBACK_REQUEST.Confirm:
+        json_check_type({type: "string", data: message, should_throw: true});
+        // @ts-ignore This is in a browser context
+        value = globalThis.confirm(data);
+        break;
+
+      case FEEDBACK_REQUEST.Prompt:
+        json_check_type({type: "string", data: message, should_throw: true});
+        // @ts-ignore This is in a browser context
+        value = globalThis.prompt(data) ?? "";
+        break;
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+    return value;
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_message() error.", err);
   }
 }
 
