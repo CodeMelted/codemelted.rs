@@ -278,34 +278,44 @@ export const PROTOCOL_EVENT = Object.freeze({
   Message: "message",
   MessageError: "message_error",
   Open: "open",
-  Started: "started",
-  Terminated: "terminated",
 });
 
 /**
- * Provides the type of protocol for the {@link CProtocol.type()} object.
+ * Provides the different asynchronous protocols one can open via the
+ * {@link protocol_open} function.
  * @readonly
  * @enum {string}
- * @property {string} BroadcastChannel Identifies a
- * {@link CBroadcastChannelProtocol} object.
- * @property {string} EventSource Identifies a {@link CEventSourceProtocol}
- * object.
- * @property {string} Orientation Identifies a {@link COrientationProtocol}
- * object.
- * @property {string} Timer Identifies a {@link CTimerProtocol} object.
- * @property {string} SerialPort Identifies a {@link CSerialPortProtocol}
- * object.
- * @property {string} WebSocket Identifies a {@link CWebSocketProtocol}
- * object.
- * @property {string} Worker Identifies a {@link CWorkerProtocol} object.
+ * @property {string} Audio
+ * @property {string} BroadcastChannel
+ * @property {string} Bluetooth
+ * @property {string} EventSource
+ * @property {string} Gamepad
+ * @property {string} MIDI
+ * @property {string} Orientation
+ * @property {string} Timer
+ * @property {string} SerialPort
+ * @property {string} TextToSpeech
+ * @property {string} USB
+ * @property {string} WebSocket
+ * @property {string} WebRTC
+ * @property {string} WebTransport
+ * @property {string} Worker
  */
 export const PROTOCOL_TYPE = Object.freeze({
+  Audio: "audio",
+  Bluetooth: "bluetooth",
   BroadcastChannel: "broadcast_channel",
   EventSource: "event_source",
+  Gamepad: "gamepad",
+  MIDI: "midi",
   Orientation: "orientation",
   Timer: "timer",
   SerialPort: "serial_port",
+  TextToSpeech: "text_to_speech",
+  USB: "usb",
   WebSocket: "web_socket",
+  WebRTC: "web_rtc",
+  WebTransport: "web_transport",
   Worker: "worker",
 });
 
@@ -344,15 +354,27 @@ export const PROTOCOL_TYPE = Object.freeze({
  * (that is, the width of the window's layout viewport). That includes the
  * width of the vertical scroll bar, if one is present.
  * @property {string} IsAudio Determines if audio is available in the runtime.
+ * @property {string} IsBeacon Determines if the {@link network_beacon} is
+ * available to the runtime.
+ * @property {string} IsBroadcastChannel Determines if a BroadcastChannel
+ * protocol is available.
  * @property {string} IsBrowser Determine if the runtime is a Web Browser.
  * @property {string} IsBun Determines if the runtime is Bun.
  * @property {string} IsBluetooth Determines if bluetooth is available.
  * @property {string} IsDeno Determines if the runtime is Deno.
+ * @property {string} IsCookieStore Determines if cookie store is
+ * available to the runtime.
+ * @property {string} IsEventSource Determines if an EventSource protocol
+ * is available.
  * @property {string} IsIframe Will determine if the document is within an
  * iframe or not.
+ * @property {string} IsLocalStorage Determines if local storage is
+ * available to the runtime.
  * @property {string} IsMidi Determines if MIDI devices are available.
- * @property {String} IsNode Determines if the runtime is Node.
- * @property {String} IsOrientation Determines if Orientation is available
+ * @property {string} IsNode Determines if the runtime is Node.
+ * @property {string} IsOpen Determines if {@link runtime_open} is available
+ * to the runtime.
+ * @property {string} IsOrientation Determines if Orientation is available
  * (i.e. GPS and 3D space device orientation.)
  * @property {string} IsPwa Determines if the browser window represents an
  * installed Progressive Web Application.
@@ -362,6 +384,8 @@ export const PROTOCOL_TYPE = Object.freeze({
  * is secure (true) or not (false).
  * @property {string} IsShare Determines if sharing is available to the
  * runtime.
+ * @property {string} IsSessionStorage Determines if session storage is
+ * available to the runtime.
  * @property {string} IsTextToSpeech Determines if text-to-speech is available
  * to the runtime.
  * @property {string} IsTouchEnabled Identifies if the browser is accessible
@@ -421,23 +445,30 @@ export const QUERY_REQUEST = Object.freeze({
   InnerHeight: "inner_height",
   InnerWidth: "inner_width",
   IsAudio: "is_audio",
+  IsBeacon: "is_beacon",
+  IsBroadcastChannel: "is_broadcast_channel",
   IsBrowser: "is_browser",
   IsBun: "is_bun",
   IsBluetooth: "is_bluetooth",
+  IsCookieStore: "is_cookie_store",
   IsDeno: "is_deno",
-  IsWorkerRuntime: "is_worker_runtime",
+  IsEventSource: "is_event_source",
   IsIFrame: "is_iframe",
+  IsLocalStorage: "is_local_storage",
   IsMidi: "is_midi",
   IsNode: "is_node",
+  IsOpen: "is_open",
   IsOrientation: "is_orientation",
   IsPwa: "is_pwa",
   IsSerialPort: "is_serial_port",
   IsSecureContext: "is_secure_context",
+  IsSessionStorage: "is_session_storage",
   IsShare: "is_share",
   IsTextToSpeech: "is_text_to_speech",
   IsTouchEnabled: "is_touch_enabled",
   IsUsb: "is_usb",
   IsWorkerAvailable: "is_worker_available",
+  IsWorkerRuntime: "is_worker_runtime",
   Name: "name",
   Online: "online",
   OuterHeight: "outer_height",
@@ -568,7 +599,7 @@ export const TARGET_TYPE = Object.freeze({
  * Supports the {@link CProtocol} for data received as part of a
  * protocol.
  * @callback CProtocolEventHandler
- * @param {CProtocolEvent} evt The event handled by a given protocol.
+ * @param {CProtocolEvent} evt The event handled by an open protocol.
  */
 
 /**
@@ -581,6 +612,27 @@ export const TARGET_TYPE = Object.freeze({
 // ============================================================================
 // [MODULE UTILITY OBJECTS] ===================================================
 // ============================================================================
+
+/**
+ * @typedef {object} COrientationOptions
+ * @property {number} [maximumAge] A positive long value indicating the
+ * maximum age in milliseconds of a possible cached position that is
+ * acceptable to return. If set to 0, it means that the device cannot use a
+ * cached position and must attempt to retrieve the real current position.
+ * If set to Infinity the device must return a cached position regardless of
+ * its age. Default: 0.
+ * @property {number} [timeout] A positive long value representing the maximum
+ * length of time (in milliseconds) the device is allowed to take in order to
+ * return a position. The default value is Infinity, meaning that
+ * getCurrentPosition() won't return until the position is available.
+ * @property {boolean} [enableHighAccuracy] boolean value that indicates the
+ * application would like to receive the best possible results. If true and if
+ * the device is able to provide a more accurate position, it will do so. Note
+ * that this can result in slower response times or increased power
+ * consumption (with a GPS chip on a mobile device for example). On the other
+ * hand, if false, the device can take the liberty to save resources by
+ * responding more quickly and/or using less power. Default: false.
+ */
 
 /**
  * Class that represents any codemelted.js API violations or caught exceptions
@@ -677,6 +729,18 @@ class ModuleUtils {
   static logger_handler = null;
 
   /**
+   * Holds a dictionary of the currently opened protocol.
+   * @type {Map<number, CProtocol>}
+   */
+  static protocols = new Map();
+
+  /**
+   * Represents the current protocol file description number.
+   * @type {number}
+   */
+  static protocol_fd = 0;
+
+  /**
    * Helper function for the {@link runtime_query} to search for properties
    * within the runtime.
    * @param {object} params The named parameters.
@@ -698,6 +762,224 @@ class ModuleUtils {
 // ============================================================================
 // [MODULE DATA CLASSES] ======================================================
 // ============================================================================
+
+/**
+ * Identifies event handled by the {@link PROTOCOL_TYPE.BroadcastChannel}
+ * protocol.
+ */
+export class CBroadcastChannelEvent {
+  /** @type {MessageEvent} */
+  #event
+  /** @type {boolean} */
+  #is_error;
+
+  /**
+   * The message event received by the protocol.
+   * @returns {MessageEvent}
+   */
+  event() { return this.#event; }
+
+  /**
+   * Indicates whether the wrapped MessageEvent is an error or not.
+   * @returns {boolean}
+   */
+  is_error() { return this.#is_error; }
+
+  /**
+   * Constructor for the object.
+   * @param {object} params The named parameters.
+   * @param {MessageEvent} params.event The event received by the protocol.
+   * @param {boolean} params.is_error true if the MessageEvent was
+   * associated with an error, false otherwise.
+   */
+  constructor({event, is_error}) {
+    try {
+      json_check_type({type: MessageEvent, data: event, should_throw: true});
+      json_check_type({type: "boolean", data: is_error, should_throw: true});
+      this.#event = event;
+      this.#is_error = is_error;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CBroadcastChannelEvent construction error.", err
+      );
+    }
+  }
+}
+
+/**
+ * Identifies event handled by the {@link PROTOCOL_TYPE.EventSource}
+ * protocol.
+ */
+export class CEventSourceEvent {
+  /** @type {Event | MessageEvent} */
+  #event;
+  /** @type {boolean} */
+  #is_error;
+  /** @type {number} */
+  #ready_state;
+
+  /**
+   * Signals the ready_state() is in a connecting state.
+   * @readonly
+   * @type {number}
+   */
+  static get CONNECTING() { return 0; }
+
+  /**
+   * Signals the ready_state() is in a connecting state.
+   * @readonly
+   * @type {number}
+   */
+  static get OPEN() { return 1; }
+
+    /**
+   * Signals the ready_state() is in a connecting state.
+   * @readonly
+   * @type {number}
+   */
+  static get CLOSED() { return 2; }
+
+  /**
+   * The event captured by the protocol.
+   * @returns {Event | MessageEvent}
+   */
+  event() { return this.#event; }
+
+  /**
+   * Indicates if the event captured was an error.
+   * @returns {boolean}
+   */
+  is_error() { return this.#is_error; }
+
+  /**
+   * The current state of the protocol.
+   * @returns {number}
+   */
+  ready_state() { return this.#ready_state; }
+
+  /**
+   * Constructor for the class.
+   * @param {object} params The named parameters
+   * @param {Event | MessageEvent} params.event The event handled by the
+   * protocol.
+   * @param {boolean} params.is_error true if it was an error event,
+   * false otherwise.
+   * @param {number} params.ready_state The current state of the protocol.
+   */
+  constructor({event, is_error, ready_state}) {
+    try {
+      if (!json_check_type({type: MessageEvent, data: event}) &&
+          !json_check_type({type: Event, data: event})) {
+        throw new CModuleError(CModuleError.TYPE_VIOLATION);
+      }
+      json_check_type({type: "boolean", data: is_error, should_throw: true});
+      json_check_type({
+        type: "number",
+        data: ready_state,
+        should_throw: true
+      });
+      this.#event = event;
+      this.#is_error = is_error;
+      this.#ready_state = ready_state;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CEventSourceEvent construction error.", err
+      );
+    }
+  }
+}
+
+/**
+ * The result of a  {@link network_fetch} call containing any data from the
+ * call along with the HTTP Status Code  of the transaction.
+ */
+export class CFetchResult {
+  /** @type {number} */
+  #status = -1;
+  /** @type {any} */
+  #data;
+
+  /**
+   * Will get the data if it is a Uint8Array or null if not that object
+   * type.
+   * @returns {Uint8Array?}
+   */
+  as_binary() {
+    return json_check_type({type: Uint8Array, data: this.#data})
+        ? this.#data
+        : null;
+  }
+
+  /**
+   * Will get the data if it is a Blob or null if not that object type.
+   * @returns {Blob?}
+   */
+  as_blob() {
+    return json_check_type({type: Blob, data: this.#data})
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Will get the value if it is a FormData or null if not that object
+   * type.
+   * @returns {FormData?}
+   */
+  as_form_data() {
+    return json_check_type({type: FormData, data: this.#data})
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Will get the value if it is a Object or null if not that object
+   * type.
+   * @returns {object?}
+   */
+  as_object() {
+    return json_check_type({type: "object", data: this.#data})
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Will get the value if it is a string or null if not that object
+   * type.
+   * @returns {string?}
+   */
+  as_string() {
+    return json_check_type({type: "string", data: this.#data})
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * The HTTP Status Code
+   * @returns {number}
+   */
+  status() { return this.#status; }
+
+  /**
+   * Constructor for the class.
+   * @param {object} params The named parameters.
+   * @param {number} params.status The HTTP status code of the fetch request.
+   * @param {any} [params.data] Any data associated with the request.
+   * @param {any} [params.error] Any captured errors as a result of the
+   * request.
+   */
+  constructor({status, data=null}) {
+    try {
+      json_check_type({type: "number", data: status, should_throw: true});
+      this.#status = status;
+      this.#data = data;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CFetchResult construction error.", err);
+    }
+  }
+}
 
 /**
  * The resulting object from the {@link async_task} function call with a
@@ -817,8 +1099,8 @@ export class CFuture {
 }
 
 /**
- * Represents the geodetic data captured from the [COrientationProtocol]
- * object when created via the [hw_request_orientation] function call.
+ * Represents the geodetic data captured from the
+ * {@link PROTOCOL_TYPE.Orientation} opened protocol.
  */
 export class CGeodeticData {
   /** @type {Date} */
@@ -1023,6 +1305,70 @@ export class CGeodeticData {
 }
 
 /**
+ * Error captured as part of the {@link PROTOCOL_TYPE} Orientation protocol.
+ */
+export class CGeodeticError {
+  /** @type {number} */
+  #code;
+  /** @type {string} */
+  #message;
+
+  /**
+   * The acquisition of the geolocation information failed because the page
+   * didn't have the necessary permissions.
+   * @readonly
+   * @type {number}
+   */
+  static get PERMISSION_DENIED() { return 1; }
+
+  /**
+   * The acquisition of the geolocation failed because at least one internal
+   * source of position returned an internal error.
+   * @readonly
+   * @type {number}
+   */
+  static get POSITION_UNAVAILABLE() { return 2; }
+
+  /**
+   * The time allowed to acquire the geolocation was reached before the
+   * information was obtained.
+   * @readonly
+   * @type {number}
+   */
+  static get TIMEOUT() { return 3; }
+
+  /**
+   * The code of the error message.
+   * @returns {number}
+   */
+  code() { return this.#code; }
+
+  /**
+   * The message associated with the error.
+   * @returns {string}
+   */
+  message() { return this.#message; }
+
+  /**
+   * Constructor for the class.
+   * @param {object} params The named parameters
+   * @param {number} params.code The error code detected
+   * @param {string} params.message Message associated with the error.
+   */
+  constructor({code, message}) {
+    try {
+      json_check_type({type: "number", data: code, should_throw: true});
+      json_check_type({type: "string", data: message, should_throw: true});
+      this.#code = code;
+      this.#message = message;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CGeodeticError construction error.", err);
+    }
+  }
+}
+
+/**
  * The log record processed via the {@link CLogHandler} post logging event.
  */
 export class CLogRecord {
@@ -1136,139 +1482,29 @@ export class CResult {
 }
 
 /**
- * The result of a  {@link network_fetch} call containing any data from the
- * call along with the HTTP Status Code  of the transaction.
+ * Represents a firing timer for an open {@link PROTOCOL_TYPE} Timer.
  */
-export class CFetchResult {
+export class CTimerEvent {
   /** @type {number} */
-  #status = -1;
-  /** @type {any} */
-  #data;
+  #interval;
 
   /**
-   * Will get the data if it is a Uint8Array or null if not that object
-   * type.
-   * @returns {Uint8Array?}
-   */
-  as_binary() {
-    return json_check_type({type: Uint8Array, data: this.#data})
-        ? this.#data
-        : null;
-  }
-
-  /**
-   * Will get the data if it is a Blob or null if not that object type.
-   * @returns {Blob?}
-   */
-  as_blob() {
-    return json_check_type({type: Blob, data: this.#data})
-      ? this.#data
-      : null;
-  }
-
-  /**
-   * Will get the value if it is a FormData or null if not that object
-   * type.
-   * @returns {FormData?}
-   */
-  as_form_data() {
-    return json_check_type({type: FormData, data: this.#data})
-      ? this.#data
-      : null;
-  }
-
-  /**
-   * Will get the value if it is a Object or null if not that object
-   * type.
-   * @returns {object?}
-   */
-  as_object() {
-    return json_check_type({type: "object", data: this.#data})
-      ? this.#data
-      : null;
-  }
-
-  /**
-   * Will get the value if it is a string or null if not that object
-   * type.
-   * @returns {string?}
-   */
-  as_string() {
-    return json_check_type({type: "string", data: this.#data})
-      ? this.#data
-      : null;
-  }
-
-  /**
-   * The HTTP Status Code
+   * The interval of the firing timer event.
    * @returns {number}
    */
-  status() { return this.#status; }
+  interval() { return this.#interval; }
 
   /**
    * Constructor for the class.
-   * @param {object} params The named parameters.
-   * @param {number} params.status The HTTP status code of the fetch request.
-   * @param {any} [params.data] Any data associated with the request.
-   * @param {any} [params.error] Any captured errors as a result of the
-   * request.
+   * @param {number} interval The interval of the firing timer.
    */
-  constructor({status, data=null}) {
+  constructor(interval) {
     try {
-      json_check_type({type: "number", data: status, should_throw: true});
-      this.#status = status;
-      this.#data = data;
+      json_check_type({type: "number", data: interval});
+      this.#interval = interval;
     } catch (err) {
       CModuleError.handle_error(err);
-      throw new CModuleError("CFetchResult construction error.", err);
-    }
-  }
-}
-
-/**
- * An event handled by a implementing {@link CProtocol} object via their
- * individually implemented protocol specific handlers to bubble up events
- * in a common manner via the {@link CProtocolEventHandler}.
- * @extends {CResult<MessageEvent>}
- */
-export class CProtocolEvent extends CResult {
-  /** @type {PROTOCOL_EVENT} */
-  #event_fired;
-  /** @type {CProtocol} */
-  #protocol;
-
-  /**
-   * Retrieves the event fired from within {@link CProtocol} that created
-   * this event.
-   * @returns {PROTOCOL_EVENT}
-   */
-  event_fired() { return this.#event_fired; }
-
-  /**
-   * Retrieves a reference to the protocol that fired the event.
-   * @returns {CProtocol}
-   */
-  protocol() { return this.#protocol; }
-
-  /**
-   * Constructor for the event.
-   * @param {object} params The named parameters.
-   * @param {CProtocol} params.protocol The protocol that handled the event.
-   * @param {PROTOCOL_EVENT} params.event_fired The event that fired
-   * that produced this event.
-   * @param {any} [params.value] The value associated with the result.
-   * @param {any} [params.error] The error associated with the result.
-   */
-  constructor({protocol, event_fired, error=null, value=null}) {
-    try {
-      super({error: error, value: value});
-      json_check_type({type: "string", data: event_fired, should_throw: true});
-      json_check_type({type: CProtocol, data: protocol, should_throw: true});
-      this.#event_fired = event_fired;
-      this.#protocol = protocol;
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CProtocolEvent construction error.", err);
+      throw new CModuleError("CTimerEvent construction error.", err);
     }
   }
 }
@@ -1278,55 +1514,196 @@ export class CProtocolEvent extends CResult {
 // ============================================================================
 
 /**
- * Defines the "rules" for objects that will setup a protocol that directly
- * exchanges data with an external item, will continuously run until
- * terminated, requires the ability to know it is running, and get any
- * errors that have occurred during its run.
+ * An event handled by a currently opened protocol via {@link protocol_open}.
+ * This protocol is handled via the {@link CProtocolEventHandler}.
  */
-export class CProtocol {
+export class CProtocolEvent {
   /** @type {string} */
-  #id = "";
-  /** @type {CProtocolEventHandler} */
-  #rx_handler;
+  #id;
+  /** @type {number} */
+  #fd;
+  /** @type {any} */
+  #data;
+  /** @type {PROTOCOL_EVENT} */
+  #event_fired;
   /** @type {PROTOCOL_TYPE} */
-  #type;
-  /** @type {boolean} */
-  #is_running = false;
+  #protocol_type;
 
   /**
-   * Helper function to process received data on a protocol.
-   * @protected
-   * @param {object} params The named parameters for the object.
-   * @param {boolean} [params.terminated=false] true if terminated, false
-   * otherwise.
-   * @param {PROTOCOL_EVENT} params.event_fired The event that occurred with
-   * the protocol.
-   * @param {any} [params.value] The value associated with the result.
-   * @param {any} [params.error] The error associated with the result.
-   * @returns {void}
+   * Treats the data as a received broadcast channel event.
+   * @returns {CBroadcastChannelEvent?}
    */
-  on_data_rx({event_fired, error, value}) {
-    this.#is_running = event_fired != PROTOCOL_EVENT.Terminated;
-    let evt = new CProtocolEvent({
-      protocol: this,
-      event_fired: event_fired,
-      error: error,
-      value: value
-    });
-    this.#rx_handler(evt);
+  as_broadcast_channel_event() {
+    return this.#data instanceof CBroadcastChannelEvent
+      ? this.#data
+      : null;
   }
 
   /**
-   * A unique ID for the protocol.
+   * Treats the data as a received event source event.
+   * @returns {CEventSourceEvent?}
+   */
+  as_event_source_event() {
+    return this.#data instanceof CEventSourceEvent
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Treats the data as a received geodetic data.
+   * @returns {CGeodeticData?}
+   */
+  as_geodetic_data() {
+    return this.#data instanceof CGeodeticData
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Treats the data as a received geodetic error.
+   * @returns {CGeodeticError?}
+   */
+  as_geodetic_error() {
+    return this.#data instanceof CGeodeticError
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Treats the data as a JavaScript Runtime event.
+   * @returns {MessageEvent?}
+   */
+  as_message_event() {
+    return this.#data instanceof MessageEvent
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Treats the data as a timer event.
+   * @returns {CTimerEvent?}
+   */
+  as_timer_event() {
+    return this.#data instanceof CTimerEvent
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Identification of the protocol. Utilized for logging purposes.
    * @returns {string}
    */
   id() { return this.#id; }
 
   /**
-   * Determines if the protocol is running or terminated.
-   * @returns {boolean} true if running, false if terminated.
+   * The protocol file descriptor that originated the event.
+   * @returns {number}
    */
-  is_running() { return this.#is_running; }
+  fd() { return this.#fd; }
+
+  /**
+   * The data received by the event. Utilize the as_xxx() functions to
+   * retrieve a specific data type for the given protocol_type().
+   * @returns {any}
+   */
+  data() {return this.#data; }
+
+  /**
+   * Retrieves the event that was fired with the open protocol.
+   * @returns {PROTOCOL_EVENT}
+   */
+  event_fired() { return this.#event_fired; }
+
+  /**
+   * Identifies what protocol fired the event.
+   * @returns {PROTOCOL_TYPE}
+   */
+  protocol_type() { return this.#protocol_type; }
+
+  /**
+   * Constructor for the event.
+   * @param {object} params The named parameters.
+   * @param {string} params.id The debug identification of the protocol for
+   * logging purposes.
+   * @param {number} params.fd The file descriptor of the open protocol.
+   * @param {any} params.data The data handled by the protocol.
+   * @param {PROTOCOL_EVENT} params.event_fired The event that was handled.
+   * @param {PROTOCOL_TYPE} params.protocol_type The type of the protocol.
+   */
+  constructor({id, fd, data, event_fired, protocol_type}) {
+    try {
+      json_check_type({type: "string", data: id, should_throw: true});
+      json_has_key({
+        data: PROTOCOL_EVENT,
+        key: event_fired,
+        should_throw: true
+      });
+      json_has_key({
+        data: PROTOCOL_TYPE,
+        key: protocol_type,
+        should_throw: true
+      });
+      if (!ModuleUtils.protocols.get(fd)) {
+        throw new CModuleError(`${CModuleError.MISUSE}: ${fd} fd not valid`);
+      }
+      this.#id = id;
+      this.#fd = fd;
+      this.#data = data;
+      this.#event_fired = event_fired;
+      this.#protocol_type = protocol_type;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CProtocolEvent construction error.", err);
+    }
+  }
+}
+
+/**
+ * Defines the "rules" for objects that will setup a protocol that directly
+ * exchanges data with an external item, will continuously run until
+ * terminated, requires the ability to know it is running, and get any
+ * errors that have occurred during its run.
+ */
+class CProtocol {
+  /** @type {string} */
+  #id = "";
+  /** @type {number} */
+  #fd = -1;
+  /** @type {CProtocolEventHandler} */
+  #rx_handler;
+  /** @type {PROTOCOL_TYPE} */
+  #type;
+
+  /**
+   * Helper function for the implementing protocols to report events.
+   * @protected
+   * @param {object} params The named parameters.
+   * @param {PROTOCOL_EVENT} params.event_fired The event handled by the
+   * protocol.
+   * @param {any} params.data The data associated with the given event.
+   */
+  report({event_fired, data}) {
+    const evt = new CProtocolEvent({
+      id: this.id(),
+      fd: this.fd(),
+      data: data,
+      event_fired: event_fired,
+      protocol_type: this.type(),
+    });
+    this.#rx_handler(evt);
+  }
+
+  /**
+   * A log identification.
+   * @returns {string}
+   */
+  id() { return this.#id; }
+
+  /**
+   * The file description of the open protocol.
+   * @returns {number}
+   */
+  fd() { return this.#fd; }
 
   /**
    * Identifies the type of protocol.
@@ -1366,14 +1743,15 @@ export class CProtocol {
       json_check_type({
         type: "function",
         data: rx_handler,
-        count: 2,
+        count: 1,
         should_throw: true
       });
       json_check_type({type: "string", data: type, should_throw: true});
       this.#id = id;
       this.#rx_handler = rx_handler;
       this.#type = type;
-      this.#is_running = true;
+      ModuleUtils.protocol_fd += 1;
+      this.#fd = ModuleUtils.protocol_fd;
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CProtocol construction error.", err);
@@ -1385,10 +1763,10 @@ export class CProtocol {
  * This protocol represents a named channel that any browsing context of a
  * given origin can subscribe to. It allows communication between different
  * documents (in different windows, tabs, frames, iframes, or worker) of the
- * same origin. {@link network_connect} creates this protocol.
+ * same origin.
  * @extends {CProtocol}
  */
-export class CBroadcastChannelProtocol extends CProtocol {
+class CBroadcastChannelProtocol extends CProtocol {
   /** @type {BroadcastChannel} */
   #channel;
 
@@ -1406,9 +1784,6 @@ export class CBroadcastChannelProtocol extends CProtocol {
    */
   post_message(data) {
     try {
-      if (!this.is_running()) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
       this.#channel.postMessage(data);
     } catch (err) {
       CModuleError.handle_error(err);
@@ -1422,14 +1797,7 @@ export class CBroadcastChannelProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (!this.is_running()) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
       this.#channel.close();
-      this.on_data_rx({
-        terminated: true,
-        event_fired: PROTOCOL_EVENT.Terminated
-      });
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError(
@@ -1453,17 +1821,20 @@ export class CBroadcastChannelProtocol extends CProtocol {
       type: PROTOCOL_TYPE.BroadcastChannel
     });
     try {
-      if (!ModuleUtils.is_defined({property: "BroadcastChannel"})) {
+      if (!runtime_query({request: QUERY_REQUEST.IsBroadcastChannel})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       this.#channel = new globalThis.BroadcastChannel(url);
       this.#channel.onmessage = (evt) => {
-        this.on_data_rx({event_fired: PROTOCOL_EVENT.Message, value: evt});
+        this.report({
+          event_fired: PROTOCOL_EVENT.Message,
+          data: new CBroadcastChannelEvent({event: evt, is_error: false})
+        });
       };
       this.#channel.onmessageerror = (evt) => {
-        this.on_data_rx({
+        this.report({
           event_fired: PROTOCOL_EVENT.MessageError,
-          error: evt
+          data: new CBroadcastChannelEvent({event: evt, is_error: true})
         });
       };
     } catch (err) {
@@ -1476,10 +1847,10 @@ export class CBroadcastChannelProtocol extends CProtocol {
 /**
  * Opens a persistent connection to an HTTP server, which sends events in
  * text/event-stream format. The connection remains open until terminate is
- * called. {@link network_connect} creates this protocol.
+ * called.
  * @extends {CProtocol}
  */
-export class CEventSourceProtocol extends CProtocol {
+class CEventSourceProtocol extends CProtocol {
   /** @type {EventSource} */
   #sse
 
@@ -1489,11 +1860,7 @@ export class CEventSourceProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (!this.is_running()) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
       this.#sse.close();
-      this.on_data_rx({event_fired: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError(
@@ -1507,27 +1874,58 @@ export class CEventSourceProtocol extends CProtocol {
    * Constructor for the protocol.
    * @param {object} params The named parameters.
    * @param {string} params.url URL of the server sending the events.
+   * @param {boolean} [params.with_credentials=false] True to utilize CORS,
+   * false otherwise.
    * @param {CProtocolEventHandler} params.rx_handler The protocol handler
    * to receive those events.
    */
-  constructor({url, rx_handler}) {
+  constructor({url, rx_handler, with_credentials=false}) {
     super({
       id: `CEventSourceProtocol-${url}`,
       rx_handler: rx_handler, type: PROTOCOL_TYPE.EventSource
     });
     try {
-      if (!ModuleUtils.is_defined({property: "EventSource"})) {
+      if (!runtime_query({request: QUERY_REQUEST.IsEventSource})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
-      this.#sse = new globalThis.EventSource(url);
+      json_check_type({
+        type: "boolean",
+        data: with_credentials,
+        should_throw: true
+      });
+      this.#sse = new globalThis.EventSource(
+        url,
+        {withCredentials: with_credentials}
+      );
       this.#sse.onerror = (evt) => {
-        this.on_data_rx({event_fired: PROTOCOL_EVENT.Error, error: evt});
+        this.report({
+          event_fired: PROTOCOL_EVENT.Error,
+          data: new CEventSourceEvent({
+            event: evt,
+            is_error: true,
+            ready_state: this.#sse.readyState
+          })
+        });
       };
       this.#sse.onmessage = (evt) => {
-        this.on_data_rx({event_fired: PROTOCOL_EVENT.Message, value: evt});
+        this.report({
+          event_fired: PROTOCOL_EVENT.Message,
+          data: new CEventSourceEvent({
+            event: evt,
+            is_error: false,
+            ready_state: this.#sse.readyState
+          })
+        });
       };
       this.#sse.onopen = (evt) => {
-        this.on_data_rx({event_fired: PROTOCOL_EVENT.Open, value: evt});
+        this.report({
+          event_fired: PROTOCOL_EVENT.Open,
+          data: new CEventSourceEvent({
+            event: evt,
+            is_error: false,
+            ready_state: this.#sse.readyState
+          })
+        });
       };
     } catch (err) {
       CModuleError.handle_error(err);
@@ -1538,11 +1936,12 @@ export class CEventSourceProtocol extends CProtocol {
 
 /**
  * Creates the ability to get a devices geodetic orientation
- * (GPS location, 3D orientation). Protocol created via the
- * {@link hw_request_orientation} function call.
+ * (GPS location, 3D orientation).
  * @extends {CProtocol}
  */
-export class COrientationProtocol extends CProtocol {
+class COrientationProtocol extends CProtocol {
+  /** @type {boolean} */
+  static #is_created = false;
   /** @type {CGeodeticData} */
   #data = new CGeodeticData();
   /** @type {CEventHandler} */
@@ -1556,9 +1955,6 @@ export class COrientationProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() == PROTOCOL_EVENT.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
       // @ts-ignore Object exists in browser runtime.
       globalThis.navigator.geolocation.clearWatch(this.#watch_id);
       this.#watch_id = -1;
@@ -1567,7 +1963,7 @@ export class COrientationProtocol extends CProtocol {
         "deviceorientation",
         this.#on_device_orientation
       );
-      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
+      COrientationProtocol.#is_created = false;
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("COrientationProtocol.terminate() error.", err);
@@ -1588,8 +1984,12 @@ export class COrientationProtocol extends CProtocol {
       type: PROTOCOL_TYPE.Orientation
     });
     try {
-      if (!ModuleUtils.is_defined({property: "geolocation",
-                                   obj: globalThis["navigator"]})) {
+      if (COrientationProtocol.#is_created) {
+        throw new CModuleError(
+          `${CModuleError.MISUSE}: only one COrientationProtocol can exist`
+        );
+      }
+      if (!runtime_query({request: QUERY_REQUEST.IsOrientation})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({type: "object", data: options, should_throw: true});
@@ -1597,6 +1997,10 @@ export class COrientationProtocol extends CProtocol {
       this.#on_device_orientation =
         (/** @type {DeviceOrientationEvent} */ evt) => {
           this.#data.update(evt);
+          this.report({
+            event_fired: PROTOCOL_EVENT.Message,
+            data: Object.assign({}, this.#data)
+          });
       };
       // @ts-ignore Object exists in browser runtime.
       globalThis.addEventListener(
@@ -1608,14 +2012,17 @@ export class COrientationProtocol extends CProtocol {
         // @ts-ignore This will work in Browser runtime.
         (/** @type {GeolocationPosition} */ evt) => {
           this.#data.update(evt.coords);
-          this.on_data_rx({
-            state: PROTOCOL_EVENT.Message,
-            value: Object.assign({}, this.#data)
+          this.report({
+            event_fired: PROTOCOL_EVENT.Message,
+            data: Object.assign({}, this.#data)
           });
         },
         // @ts-ignore This will work in Browser runtime.
         (/** @type {GeolocationPositionError} */evt) => {
-          this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: evt});
+          this.report({
+            event_fired: PROTOCOL_EVENT.Error,
+            data: new CGeodeticError({code: evt.code, message: evt.message})
+          });
         },
         options
       );
@@ -1627,182 +2034,13 @@ export class COrientationProtocol extends CProtocol {
 }
 
 /**
- * Creates a protocol allowing communication with an attached serial port
- * device. Provides the ability to interact with the device setting signals
- * data, and querying the current line status of the port. This is all
- * handled via the {@link SERIAL_PORT_DATA_REQUEST} via
- * the post_message() call.
- * @extends {CProtocol}
- */
-export class CSerialPortProtocol extends CProtocol {
-  /** @type {SerialPort} */
-  #port;
-
-  /**
-   * Carries out either a request for data from an open serial port or to send
-   * data to that open port.
-   * @override
-   * @param {object} params The named parameters.
-   * @param {SERIAL_PORT_DATA_REQUEST} params.request The request to make of the
-   * protocol.
-   * @param {any} [params.data] Any data associated with the given request.
-   * @returns {Promise<void>}
-   */
-  async post_message({request, data}) {
-    try {
-      if (this.state() === PROTOCOL_EVENT.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      let resp = null;
-      switch (request) {
-        case SERIAL_PORT_DATA_REQUEST.Break:
-          json_check_type({
-            type: "boolean",
-            data: data,
-            should_throw: true
-          });
-          await this.#port.setSignals("break", data);
-          break;
-        case SERIAL_PORT_DATA_REQUEST.CarrierDetect:
-          resp = await this.#port.getSignals();
-          this.on_data_rx({
-            state: PROTOCOL_EVENT.Message,
-            value: {carrier_detect: resp["carrierDetect"]}
-          });
-          break;
-        case SERIAL_PORT_DATA_REQUEST.ClearToSend:
-          resp = await this.#port.getSignals();
-          this.on_data_rx({
-            state: PROTOCOL_EVENT.Message,
-            value: {clear_to_send: resp["clearToSend"]}
-          });
-          break;
-        case SERIAL_PORT_DATA_REQUEST.DataBytesRead:
-          if (!this.#port.readable) {
-            this.on_data_rx({
-              state: PROTOCOL_EVENT.Message,
-              value: {data_bytes_read: new Uint8Array()}
-            });
-          }
-          const reader = this.#port.readable.getReader();
-          // @ts-ignore This will exist in the browser runtime.
-          const { value, done } = await reader.read();
-          reader.releaseLock();
-          this.on_data_rx({
-            state: PROTOCOL_EVENT.Message,
-            value: {data_bytes_read: value}
-          });
-          break;
-        case SERIAL_PORT_DATA_REQUEST.DataBytesWrite:
-          json_check_type({
-            type: Uint8Array,
-            data: data,
-            should_throw: true
-          });
-          const writer = this.#port.writable.getWriter();
-          await writer.write(data);
-          writer.releaseLock();
-          break;
-        case SERIAL_PORT_DATA_REQUEST.DataSetReady:
-          resp = await this.#port.getSignals();
-          this.on_data_rx({
-            state: PROTOCOL_EVENT.Message,
-            value: {data_set_ready: resp["dataSetReady"]}
-          });
-          break;
-        case SERIAL_PORT_DATA_REQUEST.DataTerminalReady:
-          json_check_type({
-            type: "boolean",
-            data: data,
-            should_throw: true
-          });
-          await this.#port.setSignals("dataTerminalReady", data);
-          break;
-        case SERIAL_PORT_DATA_REQUEST.RequestToSend:
-          json_check_type({
-            type: "boolean",
-            data: data,
-            should_throw: true
-          });
-          await this.#port.setSignals("requestToSend", data);
-          break;
-        case SERIAL_PORT_DATA_REQUEST.RingIndicator:
-          resp = await this.#port.getSignals();
-          this.on_data_rx({
-            state: PROTOCOL_EVENT.Message,
-            value: {ring_indicator: resp["ringIndicator"]}
-          });
-          break;
-        default:
-          throw new CModuleError(CModuleError.MISUSE);
-      }
-    } catch (err) {
-      if (err instanceof CModuleError) {
-        CModuleError.handle_error(err);
-      }
-      this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: err});
-    }
-  }
-
-  /**
-   * @inheritdoc
-   * @override
-   */
-  terminate() {
-    try {
-      if (this.state() === PROTOCOL_EVENT.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#port.close();
-      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError(
-        "CSerialPortProtocol.terminate() error.",
-        err
-      );
-    }
-  }
-
-  /**
-   * Constructor for the protocol.
-   * @param {object} params The named parameters.
-   * @param {CProtocolEventHandler} params.rx_handler  The receive handler
-   * for data from the protocol.
-   * @param {SerialPort} params.port The physical serial port opened by the
-   * protocol.
-   */
-  constructor({rx_handler, port}) {
-    super({
-      id: `CSerialPortProtocol_${port.getInfo().usbVendorId}` +
-      `_${[port.getInfo().usbProductId]}`,
-      rx_handler: rx_handler,
-      type: PROTOCOL_TYPE.SerialPort
-    });
-    try {
-      if (!ModuleUtils.is_defined({property: "serial",
-                                   obj: globalThis["navigator"]})) {
-        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-      }
-      // @ts-ignore SerialPort exists as a type in Browser context.
-      json_check_type({type: SerialPort, data: port, should_throw: true});
-      this.#port = port;
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError(
-        "CSerialPortProtocol construction error.",
-        err
-      );
-    }
-  }
-}
-
-/**
  * Creates an asynchronous timer that fires on the specified interval until
- * terminated. Created via the {@link async_timer} call.
+ * terminated.
  * @extends {CProtocol}
  */
-export class CTimerProtocol extends CProtocol {
+class CTimerProtocol extends CProtocol {
+  /** @type {number} */
+  #interval;
   /** @type {number} */
   #timer_id = -1;
 
@@ -1812,12 +2050,8 @@ export class CTimerProtocol extends CProtocol {
    */
   terminate() {
     try {
-      if (this.state() == PROTOCOL_EVENT.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
       globalThis.clearInterval(this.#timer_id);
       this.#timer_id = -1;
-      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CTimerProtocol terminate error.", err);
@@ -1840,14 +2074,12 @@ export class CTimerProtocol extends CProtocol {
     try {
       json_check_type({type: "number", data: interval, should_throw: true});
       // @ts-ignore node returns an object.
+      this.#interval = interval;
       this.#timer_id = globalThis.setInterval(() => {
-        try {
-          this.on_data_rx({state: PROTOCOL_EVENT.Message,
-                           value: "timer_expired"});
-        } catch (err) {
-          CModuleError.handle_error(err);
-          throw new CModuleError("CTimerProtocol on_data_rx() error.", err);
-        }
+        this.report({
+          event_fired: PROTOCOL_EVENT.Message,
+          data: new CTimerEvent(this.#interval),
+        });
       }, interval);
     } catch (err) {
       CModuleError.handle_error(err);
@@ -1856,208 +2088,379 @@ export class CTimerProtocol extends CProtocol {
   }
 }
 
-/**
- * Creates a WebSocket connection to a server allowing a dedicated
- * bi-directional exchange of data. This socket will continuously attempt
- * reconnecting to the server on connection loss until the protocol is
- * terminated. {@link network_connect} creates this protocol.
- * @extends {CProtocol}
- */
-export class CWebSocketProtocol extends CProtocol {
-  /** @type {string} */
-  #url;
-  /** @type {WebSocket} */
-  // @ts-ignore The #connect_socket() creates this member field.
-  #socket;
+// /**
+//  * Creates a protocol allowing communication with an attached serial port
+//  * device. Provides the ability to interact with the device setting signals
+//  * data, and querying the current line status of the port. This is all
+//  * handled via the {@link SERIAL_PORT_DATA_REQUEST} via
+//  * the post_message() call.
+//  * @extends {CProtocol}
+//  */
+// export class CSerialPortProtocol extends CProtocol {
+//   /** @type {SerialPort} */
+//   #port;
 
-  /**
-   * Enqueues the specified data to be transmitted to the server over the
-   * WebSocket connection, increasing the value of bufferedAmount by the
-   * number of bytes needed to contain the data. If the data can't be sent
-   * (for example, because it needs to be buffered but the buffer is full),
-   * the socket is closed automatically.
-   * @override
-   * @param {string | ArrayBuffer | Blob } data Data to send to the server
-   * for further processing.
-   * @returns {void}
-   */
-  post_message(data) {
-    try {
-      if (this.state() === PROTOCOL_EVENT.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#socket.send(data);
-    } catch (err) {
-      if (err instanceof CModuleError) {
-        CModuleError.handle_error(err);
-        throw new CModuleError(
-          "CWebSocketProtocol.post_message() error.",
-          err
-        );
-      }
-      this.on_data_rx({state: PROTOCOL_EVENT.Error, error: err});
-    }
-  }
+//   /**
+//    * Carries out either a request for data from an open serial port or to send
+//    * data to that open port.
+//    * @override
+//    * @param {object} params The named parameters.
+//    * @param {SERIAL_PORT_DATA_REQUEST} params.request The request to make of the
+//    * protocol.
+//    * @param {any} [params.data] Any data associated with the given request.
+//    * @returns {Promise<void>}
+//    */
+//   async post_message({request, data}) {
+//     try {
+//       if (this.state() === PROTOCOL_EVENT.Terminated) {
+//         throw new CModuleError(CModuleError.MISUSE);
+//       }
+//       let resp = null;
+//       switch (request) {
+//         case SERIAL_PORT_DATA_REQUEST.Break:
+//           json_check_type({
+//             type: "boolean",
+//             data: data,
+//             should_throw: true
+//           });
+//           await this.#port.setSignals("break", data);
+//           break;
+//         case SERIAL_PORT_DATA_REQUEST.CarrierDetect:
+//           resp = await this.#port.getSignals();
+//           this.on_data_rx({
+//             state: PROTOCOL_EVENT.Message,
+//             value: {carrier_detect: resp["carrierDetect"]}
+//           });
+//           break;
+//         case SERIAL_PORT_DATA_REQUEST.ClearToSend:
+//           resp = await this.#port.getSignals();
+//           this.on_data_rx({
+//             state: PROTOCOL_EVENT.Message,
+//             value: {clear_to_send: resp["clearToSend"]}
+//           });
+//           break;
+//         case SERIAL_PORT_DATA_REQUEST.DataBytesRead:
+//           if (!this.#port.readable) {
+//             this.on_data_rx({
+//               state: PROTOCOL_EVENT.Message,
+//               value: {data_bytes_read: new Uint8Array()}
+//             });
+//           }
+//           const reader = this.#port.readable.getReader();
+//           // @ts-ignore This will exist in the browser runtime.
+//           const { value, done } = await reader.read();
+//           reader.releaseLock();
+//           this.on_data_rx({
+//             state: PROTOCOL_EVENT.Message,
+//             value: {data_bytes_read: value}
+//           });
+//           break;
+//         case SERIAL_PORT_DATA_REQUEST.DataBytesWrite:
+//           json_check_type({
+//             type: Uint8Array,
+//             data: data,
+//             should_throw: true
+//           });
+//           const writer = this.#port.writable.getWriter();
+//           await writer.write(data);
+//           writer.releaseLock();
+//           break;
+//         case SERIAL_PORT_DATA_REQUEST.DataSetReady:
+//           resp = await this.#port.getSignals();
+//           this.on_data_rx({
+//             state: PROTOCOL_EVENT.Message,
+//             value: {data_set_ready: resp["dataSetReady"]}
+//           });
+//           break;
+//         case SERIAL_PORT_DATA_REQUEST.DataTerminalReady:
+//           json_check_type({
+//             type: "boolean",
+//             data: data,
+//             should_throw: true
+//           });
+//           await this.#port.setSignals("dataTerminalReady", data);
+//           break;
+//         case SERIAL_PORT_DATA_REQUEST.RequestToSend:
+//           json_check_type({
+//             type: "boolean",
+//             data: data,
+//             should_throw: true
+//           });
+//           await this.#port.setSignals("requestToSend", data);
+//           break;
+//         case SERIAL_PORT_DATA_REQUEST.RingIndicator:
+//           resp = await this.#port.getSignals();
+//           this.on_data_rx({
+//             state: PROTOCOL_EVENT.Message,
+//             value: {ring_indicator: resp["ringIndicator"]}
+//           });
+//           break;
+//         default:
+//           throw new CModuleError(CModuleError.MISUSE);
+//       }
+//     } catch (err) {
+//       if (err instanceof CModuleError) {
+//         CModuleError.handle_error(err);
+//       }
+//       this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: err});
+//     }
+//   }
 
-  /**
-   * @inheritdoc
-   * @override
-   */
-  terminate() {
-    try {
-      if (this.state() === PROTOCOL_EVENT.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#socket.close();
-      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CWebSocketProtocol.terminate() error.", err);
-    }
-  }
+//   /**
+//    * @inheritdoc
+//    * @override
+//    */
+//   terminate() {
+//     try {
+//       if (this.state() === PROTOCOL_EVENT.Terminated) {
+//         throw new CModuleError(CModuleError.MISUSE);
+//       }
+//       this.#port.close();
+//       this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
+//     } catch (err) {
+//       CModuleError.handle_error(err);
+//       throw new CModuleError(
+//         "CSerialPortProtocol.terminate() error.",
+//         err
+//       );
+//     }
+//   }
 
-  /**
-   * Handles creating a web socket to connect to a server.
-   */
-  #connect_socket() {
-    // @ts-ignore URL will not be null.
-    this.#socket = new globalThis.WebSocket(this.#url);
-    this.#socket.onmessage = (evt) => {
-      this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
-    }
-    this.#socket.onerror = (evt) => {
-      this.on_data_rx({state: PROTOCOL_EVENT.Error, error: evt});
-    }
-    this.#socket.onclose = (evt) => {
-      this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
-      this.#socket.close();
-      this.#connect_socket();
-    }
-  }
+//   /**
+//    * Constructor for the protocol.
+//    * @param {object} params The named parameters.
+//    * @param {CProtocolEventHandler} params.rx_handler  The receive handler
+//    * for data from the protocol.
+//    * @param {SerialPort} params.port The physical serial port opened by the
+//    * protocol.
+//    */
+//   constructor({rx_handler, port}) {
+//     super({
+//       id: `CSerialPortProtocol_${port.getInfo().usbVendorId}` +
+//       `_${[port.getInfo().usbProductId]}`,
+//       rx_handler: rx_handler,
+//       type: PROTOCOL_TYPE.SerialPort
+//     });
+//     try {
+//       if (!ModuleUtils.is_defined({property: "serial",
+//                                    obj: globalThis["navigator"]})) {
+//         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+//       }
+//       // @ts-ignore SerialPort exists as a type in Browser context.
+//       json_check_type({type: SerialPort, data: port, should_throw: true});
+//       this.#port = port;
+//     } catch (err) {
+//       CModuleError.handle_error(err);
+//       throw new CModuleError(
+//         "CSerialPortProtocol construction error.",
+//         err
+//       );
+//     }
+//   }
+// }
 
-  /**
-   * Constructor for the protocol.
-   * @param {object} params The named parameters.
-   * @param {string} params.url The URL of the server to connect.
-   * @param {CProtocolEventHandler} params.rx_handler The handler for
-   * receiving data from this protocol.
-   */
-  constructor({url, rx_handler}) {
-    super({
-      id: `CWebSocketProtocol-${url}`,
-      rx_handler: rx_handler,
-      type: PROTOCOL_TYPE.WebSocket
-    });
-    try {
-      if (!ModuleUtils.is_defined({property: "WebSocket"})) {
-        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-      }
-      json_check_type({type: "string", data: url, should_throw: true});
-      this.#url = url;
-      this.#connect_socket();
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CWebSocketProtocol construction error.", err);
-    }
-  }
-}
+// /**
+//  * Creates a WebSocket connection to a server allowing a dedicated
+//  * bi-directional exchange of data. This socket will continuously attempt
+//  * reconnecting to the server on connection loss until the protocol is
+//  * terminated. {@link network_connect} creates this protocol.
+//  * @extends {CProtocol}
+//  */
+// export class CWebSocketProtocol extends CProtocol {
+//   /** @type {string} */
+//   #url;
+//   /** @type {WebSocket} */
+//   // @ts-ignore The #connect_socket() creates this member field.
+//   #socket;
 
-/**
- * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
- * @extends {CProtocol}
- */
-export class CWebRtcProtocol extends CProtocol {
+//   /**
+//    * Enqueues the specified data to be transmitted to the server over the
+//    * WebSocket connection, increasing the value of bufferedAmount by the
+//    * number of bytes needed to contain the data. If the data can't be sent
+//    * (for example, because it needs to be buffered but the buffer is full),
+//    * the socket is closed automatically.
+//    * @override
+//    * @param {string | ArrayBuffer | Blob } data Data to send to the server
+//    * for further processing.
+//    * @returns {void}
+//    */
+//   post_message(data) {
+//     try {
+//       if (this.state() === PROTOCOL_EVENT.Terminated) {
+//         throw new CModuleError(CModuleError.MISUSE);
+//       }
+//       this.#socket.send(data);
+//     } catch (err) {
+//       if (err instanceof CModuleError) {
+//         CModuleError.handle_error(err);
+//         throw new CModuleError(
+//           "CWebSocketProtocol.post_message() error.",
+//           err
+//         );
+//       }
+//       this.on_data_rx({state: PROTOCOL_EVENT.Error, error: err});
+//     }
+//   }
 
-}
+//   /**
+//    * @inheritdoc
+//    * @override
+//    */
+//   terminate() {
+//     try {
+//       if (this.state() === PROTOCOL_EVENT.Terminated) {
+//         throw new CModuleError(CModuleError.MISUSE);
+//       }
+//       this.#socket.close();
+//       this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
+//     } catch (err) {
+//       CModuleError.handle_error(err);
+//       throw new CModuleError("CWebSocketProtocol.terminate() error.", err);
+//     }
+//   }
 
-/**
- * Constructs a dedicated background worker off the JavaScript runtime main
- * thread. Object constructed via the {@link async_worker} call.
- * @extends {CProtocol}
- */
-export class CWorkerProtocol extends CProtocol {
-  /** @type {Worker} */
-  #worker;
+//   /**
+//    * Handles creating a web socket to connect to a server.
+//    */
+//   #connect_socket() {
+//     // @ts-ignore URL will not be null.
+//     this.#socket = new globalThis.WebSocket(this.#url);
+//     this.#socket.onmessage = (evt) => {
+//       this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
+//     }
+//     this.#socket.onerror = (evt) => {
+//       this.on_data_rx({state: PROTOCOL_EVENT.Error, error: evt});
+//     }
+//     this.#socket.onclose = (evt) => {
+//       this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
+//       this.#socket.close();
+//       this.#connect_socket();
+//     }
+//   }
 
-  /**
-   * Data specific to how you construct your dedicated background worker.
-   * @override
-   * @param {any} data The data to send to the background worker.
-   * @returns {void}
-   */
-  post_message(data) {
-    try {
-      if (this.state() == PROTOCOL_EVENT.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#worker.postMessage(data);
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CWorkerProtocol.post_message() error.", err);
-    }
-  }
+//   /**
+//    * Constructor for the protocol.
+//    * @param {object} params The named parameters.
+//    * @param {string} params.url The URL of the server to connect.
+//    * @param {CProtocolEventHandler} params.rx_handler The handler for
+//    * receiving data from this protocol.
+//    */
+//   constructor({url, rx_handler}) {
+//     super({
+//       id: `CWebSocketProtocol-${url}`,
+//       rx_handler: rx_handler,
+//       type: PROTOCOL_TYPE.WebSocket
+//     });
+//     try {
+//       if (!ModuleUtils.is_defined({property: "WebSocket"})) {
+//         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+//       }
+//       json_check_type({type: "string", data: url, should_throw: true});
+//       this.#url = url;
+//       this.#connect_socket();
+//     } catch (err) {
+//       CModuleError.handle_error(err);
+//       throw new CModuleError("CWebSocketProtocol construction error.", err);
+//     }
+//   }
+// }
 
-  /**
-   * @inheritdoc
-   * @override
-   */
-  terminate() {
-    try {
-      if (this.state() == PROTOCOL_EVENT.Terminated) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#worker.terminate();
-      this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CWorkerProtocol.terminate() error.", err);
-    }
-  }
+// /**
+//  * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
+//  * @extends {CProtocol}
+//  */
+// export class CWebRtcProtocol extends CProtocol {
 
-  /**
-   * Constructs a worker protocol for asynchronous processing off the main
-   * runtime thread.
-   * @param {object} params The named parameters.
-   * @param {string} params.url A unique ID for the protocol.
-   * @param {CProtocolEventHandler} params.rx_handler The receive handler
-   * for data and state changes
-   * @param {object} [params.options] Options for further configuration of
-   * the worker.
-   */
-  constructor({url, rx_handler, options = {type: "module"}}) {
-    super({
-      id: `Worker-${url}`,
-      rx_handler: rx_handler,
-      type: PROTOCOL_TYPE.Worker
-    });
-    try {
-      if (!ModuleUtils.is_defined({property: "Worker"})) {
-        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-      }
-      json_check_type({type: "string", data: url, should_throw: true});
-      json_check_type({type: "object", data: options, should_throw: true});
-      this.#worker = new globalThis.Worker(
-        new URL(url, import.meta.url).href,
-        options
-      );
-      this.#worker.onerror = (evt) => {
-        this.on_data_rx({state: PROTOCOL_EVENT.Error, error: evt});
-        evt.preventDefault();
-      }
-      this.#worker.onmessageerror = (evt) => {
-        this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: evt});
-        evt.preventDefault();
-      }
-      this.#worker.onmessage = (evt) => {
-        this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
-        evt.preventDefault();
-      }
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CWorkerProtocol construction error.", err);
-    }
-  }
-}
+// }
+
+// /**
+//  * Constructs a dedicated background worker off the JavaScript runtime main
+//  * thread. Object constructed via the {@link async_worker} call.
+//  * @extends {CProtocol}
+//  */
+// export class CWorkerProtocol extends CProtocol {
+//   /** @type {Worker} */
+//   #worker;
+
+//   /**
+//    * Data specific to how you construct your dedicated background worker.
+//    * @override
+//    * @param {any} data The data to send to the background worker.
+//    * @returns {void}
+//    */
+//   post_message(data) {
+//     try {
+//       if (this.state() == PROTOCOL_EVENT.Terminated) {
+//         throw new CModuleError(CModuleError.MISUSE);
+//       }
+//       this.#worker.postMessage(data);
+//     } catch (err) {
+//       CModuleError.handle_error(err);
+//       throw new CModuleError("CWorkerProtocol.post_message() error.", err);
+//     }
+//   }
+
+//   /**
+//    * @inheritdoc
+//    * @override
+//    */
+//   terminate() {
+//     try {
+//       if (this.state() == PROTOCOL_EVENT.Terminated) {
+//         throw new CModuleError(CModuleError.MISUSE);
+//       }
+//       this.#worker.terminate();
+//       this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
+//     } catch (err) {
+//       CModuleError.handle_error(err);
+//       throw new CModuleError("CWorkerProtocol.terminate() error.", err);
+//     }
+//   }
+
+//   /**
+//    * Constructs a worker protocol for asynchronous processing off the main
+//    * runtime thread.
+//    * @param {object} params The named parameters.
+//    * @param {string} params.url A unique ID for the protocol.
+//    * @param {CProtocolEventHandler} params.rx_handler The receive handler
+//    * for data and state changes
+//    * @param {object} [params.options] Options for further configuration of
+//    * the worker.
+//    */
+//   constructor({url, rx_handler, options = {type: "module"}}) {
+//     super({
+//       id: `Worker-${url}`,
+//       rx_handler: rx_handler,
+//       type: PROTOCOL_TYPE.Worker
+//     });
+//     try {
+//       if (!ModuleUtils.is_defined({property: "Worker"})) {
+//         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+//       }
+//       json_check_type({type: "string", data: url, should_throw: true});
+//       json_check_type({type: "object", data: options, should_throw: true});
+//       this.#worker = new globalThis.Worker(
+//         new URL(url, import.meta.url).href,
+//         options
+//       );
+//       this.#worker.onerror = (evt) => {
+//         this.on_data_rx({state: PROTOCOL_EVENT.Error, error: evt});
+//         evt.preventDefault();
+//       }
+//       this.#worker.onmessageerror = (evt) => {
+//         this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: evt});
+//         evt.preventDefault();
+//       }
+//       this.#worker.onmessage = (evt) => {
+//         this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
+//         evt.preventDefault();
+//       }
+//     } catch (err) {
+//       CModuleError.handle_error(err);
+//       throw new CModuleError("CWorkerProtocol construction error.", err);
+//     }
+//   }
+// }
 
 // ============================================================================
 // [ASYNC I/O UC FUNCTIONS] ===================================================
@@ -2215,9 +2618,10 @@ export function db_version() {
  * disk.
  * @param {string} [params.accept="*"] A comma separated list of either file
  * extensions or mime types representing files
- * @returns {Promise<CResult<ArrayBuffer | string | Uint8Array | null>>} The
+ * @returns {Promise<CResult<ArrayBuffer | string | Uint8Array | void>>} The
  * data read from the particular file or null if an error occurred or no file
  * was selected.
+ * A rejected promise represents a module API violation.
  * @example
  * // Read a text file from disk.
  * const data = await disk_read_file({
@@ -2296,8 +2700,8 @@ export function disk_read_file({data_type, accept="*"}) {
  * to disk.
  * @param {string} params.filename What to call the file in the download
  * directory.
- * @returns {Promise<CResult<null>>} The result of the save.
- * @see https://web.dev/patterns/files/save-a-file
+ * @returns {Promise<CResult<void>>} The result of the save. A rejected
+ * promise represents an API violation.
  * @example
  * // Go attempt to download the file contents from a blob
  * let result = await disk_write_file({
@@ -2734,8 +3138,7 @@ export function logger_log({level, data}) {
 export function network_beacon({url, data}) {
   try {
 
-    if (!ModuleUtils.is_defined({property: "sendBeacon",
-                                 obj: globalThis["navigator"]})) {
+    if (!runtime_query({request: QUERY_REQUEST.IsBeacon})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: url, should_throw: true});
@@ -2789,7 +3192,121 @@ export async function network_fetch({url, options}) {
 // [PROTOCOL UC FUNCTIONS] ====================================================
 // ============================================================================
 
-// TBD
+/**
+ *
+ * @param {object} params The named parameters
+ * @param {PROTOCOL_TYPE} params.type The protocol to open.
+ * @param {CProtocolEventHandler} params.rx_handler The handler for the
+ * protocol.
+ * @param {number} params.interval The interval for a given Timer protocol
+ * type.
+ * @param {COrientationOptions} [params.orientation_options] Options specific
+ * to the Orientation protocol.
+ * @param {string} [params.url=" "] The url associated with socket connecting
+ * protocols. Defaults to an invalid value to trigger an error if not set
+ * properly.
+ * @param {boolean} [params.with_credentials=false] Associated with protocols
+ * that utilize CORS processing (set to true).
+ * @returns {Promise<number>} A handle to the opened protocol or -1 if open
+ * was cancelled by user.
+ * @example
+ * // TBD
+ */
+export async function protocol_open({
+  type,
+  rx_handler,
+  interval,
+  orientation_options,
+  url=" ",
+  with_credentials=false,
+}) {
+  try {
+    let protocol = null;
+    switch (type) {
+      case PROTOCOL_TYPE.BroadcastChannel:
+        protocol = new CBroadcastChannelProtocol({
+          rx_handler: rx_handler,
+          url: url
+        });
+        break;
+      case PROTOCOL_TYPE.EventSource:
+        protocol = new CEventSourceProtocol({
+          rx_handler: rx_handler,
+          url: url
+        });
+      case PROTOCOL_TYPE.Orientation:
+        protocol = new COrientationProtocol({
+          rx_handler: rx_handler,
+          options: orientation_options,
+        });
+        break;
+      case PROTOCOL_TYPE.Timer:
+        protocol = new CTimerProtocol({
+          rx_handler: rx_handler,
+          interval: interval
+        });
+        break;
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+    ModuleUtils.protocols.set(protocol.fd(), protocol);
+    return protocol.fd();
+  } catch (err) {
+    if (err instanceof CModuleError) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("protocol_open() error.", err);
+    }
+    return -1;
+  }
+}
+
+/**
+ * Posts data to an open protocol for processing.
+ * @param {object} params The named parameters
+ * @param {number} params.fd The file descriptor that represents the open
+ * protocol.
+ * @param {any} params.data TBD
+ * @returns {void}
+ * @example
+ * // TBD
+ */
+export function protocol_post_message({fd, data}) {
+  try {
+    let protocol = ModuleUtils.protocols.get(fd);
+    if (!protocol) {
+      throw new CModuleError(`
+        ${CModuleError.MISUSE}: ${fd} protocol not found.`
+      );
+    }
+    protocol.post_message(data);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("protocol_post_message() error.", err);
+  }
+}
+
+/**
+ * Terminates a currently open protocol.
+ * @param {number} fd The currently opened protocol.
+ * @returns {void}
+ * @example
+ * // TBD
+ */
+export function protocol_terminate(fd) {
+  try {
+    let protocol = ModuleUtils.protocols.get(fd);
+    if (!protocol) {
+      throw new CModuleError(`
+        ${CModuleError.MISUSE}: ${fd} protocol not found.`
+      );
+    }
+    protocol.terminate();
+    ModuleUtils.protocols.delete(fd);
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("protocol_terminate() error.", err);
+  }
+}
 
 // ============================================================================
 // [RUNTIME UC FUNCTIONS] =====================================================
@@ -3061,7 +3578,7 @@ export function runtime_open({
 }) {
   try {
     // Ensure the runtime function is available
-    if (!ModuleUtils.is_defined({property: "open"})) {
+    if (!runtime_query({request: QUERY_REQUEST.IsOpen})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
 
@@ -3161,7 +3678,7 @@ export function runtime_open({
  * @param {QUERY_REQUEST} params.request The item to query about the runtime.
  * @param {string} [params.name = ""] An additional name to aid in the query.
  * @param {object} [params.obj = globalThis] The object to check for a given
- * named feature. Only valid with the {@link DEFINED_REQUEST.AskRuntime}
+ * named feature. Only valid with the {@link QUERY_REQUEST.AskRuntime}
  * request.
  * @returns {boolean | HTMLElement | HTMLElement[] | number | string | null}
  * @example
@@ -3273,15 +3790,26 @@ export function runtime_query({request, name="", obj = globalThis}) {
           : -1;
       case QUERY_REQUEST.IsAudio:
         return ModuleUtils.is_defined({property: "HTMLAudioElement"});
+      case QUERY_REQUEST.IsBeacon:
+        return ModuleUtils.is_defined({property: "sendBeacon",
+                                 obj: globalThis["navigator"]});
       case QUERY_REQUEST.IsBluetooth:
         return ModuleUtils.is_defined({property: "bluetooth",
                                        obj: globalThis["navigator"]});
+      case QUERY_REQUEST.IsBroadcastChannel:
+        return ModuleUtils.is_defined({property: "BroadcastChannel"});
       case QUERY_REQUEST.IsBrowser:
         return ModuleUtils.is_defined({property: "HTMLElement"});
       case QUERY_REQUEST.IsBun:
         return ModuleUtils.is_defined({property: "Bun"});
       case QUERY_REQUEST.IsDeno:
         return ModuleUtils.is_defined({property: "Deno"});
+      case QUERY_REQUEST.IsCookieStore:
+        return ModuleUtils.is_defined({property: "cookieStore"});
+      case QUERY_REQUEST.IsEventSource:
+        return ModuleUtils.is_defined({property: "EventSource"});
+      case QUERY_REQUEST.IsLocalStorage:
+        return runtime_query({request: QUERY_REQUEST.IsLocalStorage});
       case QUERY_REQUEST.IsIFrame:
         try {
           // @ts-ignore This will be within the browser context
@@ -3296,6 +3824,8 @@ export function runtime_query({request, name="", obj = globalThis}) {
         return ModuleUtils.is_defined({property: "process"}) &&
           !ModuleUtils.is_defined({property: "Deno"}) &&
           !ModuleUtils.is_defined({property: "Bun"});
+      case QUERY_REQUEST.IsOpen:
+        return ModuleUtils.is_defined({property: "open"});
       case QUERY_REQUEST.IsOrientation:
         return ModuleUtils.is_defined({property: "geolocation",
                                        obj: globalThis["navigator"]});
@@ -3311,6 +3841,9 @@ export function runtime_query({request, name="", obj = globalThis}) {
       case QUERY_REQUEST.IsSerialPort:
         return ModuleUtils.is_defined({property: "serial",
                                        obj: globalThis["navigator"]});
+      case QUERY_REQUEST.IsSessionStorage:
+        return runtime_query({request: QUERY_REQUEST.IsSessionStorage});
+
       case QUERY_REQUEST.IsShare:
         return ModuleUtils.is_defined({property: "share",
                                        obj: globalThis["navigator"]});
@@ -3456,7 +3989,7 @@ export async function storage_clear(type = STORAGE_TYPE.Local) {
   try {
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3470,14 +4003,14 @@ export async function storage_clear(type = STORAGE_TYPE.Local) {
         }
         break;
       case STORAGE_TYPE.Local:
-        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
         globalThis.localStorage.clear();
         break;
       case STORAGE_TYPE.Session:
-        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3512,7 +4045,7 @@ export async function storage_get({type = STORAGE_TYPE.Local, key}) {
     json_check_type({type: "string", data: key, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3523,13 +4056,13 @@ export async function storage_get({type = STORAGE_TYPE.Local, key}) {
             : null
           : null;
       case STORAGE_TYPE.Local:
-        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
         return globalThis.localStorage.getItem(key);
       case STORAGE_TYPE.Session:
-        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3564,7 +4097,7 @@ export async function storage_key({type = STORAGE_TYPE.Local, index}) {
     json_check_type({type: "number", data: index, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3574,7 +4107,7 @@ export async function storage_key({type = STORAGE_TYPE.Local, index}) {
           ? key
           : null;
       case STORAGE_TYPE.Local:
-        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3583,7 +4116,7 @@ export async function storage_key({type = STORAGE_TYPE.Local, index}) {
           ? globalThis.localStorage.key(index)
           : null;
       case STORAGE_TYPE.Session:
-        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3618,19 +4151,19 @@ export async function storage_length(type = STORAGE_TYPE.Local) {
   try {
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
         return (await globalThis.cookieStore.getAll()).length;
       case STORAGE_TYPE.Local:
-        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
         return globalThis.localStorage.length;
       case STORAGE_TYPE.Session:
-        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3663,21 +4196,21 @@ export async function storage_remove({type = STORAGE_TYPE.Local, key}) {
     json_check_type({type: "string", data: key, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
         await globalThis.cookieStore.delete(key, value);
         break;
       case STORAGE_TYPE.Local:
-        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
         globalThis.localStorage.removeItem(key);
         break;
       case STORAGE_TYPE.Session:
-        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
@@ -3713,21 +4246,21 @@ export async function storage_set({type = STORAGE_TYPE.Local, key, value}) {
     json_check_type({type: "string", data: value, should_throw: true});
     switch (type) {
       case STORAGE_TYPE.Cookie:
-        if (!ModuleUtils.is_defined({property: "cookieStore"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
         await globalThis.cookieStore.set(key, value);
         break;
       case STORAGE_TYPE.Local:
-        if (!ModuleUtils.is_defined({property: "localStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
         globalThis.localStorage.setItem(key, value);
         break;
       case STORAGE_TYPE.Session:
-        if (!ModuleUtils.is_defined({property: "sessionStorage"})) {
+        if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore Will exist in browser context
