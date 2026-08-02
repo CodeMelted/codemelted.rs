@@ -259,6 +259,8 @@ export const LOGGER = Object.freeze({
  * Provides the current state of the {@link CProtocol.state()} object.
  * @readonly
  * @enum {string}
+ * @property {string} Close Signifies an onclose listener received an
+ * CloseEvent.
  * @property {string} Error Signifies an onerror listener received an
  * ErrorEvent.
  * @property {string} Message Signifies a onmessage listener received a
@@ -274,6 +276,7 @@ export const LOGGER = Object.freeze({
  * been terminated and is no longer running.
  */
 export const PROTOCOL_EVENT = Object.freeze({
+  Close: "close",
   Error: "error",
   Message: "message",
   MessageError: "message_error",
@@ -386,11 +389,13 @@ export const PROTOCOL_TYPE = Object.freeze({
  * runtime.
  * @property {string} IsSessionStorage Determines if session storage is
  * available to the runtime.
- * @property {string} IsTextToSpeech Determines if text-to-speech is available
- * to the runtime.
+ * @property {string} IsTextToSpeech Determines if text-to-speech is
+ * available to the runtime.
  * @property {string} IsTouchEnabled Identifies if the browser is accessible
  * via a touch device.
  * @property {string} IsUsb Determines if USB is available to the runtime.
+ * @property {string} IsWebSocket Determines if WebSocket is available to the
+ * runtime.
  * @property {string} IsWorkerAvailable Determines if a Worker can be created
  * with the runtime.
  * @property {string} IsWorkerRuntime Determines if the runtime is a Worker.
@@ -467,6 +472,7 @@ export const QUERY_REQUEST = Object.freeze({
   IsTextToSpeech: "is_text_to_speech",
   IsTouchEnabled: "is_touch_enabled",
   IsUsb: "is_usb",
+  IsWebSocket: "is_websocket",
   IsWorkerAvailable: "is_worker_available",
   IsWorkerRuntime: "is_worker_runtime",
   Name: "name",
@@ -833,12 +839,22 @@ export class CEventSourceEvent {
    */
   static get OPEN() { return 1; }
 
-    /**
+  /**
    * Signals the ready_state() is in a connecting state.
    * @readonly
    * @type {number}
    */
   static get CLOSED() { return 2; }
+
+  /**
+   * Treats the wrapped event as a message event.
+   * @returns {MessageEvent?}
+   */
+  as_message_event() {
+    return this.#event instanceof MessageEvent
+      ? this.#event
+      : null;
+  }
 
   /**
    * The event captured by the protocol.
@@ -886,54 +902,6 @@ export class CEventSourceEvent {
       CModuleError.handle_error(err);
       throw new CModuleError(
         "CEventSourceEvent construction error.", err
-      );
-    }
-  }
-}
-
-/**
- * Identifies event handled by the {@link PROTOCOL_TYPE.Worker}
- * protocol.
- */
-export class CWorkerEvent {
-  /** @type {ErrorEvent | MessageEvent} */
-  #event;
-  /** @type {boolean} */
-  #is_error;
-
-  /**
-   * The event captured by the protocol.
-   * @returns {ErrorEvent | MessageEvent}
-   */
-  event() { return this.#event; }
-
-  /**
-   * Indicates if the event captured was an error.
-   * @returns {boolean}
-   */
-  is_error() { return this.#is_error; }
-
-  /**
-   * Constructor for the protocol event.
-   * @param {object} params The named parameters
-   * @param {ErrorEvent | MessageEvent} params.event The event handled by the
-   * protocol.
-   * @param {boolean} params.is_error true if it was an error event,
-   * false otherwise.
-   */
-  constructor({event, is_error}) {
-    try {
-      if (!json_check_type({type: MessageEvent, data: event}) &&
-          !json_check_type({type: ErrorEvent, data: event})) {
-        throw new CModuleError(CModuleError.TYPE_VIOLATION);
-      }
-      json_check_type({type: "boolean", data: is_error, should_throw: true});
-      this.#event = event;
-      this.#is_error = is_error;
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError(
-        "CWorkerEvent construction error.", err
       );
     }
   }
@@ -1557,6 +1525,261 @@ export class CTimerEvent {
   }
 }
 
+/**
+ * Represents the data to send to a connected web socket to a server. Supports
+ * the {@link PROTOCOL_TYPE.WebSocket} protocol.
+ */
+export class CWebSocketData {
+  /** @type {"arraybuffer" | "blob"} */
+  #binary_type;
+  /** @type {ArrayBuffer | Blob | string} */
+  #data;
+
+  /**
+   * Identifies the web sockets primary transmission type across the web
+   * socket.
+   * @returns {"arraybuffer" | "blob"}
+   */
+  binary_type() { return this.#binary_type; }
+
+  /**
+   * The data to transmit
+   * @returns {ArrayBuffer | Blob | string}
+   */
+  data() { return this.#data; }
+
+  /**
+   * Constructor for the data to send to a web socket.
+   * @param {object} params The named parameters
+   * @param {ArrayBuffer | Blob | string} params.data The data to send to
+   * the server.
+   * @param {"arraybuffer" | "blob"} [params.binary_type="blob"] How to
+   * configure the socket when sending / receiving the data.
+   */
+  constructor({data, binary_type="blob"}) {
+    try {
+      if (!json_check_type({type: ArrayBuffer, data: data}) &&
+          !json_check_type({type: Blob, data: data}) &&
+          !json_check_type({type: "string", data: data})) {
+        throw new CModuleError(CModuleError.TYPE_VIOLATION);
+      }
+      json_check_type({type: "string", data: binary_type, should_throw: true});
+      this.#data = data;
+      this.#binary_type = binary_type;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWebSocketData construction error.", err);
+    }
+  }
+}
+
+/**
+ * Represents a firing timer for an open {@link PROTOCOL_TYPE} WebSocket.
+ */
+export class CWebSocketEvent {
+  /** @type {number} */
+  #buffered_amount;
+  /** @type {CloseEvent | Event | MessageEvent} */
+  #event;
+  /** @type {boolean} */
+  #is_error;
+  /** @type {number} */
+  #ready_state;
+  /** @type {string} */
+  #url;
+
+  /**
+   * Signals the ready_state() is in a connecting state.
+   * @readonly
+   * @type {number}
+   */
+  static get CONNECTING() { return 0; }
+
+  /**
+   * Signals the ready_state() is in a connecting state.
+   * @readonly
+   * @type {number}
+   */
+  static get OPEN() { return 1; }
+
+  /**
+   * Signals the ready_state() is in a closing state.
+   * @readonly
+   * @type {number}
+   */
+  static get CLOSING() { return 2; }
+
+  /**
+   * Signals the ready_state() is in a closed state.
+   * @readonly
+   * @type {number}
+   */
+  static get CLOSED() { return 3; }
+
+  /**
+   * Treats the captured event as a close event.
+   * @returns {CloseEvent?}
+   */
+  as_close_event() {
+    return this.#event instanceof CloseEvent
+      ? this.#event
+      : null;
+  }
+
+  /**
+   * Treats the captured event as a message event.
+   * @returns {MessageEvent?}
+   */
+  as_message_event() {
+    return this.#event instanceof MessageEvent
+      ? this.#event
+      : null;
+  }
+
+  /**
+   * The buffered amount of data to send to the server protocol.
+   * @returns {number}
+   */
+  buffered_amount() { return this.#buffered_amount; }
+
+  /**
+   * The event captured by the protocol.
+   * @returns {CloseEvent | Event | MessageEvent}
+   */
+  event() { return this.#event; }
+
+  /**
+   * Indicates if the event captured was an error.
+   * @returns {boolean}
+   */
+  is_error() { return this.#is_error; }
+
+  /**
+   * The current state of the protocol.
+   * @returns {number}
+   */
+  ready_state() { return this.#ready_state; }
+
+  /**
+   * The URL of the server.
+   * @returns {string}
+   */
+  url() { return this.#url; }
+
+  /**
+   * Constructor for the class.
+   * @param {object} params The named parameters
+   * @param {number} params.buffered_amount The amount of data queued to be
+   * transmitted to the server.
+   * @param {Event | MessageEvent} params.event The event handled by the
+   * protocol.
+   * @param {boolean} params.is_error true if it was an error event,
+   * false otherwise.
+   * @param {number} params.ready_state The current state of the protocol.
+   * @param {string} params.url The url of the server the protocol is
+   * connected.
+   */
+  constructor({buffered_amount, event, is_error, ready_state, url}) {
+    try {
+      if (!json_check_type({type: MessageEvent, data: event}) &&
+          !json_check_type({type: CloseEvent, data: event}) &&
+          !json_check_type({type: Event, data: event})) {
+        throw new CModuleError(CModuleError.TYPE_VIOLATION);
+      }
+      json_check_type({
+        type: "number",
+        data: buffered_amount,
+        should_throw: true
+      });
+      json_check_type({type: "boolean", data: is_error, should_throw: true});
+      json_check_type({
+        type: "number",
+        data: ready_state,
+        should_throw: true
+      });
+      json_check_type({type: "string", data: url, should_throw: true});
+      this.#buffered_amount = buffered_amount;
+      this.#event = event;
+      this.#is_error = is_error;
+      this.#ready_state = ready_state;
+      this.#url = url;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CWebSocketEvent construction error.", err
+      );
+    }
+  }
+}
+
+/**
+ * Identifies event handled by the {@link PROTOCOL_TYPE.Worker}
+ * protocol.
+ */
+export class CWorkerEvent {
+  /** @type {ErrorEvent | MessageEvent} */
+  #event;
+  /** @type {boolean} */
+  #is_error;
+
+  /**
+   * Treats the wrapped event as an error event.
+   * @returns {ErrorEvent?}
+   */
+  as_error_event() {
+    return this.#event instanceof ErrorEvent
+      ? this.#event
+      : null;
+  }
+
+  /**
+   * Treats the wrapped event as a message event.
+   * @returns {MessageEvent?}
+   */
+  as_message_event() {
+    return this.#event instanceof MessageEvent
+      ? this.#event
+      : null;
+  }
+
+  /**
+   * The event captured by the protocol.
+   * @returns {ErrorEvent | MessageEvent}
+   */
+  event() { return this.#event; }
+
+  /**
+   * Indicates if the event captured was an error.
+   * @returns {boolean}
+   */
+  is_error() { return this.#is_error; }
+
+  /**
+   * Constructor for the protocol event.
+   * @param {object} params The named parameters
+   * @param {ErrorEvent | MessageEvent} params.event The event handled by the
+   * protocol.
+   * @param {boolean} params.is_error true if it was an error event,
+   * false otherwise.
+   */
+  constructor({event, is_error}) {
+    try {
+      if (!json_check_type({type: MessageEvent, data: event}) &&
+          !json_check_type({type: ErrorEvent, data: event})) {
+        throw new CModuleError(CModuleError.TYPE_VIOLATION);
+      }
+      json_check_type({type: "boolean", data: is_error, should_throw: true});
+      this.#event = event;
+      this.#is_error = is_error;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CWorkerEvent construction error.", err
+      );
+    }
+  }
+}
+
 // ============================================================================
 // [MODULE PROTOCOLS] =========================================================
 // ============================================================================
@@ -1623,6 +1846,16 @@ export class CProtocolEvent {
    */
   as_timer_event() {
     return this.#data instanceof CTimerEvent
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Treats the data as a worker event.
+   * @returns {CWebSocketEvent?}
+   */
+  as_web_socket_event() {
+    return this.#data instanceof CWebSocketEvent
       ? this.#data
       : null;
   }
@@ -2360,111 +2593,138 @@ class CUsbProtocol extends CProtocol {
 
 }
 
-// /**
-//  * Creates a WebSocket connection to a server allowing a dedicated
-//  * bi-directional exchange of data. This socket will continuously attempt
-//  * reconnecting to the server on connection loss until the protocol is
-//  * terminated. {@link network_connect} creates this protocol.
-//  * @extends {CProtocol}
-//  */
-// class CWebSocketProtocol extends CProtocol {
-//   /** @type {string} */
-//   #url;
-//   /** @type {WebSocket} */
-//   // @ts-ignore The #connect_socket() creates this member field.
-//   #socket;
+/**
+ * Creates a WebSocket connection to a server allowing a dedicated
+ * bi-directional exchange of data. This socket will continuously attempt
+ * reconnecting to the server on connection loss until the protocol is
+ * terminated. {@link network_connect} creates this protocol.
+ * @extends {CProtocol}
+ */
+class CWebSocketProtocol extends CProtocol {
+  /** @type {string} */
+  #url;
+  /** @type {WebSocket} */
+  // @ts-ignore The #connect_socket() creates this member field.
+  #socket;
 
-//   /**
-//    * Enqueues the specified data to be transmitted to the server over the
-//    * WebSocket connection, increasing the value of bufferedAmount by the
-//    * number of bytes needed to contain the data. If the data can't be sent
-//    * (for example, because it needs to be buffered but the buffer is full),
-//    * the socket is closed automatically.
-//    * @override
-//    * @param {string | ArrayBuffer | Blob } data Data to send to the server
-//    * for further processing.
-//    * @returns {void}
-//    */
-//   post_message(data) {
-//     try {
-//       if (this.state() === PROTOCOL_EVENT.Terminated) {
-//         throw new CModuleError(CModuleError.MISUSE);
-//       }
-//       this.#socket.send(data);
-//     } catch (err) {
-//       if (err instanceof CModuleError) {
-//         CModuleError.handle_error(err);
-//         throw new CModuleError(
-//           "CWebSocketProtocol.post_message() error.",
-//           err
-//         );
-//       }
-//       this.on_data_rx({state: PROTOCOL_EVENT.Error, error: err});
-//     }
-//   }
+  /**
+   * Enqueues the specified data to be transmitted to the server over the
+   * WebSocket connection, increasing the value of bufferedAmount by the
+   * number of bytes needed to contain the data. If the data can't be sent
+   * (for example, because it needs to be buffered but the buffer is full),
+   * the socket is closed automatically.
+   * @override
+   * @param {CWebSocketData} data Data to send to the server
+   * for further processing.
+   * @returns {void}
+   */
+  post_message(data) {
+    try {
+      if (this.#socket.readyState == this.#socket.OPEN) {
+        this.#socket.binaryType = data.binary_type();
+        this.#socket.send(data.data());
+      }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CWebSocketProtocol.post_message() error.",
+        err
+      );
+    }
+  }
 
-//   /**
-//    * @inheritdoc
-//    * @override
-//    */
-//   terminate() {
-//     try {
-//       if (this.state() === PROTOCOL_EVENT.Terminated) {
-//         throw new CModuleError(CModuleError.MISUSE);
-//       }
-//       this.#socket.close();
-//       this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
-//     } catch (err) {
-//       CModuleError.handle_error(err);
-//       throw new CModuleError("CWebSocketProtocol.terminate() error.", err);
-//     }
-//   }
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      this.#socket.close();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWebSocketProtocol.terminate() error.", err);
+    }
+  }
 
-//   /**
-//    * Handles creating a web socket to connect to a server.
-//    */
-//   #connect_socket() {
-//     // @ts-ignore URL will not be null.
-//     this.#socket = new globalThis.WebSocket(this.#url);
-//     this.#socket.onmessage = (evt) => {
-//       this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
-//     }
-//     this.#socket.onerror = (evt) => {
-//       this.on_data_rx({state: PROTOCOL_EVENT.Error, error: evt});
-//     }
-//     this.#socket.onclose = (evt) => {
-//       this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
-//       this.#socket.close();
-//       this.#connect_socket();
-//     }
-//   }
-
-//   /**
-//    * Constructor for the protocol.
-//    * @param {object} params The named parameters.
-//    * @param {string} params.url The URL of the server to connect.
-//    * @param {CProtocolEventHandler} params.rx_handler The handler for
-//    * receiving data from this protocol.
-//    */
-//   constructor({url, rx_handler}) {
-//     super({
-//       id: `CWebSocketProtocol-${url}`,
-//       rx_handler: rx_handler,
-//       type: PROTOCOL_TYPE.WebSocket
-//     });
-//     try {
-//       if (!ModuleUtils.is_defined({property: "WebSocket"})) {
-//         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-//       }
-//       json_check_type({type: "string", data: url, should_throw: true});
-//       this.#url = url;
-//       this.#connect_socket();
-//     } catch (err) {
-//       CModuleError.handle_error(err);
-//       throw new CModuleError("CWebSocketProtocol construction error.", err);
-//     }
-//   }
-// }
+  /**
+   * Constructor for the protocol.
+   * @param {object} params The named parameters.
+   * @param {string} params.url The URL of the server to connect.
+   * @param {CProtocolEventHandler} params.rx_handler The handler for
+   * receiving data from this protocol.
+   */
+  constructor({url, rx_handler}) {
+    super({
+      id: `CWebSocketProtocol-${url}`,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.WebSocket
+    });
+    try {
+      if (!runtime_query({request: QUERY_REQUEST.IsWebSocket})) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      json_check_type({type: "string", data: url, should_throw: true});
+      this.#url = url;
+      // @ts-ignore URL will not be null.
+      this.#socket = new globalThis.WebSocket(this.#url);
+      this.#socket.onclose = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Close,
+          data: new CWebSocketEvent({
+            buffered_amount: this.#socket.bufferedAmount,
+            event: evt,
+            is_error: false,
+            ready_state: this.#socket.readyState,
+            url: this.#socket.url
+          })
+        });
+        evt.preventDefault();
+      }
+      this.#socket.onerror = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Error,
+          data: new CWebSocketEvent({
+            buffered_amount: this.#socket.bufferedAmount,
+            event: evt,
+            is_error: true,
+            ready_state: this.#socket.readyState,
+            url: this.#socket.url
+          })
+        });
+        evt.preventDefault();
+      }
+      this.#socket.onmessage = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Message,
+          data: new CWebSocketEvent({
+            buffered_amount: this.#socket.bufferedAmount,
+            event: evt,
+            is_error: false,
+            ready_state: this.#socket.readyState,
+            url: this.#socket.url
+          })
+        });
+        evt.preventDefault();
+      }
+      this.#socket.onopen = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Open,
+          data: new CWebSocketEvent({
+            buffered_amount: this.#socket.bufferedAmount,
+            event: evt,
+            is_error: false,
+            ready_state: this.#socket.readyState,
+            url: this.#socket.url
+          })
+        });
+        evt.preventDefault();
+      }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWebSocketProtocol construction error.", err);
+    }
+  }
+}
 
 /**
  * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
@@ -3362,6 +3622,12 @@ export async function protocol_open({
           interval: interval
         });
         break;
+      case PROTOCOL_TYPE.WebSocket:
+        protocol = new CWebSocketProtocol({
+          rx_handler: rx_handler,
+          url: url
+        });
+        break;
       case PROTOCOL_TYPE.Worker:
         protocol = new CWorkerProtocol({
           url: url,
@@ -3980,11 +4246,12 @@ export function runtime_query({request, name="", obj = globalThis}) {
         return ModuleUtils.is_defined({property: "navigator"}) &&
           ModuleUtils.is_defined({property: "usb",
                                   obj: globalThis["navigator"]});
+      case QUERY_REQUEST.IsWebSocket:
+        return ModuleUtils.is_defined({property: "WebSocket"});
       case QUERY_REQUEST.IsWorkerAvailable:
         return ModuleUtils.is_defined({property: "Worker"});
       case QUERY_REQUEST.IsWorkerRuntime:
         return ModuleUtils.is_defined({property: "WorkerGlobalScope"});
-
       case QUERY_REQUEST.Name:
         if (ModuleUtils.is_defined({property: "HTMLElement"})) {
           // @ts-ignore Will exist in browser context
