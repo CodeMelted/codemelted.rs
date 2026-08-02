@@ -892,6 +892,54 @@ export class CEventSourceEvent {
 }
 
 /**
+ * Identifies event handled by the {@link PROTOCOL_TYPE.Worker}
+ * protocol.
+ */
+export class CWorkerEvent {
+  /** @type {ErrorEvent | MessageEvent} */
+  #event;
+  /** @type {boolean} */
+  #is_error;
+
+  /**
+   * The event captured by the protocol.
+   * @returns {ErrorEvent | MessageEvent}
+   */
+  event() { return this.#event; }
+
+  /**
+   * Indicates if the event captured was an error.
+   * @returns {boolean}
+   */
+  is_error() { return this.#is_error; }
+
+  /**
+   * Constructor for the protocol event.
+   * @param {object} params The named parameters
+   * @param {ErrorEvent | MessageEvent} params.event The event handled by the
+   * protocol.
+   * @param {boolean} params.is_error true if it was an error event,
+   * false otherwise.
+   */
+  constructor({event, is_error}) {
+    try {
+      if (!json_check_type({type: MessageEvent, data: event}) &&
+          !json_check_type({type: ErrorEvent, data: event})) {
+        throw new CModuleError(CModuleError.TYPE_VIOLATION);
+      }
+      json_check_type({type: "boolean", data: is_error, should_throw: true});
+      this.#event = event;
+      this.#is_error = is_error;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CWorkerEvent construction error.", err
+      );
+    }
+  }
+}
+
+/**
  * The result of a  {@link network_fetch} call containing any data from the
  * call along with the HTTP Status Code  of the transaction.
  */
@@ -1570,21 +1618,21 @@ export class CProtocolEvent {
   }
 
   /**
-   * Treats the data as a JavaScript Runtime event.
-   * @returns {MessageEvent?}
-   */
-  as_message_event() {
-    return this.#data instanceof MessageEvent
-      ? this.#data
-      : null;
-  }
-
-  /**
    * Treats the data as a timer event.
    * @returns {CTimerEvent?}
    */
   as_timer_event() {
     return this.#data instanceof CTimerEvent
+      ? this.#data
+      : null;
+  }
+
+  /**
+   * Treats the data as a worker event.
+   * @returns {CWorkerEvent?}
+   */
+  as_worker_event() {
+    return this.#data instanceof CWorkerEvent
       ? this.#data
       : null;
   }
@@ -1760,6 +1808,22 @@ class CProtocol {
 }
 
 /**
+ * <mark>UNDER DEVELOPMENT</mark>
+ * @extends {CProtocol}
+ */
+class CAudioProtocol extends CProtocol {
+
+}
+
+/**
+ * <mark>UNDER DEVELOPMENT</mark>
+ * @extends {CProtocol}
+ */
+class CBluetoothProtocol extends CProtocol {
+
+}
+
+/**
  * This protocol represents a named channel that any browsing context of a
  * given origin can subscribe to. It allows communication between different
  * documents (in different windows, tabs, frames, iframes, or worker) of the
@@ -1830,12 +1894,14 @@ class CBroadcastChannelProtocol extends CProtocol {
           event_fired: PROTOCOL_EVENT.Message,
           data: new CBroadcastChannelEvent({event: evt, is_error: false})
         });
+        evt.preventDefault();
       };
       this.#channel.onmessageerror = (evt) => {
         this.report({
           event_fired: PROTOCOL_EVENT.MessageError,
           data: new CBroadcastChannelEvent({event: evt, is_error: true})
         });
+        evt.preventDefault();
       };
     } catch (err) {
       CModuleError.handle_error(err);
@@ -1906,6 +1972,7 @@ class CEventSourceProtocol extends CProtocol {
             ready_state: this.#sse.readyState
           })
         });
+        evt.preventDefault();
       };
       this.#sse.onmessage = (evt) => {
         this.report({
@@ -1916,6 +1983,7 @@ class CEventSourceProtocol extends CProtocol {
             ready_state: this.#sse.readyState
           })
         });
+        evt.preventDefault();
       };
       this.#sse.onopen = (evt) => {
         this.report({
@@ -1926,12 +1994,29 @@ class CEventSourceProtocol extends CProtocol {
             ready_state: this.#sse.readyState
           })
         });
+        evt.preventDefault();
       };
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CEventSourceProtocol error.", err);
     }
   }
+}
+
+/**
+ * <mark>UNDER DEVELOPMENT</mark>
+ * @extends {CProtocol}
+ */
+class CGamepadProtocol extends CProtocol {
+
+}
+
+/**
+ * <mark>UNDER DEVELOPMENT</mark>
+ * @extends {CProtocol}
+ */
+class CMidiProtocol extends CProtocol {
+
 }
 
 /**
@@ -2033,61 +2118,6 @@ class COrientationProtocol extends CProtocol {
   }
 }
 
-/**
- * Creates an asynchronous timer that fires on the specified interval until
- * terminated.
- * @extends {CProtocol}
- */
-class CTimerProtocol extends CProtocol {
-  /** @type {number} */
-  #interval;
-  /** @type {number} */
-  #timer_id = -1;
-
-  /**
-   * @inheritdoc
-   * @override
-   */
-  terminate() {
-    try {
-      globalThis.clearInterval(this.#timer_id);
-      this.#timer_id = -1;
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CTimerProtocol terminate error.", err);
-    }
-  }
-
-  /**
-   * Constructor for the protocol.
-   * @param {object} params The named parameters.
-   * @param {CProtocolEventHandler} params.rx_handler Handler for the
-   * protocol.
-   * @param {number} params.interval How often to fire the timer.
-   */
-  constructor({rx_handler, interval}) {
-    super({
-      id: `CTimerProtocol-${interval}`,
-      rx_handler: rx_handler,
-      type: PROTOCOL_TYPE.Timer
-    });
-    try {
-      json_check_type({type: "number", data: interval, should_throw: true});
-      // @ts-ignore node returns an object.
-      this.#interval = interval;
-      this.#timer_id = globalThis.setInterval(() => {
-        this.report({
-          event_fired: PROTOCOL_EVENT.Message,
-          data: new CTimerEvent(this.#interval),
-        });
-      }, interval);
-    } catch (err) {
-      CModuleError.handle_error(err);
-      throw new CModuleError("CTimerProtocol construction error.", err);
-    }
-  }
-}
-
 // /**
 //  * Creates a protocol allowing communication with an attached serial port
 //  * device. Provides the ability to interact with the device setting signals
@@ -2096,7 +2126,7 @@ class CTimerProtocol extends CProtocol {
 //  * the post_message() call.
 //  * @extends {CProtocol}
 //  */
-// export class CSerialPortProtocol extends CProtocol {
+// class CSerialPortProtocol extends CProtocol {
 //   /** @type {SerialPort} */
 //   #port;
 
@@ -2259,6 +2289,77 @@ class CTimerProtocol extends CProtocol {
 //   }
 // }
 
+/**
+ * <mark>UNDER DEVELOPMENT</mark>
+ * @extends {CProtocol}
+ */
+class CTextToSpeechProtocol extends CProtocol {
+
+}
+
+/**
+ * Creates an asynchronous timer that fires on the specified interval until
+ * terminated.
+ * @extends {CProtocol}
+ */
+class CTimerProtocol extends CProtocol {
+  /** @type {number} */
+  #interval;
+  /** @type {number} */
+  #timer_id = -1;
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      globalThis.clearInterval(this.#timer_id);
+      this.#timer_id = -1;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CTimerProtocol terminate error.", err);
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {object} params The named parameters.
+   * @param {CProtocolEventHandler} params.rx_handler Handler for the
+   * protocol.
+   * @param {number} params.interval How often to fire the timer.
+   */
+  constructor({rx_handler, interval}) {
+    super({
+      id: `CTimerProtocol-${interval}`,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.Timer
+    });
+    try {
+      json_check_type({type: "number", data: interval, should_throw: true});
+      // @ts-ignore node returns an object.
+      this.#interval = interval;
+      this.#timer_id = globalThis.setInterval(() => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Message,
+          data: new CTimerEvent(this.#interval),
+        });
+      }, interval);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CTimerProtocol construction error.", err);
+    }
+  }
+}
+
+/**
+ * <mark>UNDER DEVELOPMENT</mark>
+ * @extends {CProtocol}
+ */
+class CUsbProtocol extends CProtocol {
+
+}
+
 // /**
 //  * Creates a WebSocket connection to a server allowing a dedicated
 //  * bi-directional exchange of data. This socket will continuously attempt
@@ -2266,7 +2367,7 @@ class CTimerProtocol extends CProtocol {
 //  * terminated. {@link network_connect} creates this protocol.
 //  * @extends {CProtocol}
 //  */
-// export class CWebSocketProtocol extends CProtocol {
+// class CWebSocketProtocol extends CProtocol {
 //   /** @type {string} */
 //   #url;
 //   /** @type {WebSocket} */
@@ -2365,102 +2466,116 @@ class CTimerProtocol extends CProtocol {
 //   }
 // }
 
-// /**
-//  * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
-//  * @extends {CProtocol}
-//  */
-// export class CWebRtcProtocol extends CProtocol {
+/**
+ * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
+ * @extends {CProtocol}
+ */
+class CWebRtcProtocol extends CProtocol {
 
-// }
+}
 
-// /**
-//  * Constructs a dedicated background worker off the JavaScript runtime main
-//  * thread. Object constructed via the {@link async_worker} call.
-//  * @extends {CProtocol}
-//  */
-// export class CWorkerProtocol extends CProtocol {
-//   /** @type {Worker} */
-//   #worker;
+/**
+ * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
+ * @extends {CProtocol}
+ */
+class CWebTransportProtocol extends CProtocol {
 
-//   /**
-//    * Data specific to how you construct your dedicated background worker.
-//    * @override
-//    * @param {any} data The data to send to the background worker.
-//    * @returns {void}
-//    */
-//   post_message(data) {
-//     try {
-//       if (this.state() == PROTOCOL_EVENT.Terminated) {
-//         throw new CModuleError(CModuleError.MISUSE);
-//       }
-//       this.#worker.postMessage(data);
-//     } catch (err) {
-//       CModuleError.handle_error(err);
-//       throw new CModuleError("CWorkerProtocol.post_message() error.", err);
-//     }
-//   }
+}
 
-//   /**
-//    * @inheritdoc
-//    * @override
-//    */
-//   terminate() {
-//     try {
-//       if (this.state() == PROTOCOL_EVENT.Terminated) {
-//         throw new CModuleError(CModuleError.MISUSE);
-//       }
-//       this.#worker.terminate();
-//       this.on_data_rx({state: PROTOCOL_EVENT.Terminated});
-//     } catch (err) {
-//       CModuleError.handle_error(err);
-//       throw new CModuleError("CWorkerProtocol.terminate() error.", err);
-//     }
-//   }
+/**
+ * Constructs a dedicated background worker off the JavaScript runtime main
+ * thread.
+ * @extends {CProtocol}
+ */
+class CWorkerProtocol extends CProtocol {
+  /** @type {Worker} */
+  #worker;
 
-//   /**
-//    * Constructs a worker protocol for asynchronous processing off the main
-//    * runtime thread.
-//    * @param {object} params The named parameters.
-//    * @param {string} params.url A unique ID for the protocol.
-//    * @param {CProtocolEventHandler} params.rx_handler The receive handler
-//    * for data and state changes
-//    * @param {object} [params.options] Options for further configuration of
-//    * the worker.
-//    */
-//   constructor({url, rx_handler, options = {type: "module"}}) {
-//     super({
-//       id: `Worker-${url}`,
-//       rx_handler: rx_handler,
-//       type: PROTOCOL_TYPE.Worker
-//     });
-//     try {
-//       if (!ModuleUtils.is_defined({property: "Worker"})) {
-//         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-//       }
-//       json_check_type({type: "string", data: url, should_throw: true});
-//       json_check_type({type: "object", data: options, should_throw: true});
-//       this.#worker = new globalThis.Worker(
-//         new URL(url, import.meta.url).href,
-//         options
-//       );
-//       this.#worker.onerror = (evt) => {
-//         this.on_data_rx({state: PROTOCOL_EVENT.Error, error: evt});
-//         evt.preventDefault();
-//       }
-//       this.#worker.onmessageerror = (evt) => {
-//         this.on_data_rx({state: PROTOCOL_EVENT.MessageError, error: evt});
-//         evt.preventDefault();
-//       }
-//       this.#worker.onmessage = (evt) => {
-//         this.on_data_rx({state: PROTOCOL_EVENT.Message, value: evt});
-//         evt.preventDefault();
-//       }
-//     } catch (err) {
-//       CModuleError.handle_error(err);
-//       throw new CModuleError("CWorkerProtocol construction error.", err);
-//     }
-//   }
-// }
+  /**
+   * Sends a message, which can be of any kind of Object, to the background
+   * worker for processing based on how it was setup to be processed.
+   * @override
+   * @param {any} [data] The data to post. The data is serialized using the
+   * structured clone algorithm. This means you can pass a broad variety of
+   * data objects safely to the background for processing without having to
+   * serialize them yourself.
+   * @returns {void}
+   */
+  post_message(data) {
+    try {
+      this.#worker.postMessage(data);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol.post_message() error.", err);
+    }
+  }
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      this.#worker.terminate();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol.terminate() error.", err);
+    }
+  }
+
+  /**
+   * Constructs a worker protocol for asynchronous processing off the main
+   * runtime thread.
+   * @param {object} params The named parameters.
+   * @param {string} params.url A unique ID for the protocol.
+   * @param {CProtocolEventHandler} params.rx_handler The receive handler
+   * for data and state changes
+   * @param {object} [params.options] Options for further configuration of
+   * the worker.
+   */
+  constructor({url, rx_handler, options = {type: "module"}}) {
+    super({
+      id: `Worker-${url}`,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.Worker
+    });
+    try {
+      if (!runtime_query({request: QUERY_REQUEST.IsWorkerAvailable})) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      json_check_type({type: "string", data: url, should_throw: true});
+      json_check_type({type: "object", data: options, should_throw: true});
+      this.#worker = new globalThis.Worker(
+        new URL(url, import.meta.url).href,
+        options
+      );
+      this.#worker.onerror = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Error,
+          data: new CWorkerEvent({event: evt, is_error: true})
+        });
+        evt.preventDefault();
+      }
+      this.#worker.onmessageerror = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.MessageError,
+          data: new CWorkerEvent({event: evt, is_error: true})
+        });
+        evt.preventDefault();
+      }
+      this.#worker.onmessage = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Message,
+          data: new CWorkerEvent({event: evt, is_error: false})
+        });
+        evt.preventDefault();
+      }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol construction error.", err);
+    }
+  }
+}
 
 // ============================================================================
 // [ASYNC I/O UC FUNCTIONS] ===================================================
@@ -3232,7 +3347,8 @@ export async function protocol_open({
       case PROTOCOL_TYPE.EventSource:
         protocol = new CEventSourceProtocol({
           rx_handler: rx_handler,
-          url: url
+          url: url,
+          with_credentials: with_credentials
         });
       case PROTOCOL_TYPE.Orientation:
         protocol = new COrientationProtocol({
@@ -3244,6 +3360,12 @@ export async function protocol_open({
         protocol = new CTimerProtocol({
           rx_handler: rx_handler,
           interval: interval
+        });
+        break;
+      case PROTOCOL_TYPE.Worker:
+        protocol = new CWorkerProtocol({
+          url: url,
+          rx_handler: rx_handler
         });
         break;
       default:
