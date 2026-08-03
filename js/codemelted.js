@@ -744,7 +744,7 @@ class ModuleUtils {
    * Represents the current protocol file description number.
    * @type {number}
    */
-  static protocol_fd = 0;
+  static protocol_fd = -1;
 
   /**
    * Helper function for the {@link runtime_query} to search for properties
@@ -1789,16 +1789,12 @@ export class CWorkerEvent {
  * This protocol is handled via the {@link CProtocolEventHandler}.
  */
 export class CProtocolEvent {
-  /** @type {string} */
-  #id;
-  /** @type {number} */
-  #fd;
+  /** @type {CProtocol} */
+  #protocol;
   /** @type {any} */
   #data;
   /** @type {PROTOCOL_EVENT} */
   #event_fired;
-  /** @type {PROTOCOL_TYPE} */
-  #protocol_type;
 
   /**
    * Treats the data as a received broadcast channel event.
@@ -1874,13 +1870,13 @@ export class CProtocolEvent {
    * Identification of the protocol. Utilized for logging purposes.
    * @returns {string}
    */
-  id() { return this.#id; }
+  name() { return this.#protocol.name(); }
 
   /**
    * The protocol file descriptor that originated the event.
    * @returns {number}
    */
-  fd() { return this.#fd; }
+  fd() { return this.#protocol.fd(); }
 
   /**
    * The data received by the event. Utilize the as_xxx() functions to
@@ -1899,39 +1895,27 @@ export class CProtocolEvent {
    * Identifies what protocol fired the event.
    * @returns {PROTOCOL_TYPE}
    */
-  protocol_type() { return this.#protocol_type; }
+  protocol_type() { return this.#protocol.type(); }
 
   /**
    * Constructor for the event.
    * @param {object} params The named parameters.
-   * @param {string} params.id The debug identification of the protocol for
-   * logging purposes.
-   * @param {number} params.fd The file descriptor of the open protocol.
+   * @param {CProtocol} params.protocol The protocol associated with the
+   * event.
    * @param {any} params.data The data handled by the protocol.
    * @param {PROTOCOL_EVENT} params.event_fired The event that was handled.
-   * @param {PROTOCOL_TYPE} params.protocol_type The type of the protocol.
    */
-  constructor({id, fd, data, event_fired, protocol_type}) {
+  constructor({protocol, data, event_fired}) {
     try {
-      json_check_type({type: "string", data: id, should_throw: true});
+      json_check_type({type: CProtocol, data: protocol, should_throw: true});
       json_has_key({
         data: PROTOCOL_EVENT,
         key: event_fired,
         should_throw: true
       });
-      json_has_key({
-        data: PROTOCOL_TYPE,
-        key: protocol_type,
-        should_throw: true
-      });
-      if (!ModuleUtils.protocols.get(fd)) {
-        throw new CModuleError(`${CModuleError.MISUSE}: ${fd} fd not valid`);
-      }
-      this.#id = id;
-      this.#fd = fd;
+      this.#protocol = protocol;
       this.#data = data;
       this.#event_fired = event_fired;
-      this.#protocol_type = protocol_type;
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CProtocolEvent construction error.", err);
@@ -1944,12 +1928,13 @@ export class CProtocolEvent {
  * exchanges data with an external item, will continuously run until
  * terminated, requires the ability to know it is running, and get any
  * errors that have occurred during its run.
+ * @private
  */
 class CProtocol {
-  /** @type {string} */
-  #id = "";
   /** @type {number} */
   #fd = -1;
+  /** @type {string} */
+  #name;
   /** @type {CProtocolEventHandler} */
   #rx_handler;
   /** @type {PROTOCOL_TYPE} */
@@ -1965,26 +1950,24 @@ class CProtocol {
    */
   report({event_fired, data}) {
     const evt = new CProtocolEvent({
-      id: this.id(),
-      fd: this.fd(),
+      protocol: this,
       data: data,
       event_fired: event_fired,
-      protocol_type: this.type(),
     });
     this.#rx_handler(evt);
   }
-
-  /**
-   * A log identification.
-   * @returns {string}
-   */
-  id() { return this.#id; }
 
   /**
    * The file description of the open protocol.
    * @returns {number}
    */
   fd() { return this.#fd; }
+
+  /**
+   * A log identification.
+   * @returns {string}
+   */
+  name() { return this.#name; }
 
   /**
    * Identifies the type of protocol.
@@ -2012,23 +1995,29 @@ class CProtocol {
   /**
    * Constructor for the class.
    * @param {object} params The named parameters.
-   * @param {string} params.id Identification for the protocol for debugging
-   * purposes.
+   * @param {number} params.fd File description reference for the protocol.
+   * @param {string} [params.name=""] The name to associate with the
+   * protocol for logging purposes. If not specified, then it will be the
+   * name of the protocol and functional descriptor.
    * @param {CProtocolEventHandler} params.rx_handler The callback for
    * received data.
    * @param {PROTOCOL_TYPE} params.type The type of protocol.
    */
-  constructor({id, rx_handler, type}) {
+  constructor({fd, name="", rx_handler, type}) {
     try {
-      json_check_type({type: "string", data: id, should_throw: true});
+      json_check_type({type: "number", data: fd, should_throw: true});
       json_check_type({
         type: "function",
         data: rx_handler,
         count: 1,
         should_throw: true
       });
+      json_check_type({type: "string", data: name, should_throw: true});
       json_check_type({type: "string", data: type, should_throw: true});
-      this.#id = id;
+      this.#fd = fd;
+      this.#name = name.trim().length !== 0
+        ? name
+        : `${type}-${fd}`;
       this.#rx_handler = rx_handler;
       this.#type = type;
       ModuleUtils.protocol_fd += 1;
@@ -2042,6 +2031,7 @@ class CProtocol {
 
 /**
  * <mark>UNDER DEVELOPMENT</mark>
+ * @private
  * @extends {CProtocol}
  */
 class CAudioProtocol extends CProtocol {
@@ -2050,6 +2040,7 @@ class CAudioProtocol extends CProtocol {
 
 /**
  * <mark>UNDER DEVELOPMENT</mark>
+ * @private
  * @extends {CProtocol}
  */
 class CBluetoothProtocol extends CProtocol {
@@ -2061,6 +2052,7 @@ class CBluetoothProtocol extends CProtocol {
  * given origin can subscribe to. It allows communication between different
  * documents (in different windows, tabs, frames, iframes, or worker) of the
  * same origin.
+ * @private
  * @extends {CProtocol}
  */
 class CBroadcastChannelProtocol extends CProtocol {
@@ -2107,13 +2099,17 @@ class CBroadcastChannelProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {object} params The named parameters.
+   * @param {number} params.fd The functional descriptor assigned to the
+   * protocol.
+   * @param {string} [params.name=""] The optional name to give to the protocol.
    * @param {string} params.url The URL to connect this broadcast channel on.
    * @param {CProtocolEventHandler} params.rx_handler The handler to receive
    * data from the protocol.
    */
-  constructor({url, rx_handler}) {
+  constructor({fd, name="", rx_handler, url}) {
     super({
-      id: `CBroadcastChannel-${url}`,
+      fd: fd,
+      name: name,
       rx_handler: rx_handler,
       type: PROTOCOL_TYPE.BroadcastChannel
     });
@@ -2147,6 +2143,7 @@ class CBroadcastChannelProtocol extends CProtocol {
  * Opens a persistent connection to an HTTP server, which sends events in
  * text/event-stream format. The connection remains open until terminate is
  * called.
+ * @private
  * @extends {CProtocol}
  */
 class CEventSourceProtocol extends CProtocol {
@@ -2172,16 +2169,21 @@ class CEventSourceProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {object} params The named parameters.
+   * @param {number} params.fd The functional descriptor assigned to the
+   * protocol.
+   * @param {string} [params.name=""] The optional name to give to the protocol.
+   * @param {CProtocolEventHandler} params.rx_handler The protocol handler
+   * to receive those events.
    * @param {string} params.url URL of the server sending the events.
    * @param {boolean} [params.with_credentials=false] True to utilize CORS,
    * false otherwise.
-   * @param {CProtocolEventHandler} params.rx_handler The protocol handler
-   * to receive those events.
    */
-  constructor({url, rx_handler, with_credentials=false}) {
+  constructor({fd, name, rx_handler, url, with_credentials=false}) {
     super({
-      id: `CEventSourceProtocol-${url}`,
-      rx_handler: rx_handler, type: PROTOCOL_TYPE.EventSource
+      fd: fd,
+      name: name,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.EventSource
     });
     try {
       if (!runtime_query({request: QUERY_REQUEST.IsEventSource})) {
@@ -2255,6 +2257,7 @@ class CMidiProtocol extends CProtocol {
 /**
  * Creates the ability to get a devices geodetic orientation
  * (GPS location, 3D orientation).
+ * @private
  * @extends {CProtocol}
  */
 class COrientationProtocol extends CProtocol {
@@ -2291,15 +2294,19 @@ class COrientationProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {object} params The named parameters.
+   * @param {number} params.fd The functional descriptor assigned to the
+   * protocol.
+   * @param {string} [params.name=""] The optional name to give to the protocol.
+   * @param {object} [params.options={}] Options specific to the  protocol.
    * @param {CProtocolEventHandler} params.rx_handler The handler to receive
    * data.
-   * @param {object} [params.options={}] Options specific to the  protocol.
    */
-  constructor({rx_handler, options={}}) {
+  constructor({fd, name="", options={}, rx_handler}) {
     super({
-      id: "COrientationProtocol",
+      fd: fd,
+      name: name,
+      type: PROTOCOL_TYPE.Orientation,
       rx_handler: rx_handler,
-      type: PROTOCOL_TYPE.Orientation
     });
     try {
       if (COrientationProtocol.#is_created) {
@@ -2357,6 +2364,7 @@ class COrientationProtocol extends CProtocol {
 //  * data, and querying the current line status of the port. This is all
 //  * handled via the {@link SERIAL_PORT_DATA_REQUEST} via
 //  * the post_message() call.
+//  * @private
 //  * @extends {CProtocol}
 //  */
 // class CSerialPortProtocol extends CProtocol {
@@ -2524,6 +2532,7 @@ class COrientationProtocol extends CProtocol {
 
 /**
  * <mark>UNDER DEVELOPMENT</mark>
+ * @private
  * @extends {CProtocol}
  */
 class CTextToSpeechProtocol extends CProtocol {
@@ -2533,6 +2542,7 @@ class CTextToSpeechProtocol extends CProtocol {
 /**
  * Creates an asynchronous timer that fires on the specified interval until
  * terminated.
+ * @private
  * @extends {CProtocol}
  */
 class CTimerProtocol extends CProtocol {
@@ -2558,15 +2568,19 @@ class CTimerProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {object} params The named parameters.
+   * @param {number} params.fd The functional descriptor assigned to the
+   * protocol.
+   * @param {string} [params.name=""] The optional name to give to the protocol.
+   * @param {number} params.interval How often to fire the timer.
    * @param {CProtocolEventHandler} params.rx_handler Handler for the
    * protocol.
-   * @param {number} params.interval How often to fire the timer.
    */
-  constructor({rx_handler, interval}) {
+  constructor({fd, name="", interval, rx_handler}) {
     super({
-      id: `CTimerProtocol-${interval}`,
+      fd: fd,
+      name: name,
+      type: PROTOCOL_TYPE.Timer,
       rx_handler: rx_handler,
-      type: PROTOCOL_TYPE.Timer
     });
     try {
       json_check_type({type: "number", data: interval, should_throw: true});
@@ -2587,6 +2601,7 @@ class CTimerProtocol extends CProtocol {
 
 /**
  * <mark>UNDER DEVELOPMENT</mark>
+ * @private
  * @extends {CProtocol}
  */
 class CUsbProtocol extends CProtocol {
@@ -2598,11 +2613,10 @@ class CUsbProtocol extends CProtocol {
  * bi-directional exchange of data. This socket will continuously attempt
  * reconnecting to the server on connection loss until the protocol is
  * terminated. {@link network_connect} creates this protocol.
+ * @private
  * @extends {CProtocol}
  */
 class CWebSocketProtocol extends CProtocol {
-  /** @type {string} */
-  #url;
   /** @type {WebSocket} */
   // @ts-ignore The #connect_socket() creates this member field.
   #socket;
@@ -2649,13 +2663,17 @@ class CWebSocketProtocol extends CProtocol {
   /**
    * Constructor for the protocol.
    * @param {object} params The named parameters.
-   * @param {string} params.url The URL of the server to connect.
+   * @param {number} params.fd The functional descriptor assigned to the
+   * protocol.
+   * @param {string} [params.name=""] The optional name to give to the protocol.
    * @param {CProtocolEventHandler} params.rx_handler The handler for
    * receiving data from this protocol.
+   * @param {string} params.url The URL of the server to connect.
    */
-  constructor({url, rx_handler}) {
+  constructor({fd, name="", rx_handler, url}) {
     super({
-      id: `CWebSocketProtocol-${url}`,
+      fd: fd,
+      name: name,
       rx_handler: rx_handler,
       type: PROTOCOL_TYPE.WebSocket
     });
@@ -2664,9 +2682,8 @@ class CWebSocketProtocol extends CProtocol {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({type: "string", data: url, should_throw: true});
-      this.#url = url;
       // @ts-ignore URL will not be null.
-      this.#socket = new globalThis.WebSocket(this.#url);
+      this.#socket = new globalThis.WebSocket(url);
       this.#socket.onclose = (evt) => {
         this.report({
           event_fired: PROTOCOL_EVENT.Close,
@@ -2728,6 +2745,7 @@ class CWebSocketProtocol extends CProtocol {
 
 /**
  * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
+ * @private
  * @extends {CProtocol}
  */
 class CWebRtcProtocol extends CProtocol {
@@ -2736,6 +2754,7 @@ class CWebRtcProtocol extends CProtocol {
 
 /**
  * <mark>UNDER DEVELOPMENT - DO NOT USE</mark>
+ * @private
  * @extends {CProtocol}
  */
 class CWebTransportProtocol extends CProtocol {
@@ -2745,6 +2764,7 @@ class CWebTransportProtocol extends CProtocol {
 /**
  * Constructs a dedicated background worker off the JavaScript runtime main
  * thread.
+ * @private
  * @extends {CProtocol}
  */
 class CWorkerProtocol extends CProtocol {
@@ -2787,15 +2807,19 @@ class CWorkerProtocol extends CProtocol {
    * Constructs a worker protocol for asynchronous processing off the main
    * runtime thread.
    * @param {object} params The named parameters.
-   * @param {string} params.url A unique ID for the protocol.
-   * @param {CProtocolEventHandler} params.rx_handler The receive handler
-   * for data and state changes
+   * @param {number} params.fd The functional descriptor assigned to the
+   * protocol.
+   * @param {string} [params.name=""] The optional name to give to the protocol.
    * @param {object} [params.options] Options for further configuration of
    * the worker.
+   * @param {CProtocolEventHandler} params.rx_handler The receive handler
+   * for data and state changes
+   * @param {string} params.url The URL associated with the worker thread.
    */
-  constructor({url, rx_handler, options = {type: "module"}}) {
+  constructor({fd, name="", options = {type: "module"}, rx_handler, url}) {
     super({
-      id: `Worker-${url}`,
+      fd: fd,
+      name: name,
       rx_handler: rx_handler,
       type: PROTOCOL_TYPE.Worker
     });
@@ -2870,7 +2894,7 @@ export function async_sleep(delay) {
  * @template T
  * @param {object} params The named parameters.
  * @param {CTaskCB} params.task The task to run.
- * @param {any} [params.data] The optional data to pass to the task.
+ * @param {T} [params.data] The optional data to pass to the task.
  * @param {number} [params.delay=0] The delay to schedule the task in the
  * future.
  * @param {boolean} [params.execute=true] Flag to indicate to immediately
@@ -3573,6 +3597,9 @@ export async function network_fetch({url, options}) {
  * @param {PROTOCOL_TYPE} params.type The protocol to open.
  * @param {CProtocolEventHandler} params.rx_handler The handler for the
  * protocol.
+ * @param {string} [params.name=""] Optional name to give to the protocol
+ * for logging purposes. If not assigned, then the protocol type and fd will
+ * be utilized.
  * @param {number} params.interval The interval for a given Timer protocol
  * type.
  * @param {COrientationOptions} [params.orientation_options] Options specific
@@ -3590,6 +3617,7 @@ export async function network_fetch({url, options}) {
 export async function protocol_open({
   type,
   rx_handler,
+  name="",
   interval,
   orientation_options,
   url=" ",
@@ -3597,39 +3625,52 @@ export async function protocol_open({
 }) {
   try {
     let protocol = null;
+    ModuleUtils.protocol_fd += 1;
     switch (type) {
       case PROTOCOL_TYPE.BroadcastChannel:
         protocol = new CBroadcastChannelProtocol({
+          fd: ModuleUtils.protocol_fd,
+          name: name,
           rx_handler: rx_handler,
           url: url
         });
         break;
       case PROTOCOL_TYPE.EventSource:
         protocol = new CEventSourceProtocol({
+          fd: ModuleUtils.protocol_fd,
+          name: name,
           rx_handler: rx_handler,
           url: url,
           with_credentials: with_credentials
         });
       case PROTOCOL_TYPE.Orientation:
         protocol = new COrientationProtocol({
+          fd: ModuleUtils.protocol_fd,
+          name: name,
           rx_handler: rx_handler,
           options: orientation_options,
         });
         break;
       case PROTOCOL_TYPE.Timer:
         protocol = new CTimerProtocol({
+          fd: ModuleUtils.protocol_fd,
+          name: name,
           rx_handler: rx_handler,
           interval: interval
         });
         break;
       case PROTOCOL_TYPE.WebSocket:
         protocol = new CWebSocketProtocol({
+          fd: ModuleUtils.protocol_fd,
+          name: name,
           rx_handler: rx_handler,
           url: url
         });
         break;
       case PROTOCOL_TYPE.Worker:
         protocol = new CWorkerProtocol({
+          fd: ModuleUtils.protocol_fd,
+          name: name,
           url: url,
           rx_handler: rx_handler
         });
@@ -3640,6 +3681,7 @@ export async function protocol_open({
     ModuleUtils.protocols.set(protocol.fd(), protocol);
     return protocol.fd();
   } catch (err) {
+    ModuleUtils.protocol_fd -= 1;
     if (err instanceof CModuleError) {
       CModuleError.handle_error(err);
       throw new CModuleError("protocol_open() error.", err);

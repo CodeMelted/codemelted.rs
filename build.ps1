@@ -73,9 +73,10 @@ switch ($args[0]) {
     message "Now building codemelted.js module."
     Set-Location $PSScriptRoot/js
     Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
-    jsdoc ./codemelted.js --destination docs
+    jsdoc ./codemelted.js --readme ./README.md --destination docs
     if ($LASTEXITCODE -eq 0) {
-      Copy-Item jsdoc-default.css -Destination docs/styles
+      Copy-Item doc-theme/jsdoc-default.css -Destination docs/styles
+      Copy-Item models -Destination docs/ -Recurse
       Copy-Item codemelted.js -Destination docs
       Set-Location $PSScriptRoot
     } else {
