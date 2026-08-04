@@ -1,0 +1,10 @@
+{
+  "name": "codemelted.js Module",
+  "excludeExternals": true,
+  "excludeProtected": true,
+  "excludePrivate": true,
+  "darkHighlightTheme": "dark-plus",
+  "readme": "./README.md",
+  "entryPoints": ["./codemelted.js"],
+  "out": "docs"
+}

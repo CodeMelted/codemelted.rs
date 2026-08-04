@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "outDir": "docs",
+    "allowJs": true,
+    "checkJs": true
+  },
+  "files": ["./codemelted.js"]
+}

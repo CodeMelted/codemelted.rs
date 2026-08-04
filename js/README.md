@@ -1,7 +1,6 @@
 <center>
   <br /><img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-rs.png" /><br />
 </center>
-<h1><img style="height: 35px;" src="https://codemelted.com/assets/images/icon-js.png" /> codemelted.js Module</h1>
 
 The `codemelted.js` module is an ES6 module that mirrors the `codemelted.rs` module. It's goal is to implement the domain use cases wrapping the Web APIs exposed in a browser runtime. This provides the client side single page app (SPA) / progressive web app (PWA) development support utilizing web technologies. By supporting the SPA / PWA client side development, the `codemelted.js` module will also provide WASM bindings to support client side application development in Rust whether a native desktop application or a web hosted client.
 
@@ -20,29 +19,9 @@ TODO: Add more words about client binding for Rust.
 
 - [FEATURES](#features)
 - [GETTING STARTED](#getting-started)
-  - [Importing](#importing)
-  - [URLs](#urls)
 - [USAGE](#usage)
-  - [Module Support](#module-support)
-    - [Faked Types](#faked-types)
-  - [Domain Use Cases](#domain-use-cases)
-    - [Async I/O](#async-io)
-    - [Console](#console)
-    - [Database](#database)
-    - [Disk](#disk)
-    - [Hardware](#hardware)
-    - [JSON](#json)
-    - [Logger](#logger)
-    - [Monitor](#monitor)
-    - [Network](#network)
-    - [Numeric Processing Unit (NPU)](#numeric-processing-unit-npu)
-    - [Process](#process)
-    - [Runtime](#runtime)
-    - [Storage](#storage)
-    - [User Interface](#user-interface)
-  - [Rust Binding](#rust-binding)
 
-## FEATURES
+# FEATURES
 
  <table style="width: 100%;">
   <tr>
@@ -75,11 +54,16 @@ TODO: Add more words about client binding for Rust.
   </tr>
  </table>
 
-## GETTING STARTED
+# GETTING STARTED
 
-### Importing
+The `codemelted.js` module is hosted on GitHub and delivered via the `jsdelivr` CDN. The following represents the URLs for importing the modules.
 
-**Via ES6 Module Import**
+- **Latest Version (Risky):** `https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs/js/codemelted.js`
+- **Version Controlled (Safest):** `https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs@X.Y.Z/js/codemelted.js`
+
+Since the `codemelted.js` module is an ES6 module, standard `import` statements apply. Below is the example of how to import features within JavaScript / TypeScript.
+
+**ES6 Module Import Example**
 
 ```js
 // Import whole module statically via URL or local path
@@ -100,73 +84,14 @@ let codemelted = await import("path/to/codemelted.js");
 </script>
 ```
 
-### URLs
+As shown in the import examples above, you can utilize either the `jsdelivr` CDN to the `codemelted.js` module or download locally into your web project. When developing a Rust Desktop Tauri application and utilize the `codemelted.rs` Crate, the module will be available locally to take advantage of Tauri bindings for building a full featured Desktop / Mobile application. Downloading of the `codemelted.js` will also be a feature option of the `codemelted` native CLI command to enable quick downloading / upgrading for your local web project.
 
-- **Latest Version (Risky):** `https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs/js/codemelted.js`
-- **Version Controlled (Safest):** `https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs@X.Y.Z/js/codemelted.js`
+```sh
+# It will download the specified version of the codemelted.js
+# module to the specified path. Any failure will be presented to STDOUT.
+codemelted --dev-fetch-codemelted-js [version] [path]
+```
 
-## USAGE
+# USAGE
 
-The following section breaks down each Domain Use Case  implementation details from the main *codemelted.rs Project* design. It also identifies what module exported functions are V8 runtime. All exported functions are available within a browser runtime with varying feature support given the different browsers (i.e. Chromium / Firefox / Safari).
-
-### Module Support
-
-This section documents the common module objects that support the exported functions.
-
-#### Faked Types
-
-In order to preserve the ability to utilize TypeScript within the different V8 runtimes, certain Web APIs were documented as types via jsdoc. These types do not need to be imported from the `codemelted.js` module. They simply exist in order to make the `tsc` happy when importing the module.
-
-**Types:**
-
-- DeviceOrientationEvent
-- GeolocationCoordinates
-- SerialPort
-
-#### Enumerations
-
-<mark>Write something</mark>
-
-<img src="./models/module_enums.png" />
-
-### Domain Use Cases
-
-#### Async I/O
-
-<img src="./models/async_io.png" />
-
-#### Console
-
-Not Applicable.
-
-#### Database
-
-#### Disk
-
-#### Hardware
-
-#### JSON
-
-#### Logger
-
-#### Monitor
-
-#### Network
-
-#### Numeric Processing Unit (NPU)
-
-Not Applicable.
-
-#### Process
-
-Not Applicable.
-
-#### Runtime
-
-#### Storage
-
-#### User Interface
-
-### Rust Binding
-
-<mark>TO BE DEVELOPED</mark>
+<mark>TBD</mark>
