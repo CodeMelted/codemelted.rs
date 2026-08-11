@@ -5,14 +5,11 @@
     "checkJs": true
   },
   "files": [
-    "./codemelted_async.js",
     "./codemelted_core.js",
     "./codemelted_db.js",
     "./codemelted_disk.js",
     "./codemelted_hw.js",
-    "./codemelted_logger.js",
     "./codemelted_network.js",
-    "./codemelted_npu.js",
     "./codemelted_storage.js",
     "./codemelted_ui.js"
   ]

@@ -2,9 +2,7 @@
   <br /><img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-rs.png" /><br />
 </center>
 
-The `codemelted.js` module is an ES6 module that mirrors the `codemelted.rs` module. It's goal is to implement the domain use cases wrapping the Web APIs exposed in a browser runtime. This provides the client side single page app (SPA) / progressive web app (PWA) development support utilizing web technologies. By supporting the SPA / PWA client side development, the `codemelted.js` module will also provide WASM bindings to support client side application development in Rust whether a native desktop application or a web hosted client.
-
-TODO: Add more words about client binding for Rust.
+<mark>WORDS</mark>
 
 <center>
   <br />
@@ -18,65 +16,119 @@ TODO: Add more words about client binding for Rust.
 **Table of Contents**
 
 - [FEATURES](#features)
+  - [Domain Use Cases](#domain-use-cases)
+  - [Project Build Process](#project-build-process)
 - [GETTING STARTED](#getting-started)
+  - [Module Hierarchy](#module-hierarchy)
+  - [Rust TAURI Development](#rust-tauri-development)
+  - [V8 Runtime Utilization](#v8-runtime-utilization)
 - [USAGE](#usage)
+- [LICENSE](#license)
 
 # FEATURES
 
- <table style="width: 100%;">
-  <tr>
-    <td style="width: 275px;">
-      <img style= "width: 275px;" src="https://codemelted.com/developer/mdbook/models/use-case-model.drawio.png" />
-    </td>
-    <td>
-      <ul>
-        <li> Implements the identified domain use cases as a series of exported functions. </li>
-        <li> Function names match that of the <code>codemelted.rs</code> rust function names. </li>
-        <li> Function parameters / returns are abstracted from JS runtime specific objects. </li>
-        <li> This provides for the support of multiple JS runtimes. </li>
-        <li> This provides support for TypeScript development / checking. </li>
-      </ul>
-    </td>
-  </tr>
-   <tr>
-    <td style="width: 275px;">
-      <img style= "width: 275px;" src="https://codemelted.com/developer/mdbook/models/wasm-build-process.drawio.png" />
-    </td>
-    <td>
-      <ul>
-        <li> The <code>codemelted.js</code> module is ran through the targeted runtime tests. </li>
-        <li> When all tests PASS, the <code>codemelted.rs</code> WASM build occurs. </li>
-        <li> When the cargo doc, build, and tests all PASS you end up with two build targets. </li>
-        <li> The ability to write a pure rust desktop / web app via the <code>codemelted.rs</code> crate. </li>
-        <li> The ability to write a JS / TS frontend / backend regardless frontend development framework. </li>
-      </ul>
-    </td>
-  </tr>
- </table>
+## Domain Use Cases
+
+The domain use case model reflects what the the codemelted JavaScript modules implement. The use cases are spread across seven modules exposing objects and functions to support their identified functionality. The following model reflects how the codemelted JavaScript modules fit into the overall *codemelted.rs Project*.
+
+<img style= "width: 100%; max-width: 700px;" src="https://codemelted.com/rs/mdbook/models/use-case-model.png" />
+
+## Project Build Process
+
+The following model reflects how this project is built, tested, and delivered for consumption by a software engineer. The `build.ps1` PowerShell script ensures testing on all different platforms the *codemelted.rs Project* supports.
+
+<img style= "width: 100%; max-width: 700px;" src="https://codemelted.com/rs/mdbook/models/cargo-build-process.png" />
 
 # GETTING STARTED
 
-The `codemelted.js` module is hosted on GitHub and delivered via the `jsdelivr` CDN. The following represents the URLs for importing the modules.
+## Module Hierarchy
 
-- **Latest Version (Risky):** `https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs/js/codemelted.js`
-- **Version Controlled (Safest):** `https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs@X.Y.Z/js/codemelted.js`
+The codemelted JavaScript modules is organized into seven modules. The `codemelted_core.js` module works in all runtimes. The `codemelted_disk.js`, `codemelted_hw.js`, `codemelted_storage.js`, and `codemelted_ui.js` work only in a Browser runtime. Including them into any V8 runtime will result in a module error. Lastly the `codemelted_db.js` and `codemelted_network.js` modules work within the Browser and Worker (a.k.a Service / Web Worker Background threads) runtimes.
 
-Since the `codemelted.js` module is an ES6 module, standard `import` statements apply. Below is the example of how to import features within JavaScript / TypeScript.
+```mermaid
+classDiagram
+  direction BT
+  namespace all["All Runtimes"] {
+    class codemelted_core {
+      <<module>>
+    }
+  }
+  namespace browser["Browser Only"] {
+    class codemelted_disk {
+      <<module>>
+    }
+    class codemelted_hw {
+      <<module>>
+    }
+    class codemelted_storage {
+      <<module>>
+    }
+    class codemelted_ui {
+      <<module>>
+    }
+  }
+  namespace browser_worker["Browser / Worker Only"] {
+    class codemelted_db {
+      <<module>>
+    }
+    class codemelted_network {
+      <<module>>
+    }
+  }
+  codemelted_disk --> codemelted_core: uses
+  codemelted_hw --> codemelted_core: uses
+  codemelted_storage --> codemelted_core: uses
+  codemelted_ui --> codemelted_core: uses
+  codemelted_db --> codemelted_core: uses
+  codemelted_network --> codemelted_core: uses
+```
+
+The modules are hosted on GitHub and delivered via the `jsdelivr` CDN. The following represents the URLs for accessing the modules. These can be utilized with `import` statements or as part of the `<script type="module"></script>` tags of a website.
+
+- **Latest Version (Risky):** `https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs/js/codemelted_xxx.js`
+- **Version Controlled (Safest):** `https://cdn.jsdelivr.net/gh/codemelted/codemelted.rs@X.Y.Z/js/codemelted_xxx.js`
+
+**NOTES:**
+
+1. *The `xxx` in the `codemelted_xxx.js` module filename represents the specific module being accessed.*
+2. *The `@X.Y.Z` corresponds to the releases of the overall codemelted.rs Project.*
+
+## Rust TAURI Development
+
+<mark>UNDER INVESTIGATION</mark>
+
+## V8 Runtime Utilization
+
+Bun, Deno, and Node are all popular V8 runtimes typically for cloud / backend server-side services development. For the cloud portion, typically all the source files are packaged and delivered to the cloud Software As A Service (SaaS). Additionally, each of these runtimes has an ability to "compile" all source files into a given operating system executable. To support these options, the codemelted JavaScript modules can be downloaded into your project structure via the following command.
+
+<mark>Command below is not available yet.</mark>
+
+```sh
+codemelted --dev-fetch-codemelted-js [version] [path]
+```
+
+This then allows for you to develop your project independent of changes to the overall *codemelted.rs Project*. You also have the ability to utilize TypeScript as each of the modules have full JSDoc documentation and `// @ts-check` turned on by default.
+
+*NOTE: You can utilize this method for building complex web apps as well. It is not just for V8 JavaScript runtimes.*
+
+# USAGE
+
+Once you have determined how you will access the codemelted JavaScript modules of interest, include them in your source as follows.
 
 **ES6 Module Import Example**
 
 ```js
 // Import whole module statically via URL or local path
-import * as codemelted from "path/to/codemelted.js";
+import * as codemelted from "path/to/codemelted_xxx.js";
 
 // Import elements to use statically via URL or local path
-import { exported_element } from "path/to/codemelted.js";
+import { exported_element } from "path/to/codemelted_xxx.js";
 
 // Dynamically import all module elements to named variable
-let codemelted = await import("path/to/codemelted.js");
+let codemelted = await import("path/to/codemelted_xxx.js");
 ```
 
-**Via Script**
+**Via Script Tag in HTML File**
 
 ```html
 <script type="module">
@@ -84,14 +136,20 @@ let codemelted = await import("path/to/codemelted.js");
 </script>
 ```
 
-As shown in the import examples above, you can utilize either the `jsdelivr` CDN to the `codemelted.js` module or download locally into your web project. When developing a Rust Desktop Tauri application and utilize the `codemelted.rs` Crate, the module will be available locally to take advantage of Tauri bindings for building a full featured Desktop / Mobile application. Downloading of the `codemelted.js` will also be a feature option of the `codemelted` native CLI command to enable quick downloading / upgrading for your local web project.
+**NOTES:**
 
-```sh
-# It will download the specified version of the codemelted.js
-# module to the specified path. Any failure will be presented to STDOUT.
-codemelted --dev-fetch-codemelted-js [version] [path]
-```
+1. *Select a specific JavaScript module for more examples of how to utilize its API and to determine what to import.*
+2. *The files are TypeScript compliant so they can be utilized with TypeScript and get full code completion.*
+3. *The examples above should work whether downloaded for direct inclusion into your project or accessed via jsdelivr for a website.*
 
-# USAGE
+# LICENSE
 
-<mark>TBD</mark>
+© 2025-2026 Mark Shaffer
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

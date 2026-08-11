@@ -1,7 +1,6 @@
 // @ts-check
 /**
- * <b>ABOUT:</b> Contains the common class constructs for the core
- * `codemelted.js` supporting modules.
+ * <b>ABOUT:</b> Something something star wars.
  * <b>AUTHOR:</b> Mark L. Shaffer <br>
  * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved.
  * <br><br>
@@ -24,6 +23,26 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
+ * <br><br>
+ * <script>
+ * function open_test(url) {
+ *   let height = 600;
+ *   let width = 900;
+ *   let top = (globalThis.screen.availHeight - height) / 2;
+ *   let left = (globalThis.screen.availWidth - width) / 2;
+ *   let settings = `toolbar=no, location=no, ` +
+ *     `directories=no, status=no, menubar=no, ` +
+ *     `scrollbars=no, resizable=yes, copyhistory=no, ` +
+ *     `width=${width}, height=${height}, top=${top}, left=${left}`;
+ *   globalThis.open(url, "_blank", settings);
+ * }
+ * </script>
+ * <b>TEST RESULTS:</b>&nbsp;
+ * <button style="cursor: pointer;" onclick="open_test('coverage-browser/index.html');">Browser</button>
+ * <button style="cursor: pointer;" onclick="open_test('coverage-bun/js/index.html');">Bun</button>
+ * <button style="cursor: pointer;" onclick="open_test('coverage-deno/js/index.html');">Deno</button>
+ * <button style="cursor: pointer;" onclick="open_test('coverage-node/js/index.html');">NodeJS</button>
+ * <br>
  * @module codemelted_core
  */
 
@@ -42,6 +61,24 @@
 export const EVENT_REQUEST = Object.freeze({
   Add: "add",
   Remove: "remove",
+});
+
+/**
+ * Holds the logger configuration information for log level and labels.
+ * @readonly
+ * @enum {object}
+ * @property {object} Debug   level (0) / label "DEBUG"
+ * @property {object} Info    level (1) / label "INFO"
+ * @property {object} Warning level (2) / label "WARNING"
+ * @property {object} Error   level (3) / label "ERROR"
+ * @property {object} Off     level (4) / label "OFF"
+ */
+export const LOGGER = Object.freeze({
+  Debug:   { level: 0, label: "DEBUG"   },
+  Info:    { level: 1, label: "INFO"    },
+  Warning: { level: 2, label: "WARNING" },
+  Error:   { level: 3, label: "ERROR"   },
+  Off:     { level: 4, label: "OFF"     },
 });
 
 /**
@@ -297,62 +334,171 @@ export const PROTOCOL_TYPE = Object.freeze({
  */
 
 /**
- * Provides a result where either the value or the error can be signaled for
- * later usage. A better construct then throwing exceptions and is adapted
- * from Rust programming concepts.
- * @template T The data type that will be held by the value().
+ * The resulting object from the {@link async_task} function call with a
+ * promise of the future {@link CResult}.
+ * @template T The data associated with the {@link CResult.value} function
+ * call.
  */
-export class CResult {
-  /** @type {string | Error | null} */
-  #error;
-  /** @type {T?} */
-  #value;
+export class CFuture {
+  /** @type {T | undefined} */
+  #data;
+  /** @type {number} */
+  #delay;
+  /** @type {CTaskCB<T>} */
+  #task;
+  /** @type {Promise<CResult<T>>} */
+  #result;
+  /** @type {number} */
+  #timeout_id = -1;
 
   /**
-   * Holds any error message associated with a failed transaction request.
-   * @returns {string | Error | null}
+   * Will cancel a currently running task. If no task is running then this
+   * action is a no-op.
    */
-  error() { return this.#error; }
+  cancel() {
+    if (!this.has_completed()) {
+      globalThis.clearTimeout(this.#timeout_id);
+      this.#timeout_id = -1;
+    }
+  }
 
   /**
-   * Signals whether an error was captured or not.
-   * @returns {boolean}
+   * Allows for re-execution of the {@link CFuture} wrapped task.
+   * @param {any} [data] The optional data to pass if necessary when
+   * re-executing the task.
+   * @returns {void}
    */
-  is_error() { return this.error() != null; }
+  execute(data) {
+    try {
+      // Ensure we have completed the previous task before kicking off
+      // the task again.
+      if (!this.has_completed()) {
+        throw new CModuleError(
+          `${CModuleError.MISUSE}: task has not completed.`
+        );
+      }
+
+      // Go re-execute the wrapped task.
+      this.#data = data;
+      this.#result = this.#do_execute();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CFuture::execute() error.", err);
+    }
+  }
 
   /**
-   * Signals the transaction completed with no errors.
-   * @returns {boolean}
+   * Determines if the task has completed or not.
+   * @returns {boolean} true if completed, false otherwise.
    */
-  is_ok() { return !this.is_error(); }
+  has_completed() { return this.#timeout_id === -1; }
 
   /**
-   * Hold the value of the given result or nothing if the CResult is
-   * being used to signal there was no error.
-   * @returns {T?}
+   * Holds the result of the {@link async_task} function call.
+   * @returns {Promise<CResult<T>>} The result of the asynchronous
+   * processing.
    */
-  value() { return this.#value; }
+  result() {
+    try {
+      return this.#result;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CFuture::result() error.", err);
+    }
+  }
+
+  /**
+   * Result for the {@link async_task} function call. Must call execute() to
+   * kick-off the future task.
+   * @param {object} params The named parameters.
+   * @param {CTaskCB<T>} params.task The task to run.
+   * @param {T} [params.data] The optional data to pass to the task.
+   * @param {number} [params.delay=0] The delay to schedule the task in the
+   * future. Defaults to 0 if not specified.
+   */
+  constructor({task, data, delay=0}) {
+    try {
+      json_check_type({type: "function", data: task, should_throw: true});
+      json_check_type({type: "number", data: delay, should_throw: true});
+      this.#task = task;
+      this.#data = data;
+      this.#delay = delay;
+      this.#result = this.#do_execute();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CFuture construction error.", err);
+    }
+  }
+
+  /**
+   * Performs the execution of the task.
+   * @returns {Promise<CResult<T>>}
+   */
+  #do_execute() {
+    return new Promise((resolve) => {
+      this.#timeout_id = setTimeout(() => {
+        try {
+          let answer = this.#task(this.#data);
+          this.#timeout_id = -1;
+          resolve(new CResult({value: answer}));
+        } catch (err) {
+          this.#timeout_id = -1;
+          resolve(new CResult({error: err}));
+        }
+      }, this.#delay);
+    });
+  }
+}
+
+/**
+ * @callback CLogHandler A log handler for further processing of a logged
+ * event.
+ * @param {CLogRecord} record The record logged.
+ * @returns {void}
+ */
+
+/**
+ * The log record processed via the {@link CLogHandler} post logging event.
+ */
+export class CLogRecord {
+  /** @type {Date} */
+  #time = new Date();
+  /** @type {LOGGER} */
+  #level;
+  /** @type {any} */
+  #data = undefined;
+
+  /**
+   * The time the logged event was created.
+   * @returns {Date}
+   */
+  time() { return this.#time; }
+
+  /**
+   * The object representation of the log level.
+   * @returns {LOGGER}
+   */
+  level() { return this.#level; }
+
+  /**
+   * The data associated with the log event.
+   * @returns {any}
+   */
+  data() { return this.#data; }
 
   /**
    * Constructor for the class.
-   * @param {object} params The named parameters for the object.
-   * @param {T?} [params.value] The value associated with the result.
-   * @param {any} [params.error] The error associated with the result.
+   * @param {object} params The named parameters.
+   * @param {LOGGER} params.level object information.
+   * @param {any} params.data The data to log.
    */
-  constructor({value = null, error = null} = {}) {
+  constructor({level, data}) {
     try {
-      if (value && error) {
-        throw new CModuleError(CModuleError.MISUSE);
-      }
-      this.#value = value;
-      if (error instanceof Error || typeof error === "string") {
-        this.#error = error;
-      } else if (typeof error === "object") {
-        this.#error = JSON.stringify(error);
-      } else {
-        // Assumed to be null at this point
-        this.#error = error;
-      }
+      json_check_type({type: "object", data: level, should_throw: true});
+      json_has_key({data: level, key: "level", should_throw: true});
+      json_has_key({data: level, key: "label", should_throw: true});
+      this.#level = level;
+      this.#data = data;
     } catch (err) {
       CModuleError.handle_error(err);
       throw new CModuleError("CLogRecord construction error.", err);
@@ -432,6 +578,78 @@ export class CModuleError extends Error {
   }
 }
 
+/**
+ * Provides a result where either the value or the error can be signaled for
+ * later usage. A better construct then throwing exceptions and is adapted
+ * from Rust programming concepts.
+ * @template T The data type that will be held by the value().
+ */
+export class CResult {
+  /** @type {string | Error | null} */
+  #error;
+  /** @type {T?} */
+  #value;
+
+  /**
+   * Holds any error message associated with a failed transaction request.
+   * @returns {string | Error | null}
+   */
+  error() { return this.#error; }
+
+  /**
+   * Signals whether an error was captured or not.
+   * @returns {boolean}
+   */
+  is_error() { return this.error() != null; }
+
+  /**
+   * Signals the transaction completed with no errors.
+   * @returns {boolean}
+   */
+  is_ok() { return !this.is_error(); }
+
+  /**
+   * Hold the value of the given result or nothing if the CResult is
+   * being used to signal there was no error.
+   * @returns {T?}
+   */
+  value() { return this.#value; }
+
+  /**
+   * Constructor for the class.
+   * @param {object} params The named parameters for the object.
+   * @param {T?} [params.value] The value associated with the result.
+   * @param {any} [params.error] The error associated with the result.
+   */
+  constructor({value = null, error = null} = {}) {
+    try {
+      if (value && error) {
+        throw new CModuleError(CModuleError.MISUSE);
+      }
+      this.#value = value;
+      if (error instanceof Error || typeof error === "string") {
+        this.#error = error;
+      } else if (typeof error === "object") {
+        this.#error = JSON.stringify(error);
+      } else {
+        // Assumed to be null at this point
+        this.#error = error;
+      }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CLogRecord construction error.", err);
+    }
+  }
+}
+
+/**
+ * @callback CTaskCB The task to run as part of the {@link async_task} call.
+ * @param {T} [data] Optional data to pass to the task.
+ * @returns {T} The result of the task completing.
+ * @template T The data associated with the CResult object accessed via the
+ * result() function call.
+ */
+
 // ============================================================================
 // [PROTOCOL BASE DEFINITION] =================================================
 // ============================================================================
@@ -508,7 +726,6 @@ export class CProtocolEvent {
  * terminated, requires the ability to know it is running, and get any
  * errors that have occurred during its run.
  * @template T
- * @private
  */
 export class CProtocol {
   /** @type {string} */
@@ -594,8 +811,559 @@ export class CProtocol {
 }
 
 // ============================================================================
+// [ASYNC PROTOCOL IMPLEMENTATIONS] ===========================================
+// ============================================================================
+
+/**
+ * Represents a firing timer for an open {@link PROTOCOL_TYPE} Timer.
+ */
+export class CTimerEvent {
+  /** @type {number} */
+  #interval;
+
+  /**
+   * The interval of the firing timer event.
+   * @returns {number}
+   */
+  interval() { return this.#interval; }
+
+  /**
+   * Constructor for the class.
+   * @param {number} interval The interval of the firing timer.
+   */
+  constructor(interval) {
+    try {
+      json_check_type({type: "number", data: interval});
+      this.#interval = interval;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CTimerEvent construction error.", err);
+    }
+  }
+}
+
+/**
+ * Creates an asynchronous timer that fires on the specified interval until
+ * terminated.
+ * @extends {CProtocol<CTimerEvent>}
+ */
+export class CTimerProtocol extends CProtocol {
+  /** @type {number} */
+  #interval;
+  /** @type {number} */
+  #timer_id = -1;
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      globalThis.clearInterval(this.#timer_id);
+      this.#timer_id = -1;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      this.report({
+        event_fired: PROTOCOL_EVENT.ModuleError,
+        data: err
+      });
+    }
+  }
+
+  /**
+   * Constructor for the protocol.
+   * @param {object} params The named parameters.
+   * @param {string} params.name The name to give to the protocol.
+   * @param {number} params.interval How often to fire the timer.
+   * @param {import("./codemelted_core.js")
+   *   .CProtocolEventHandler<CTimerEvent>} params.rx_handler Handler for
+   * the protocol.
+   */
+  constructor({name, interval, rx_handler}) {
+    super({
+      name: name,
+      type: PROTOCOL_TYPE.Timer,
+      rx_handler: rx_handler,
+    });
+    try {
+      json_check_type({type: "number", data: interval, should_throw: true});
+      // @ts-ignore node returns an object.
+      this.#interval = interval;
+      this.#timer_id = globalThis.setInterval(() => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Message,
+          data: new CTimerEvent(this.#interval),
+        });
+      }, interval);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CTimerProtocol construction error.", err);
+    }
+  }
+}
+
+/**
+ * Identifies event handled by the {@link PROTOCOL_TYPE.Worker}
+ * protocol.
+ */
+export class CWorkerEvent {
+  /** @type {ErrorEvent | MessageEvent} */
+  #event;
+  /** @type {boolean} */
+  #is_error;
+
+  /**
+   * Treats the wrapped event as an error event.
+   * @returns {ErrorEvent?}
+   */
+  as_error_event() {
+    return this.#event instanceof ErrorEvent
+      ? this.#event
+      : null;
+  }
+
+  /**
+   * Treats the wrapped event as a message event.
+   * @returns {MessageEvent?}
+   */
+  as_message_event() {
+    return this.#event instanceof MessageEvent
+      ? this.#event
+      : null;
+  }
+
+  /**
+   * The event captured by the protocol.
+   * @returns {ErrorEvent | MessageEvent}
+   */
+  event() { return this.#event; }
+
+  /**
+   * Indicates if the event captured was an error.
+   * @returns {boolean}
+   */
+  is_error() { return this.#is_error; }
+
+  /**
+   * Constructor for the protocol event.
+   * @param {object} params The named parameters
+   * @param {ErrorEvent | MessageEvent} params.event The event handled by the
+   * protocol.
+   * @param {boolean} params.is_error true if it was an error event,
+   * false otherwise.
+   */
+  constructor({event, is_error}) {
+    try {
+      if (!json_check_type({type: MessageEvent, data: event}) &&
+          !json_check_type({type: ErrorEvent, data: event})) {
+        throw new CModuleError(CModuleError.TYPE_VIOLATION);
+      }
+      json_check_type({type: "boolean", data: is_error, should_throw: true});
+      this.#event = event;
+      this.#is_error = is_error;
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(
+        "CWorkerEvent construction error.", err
+      );
+    }
+  }
+}
+
+/**
+ * An object containing option properties that can be set when creating the
+ * object instance. Available properties are as follows.
+ * @typedef {object} CWorkerOptions
+ * @property {string} [credentials] A string specifying whether the browser
+ * sends credentials when importing modules into a module worker. The allowed
+ * values are the same as can be passed to the fetch()
+ * request: omit, same-origin, or include.  The default is same-origin
+ * (only include credentials for same-origin requests). This is ignored for
+ * classic workers.
+ * @property {string} [name] A string specifying an identifying name for the
+ * DedicatedWorkerGlobalScope representing the scope of the worker, which is
+ * mainly useful for debugging purposes.
+ * @property {string} [type] A string specifying the type of worker to create.
+ * The value can be classic or module. The default is classic.
+ */
+
+/**
+ * Constructs a dedicated background worker off the JavaScript runtime main
+ * thread.
+ * @extends {CProtocol<CWorkerEvent>}
+ */
+export class CWorkerProtocol extends CProtocol {
+  /** @type {Worker} */
+  #worker;
+
+  /**
+   * Sends a message, which can be of any kind of Object, to the background
+   * worker for processing based on how it was setup to be processed.
+   * @override
+   * @param {any} [data] The data to post. The data is serialized using the
+   * structured clone algorithm. This means you can pass a broad variety of
+   * data objects safely to the background for processing without having to
+   * serialize them yourself.
+   * @returns {void}
+   */
+  post_message(data) {
+    try {
+      this.#worker.postMessage(data);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      this.report({
+        event_fired: PROTOCOL_EVENT.ModuleError,
+        data: err
+      });
+    }
+  }
+
+  /**
+   * @inheritdoc
+   * @override
+   */
+  terminate() {
+    try {
+      this.#worker.terminate();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      this.report({
+        event_fired: PROTOCOL_EVENT.ModuleError,
+        data: err
+      });
+    }
+  }
+
+  /**
+   * Constructs a worker protocol for asynchronous processing off the main
+   * runtime thread.
+   * @param {object} params The named parameters.
+   * @param {string} params.name The optional name to give to the
+   * protocol.
+   * @param {CWorkerOptions} [params.options] Options for further
+   * configuration of the worker. Defaults to a "module" type.
+   * @param {import("./codemelted_core.js")
+   *  .CProtocolEventHandler<CWorkerEvent>} params.rx_handler The receive
+   * handler for data and state changes.
+   * @param {string} params.url The URL associated with the worker thread.
+   */
+  constructor({name, options = {type: "module"}, rx_handler, url}) {
+    super({
+      name: name,
+      rx_handler: rx_handler,
+      type: PROTOCOL_TYPE.Worker
+    });
+    try {
+      if (!runtime_query({request: QUERY_REQUEST.IsWorkerAvailable})) {
+        throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+      }
+      json_check_type({type: "string", data: url, should_throw: true});
+      json_check_type({type: "object", data: options, should_throw: true});
+      this.#worker = new globalThis.Worker(
+        new URL(url, import.meta.url).href,
+        // @ts-ignore CWorkerOptions matches WorkerOptions from browser.
+        options
+      );
+      this.#worker.onerror = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Error,
+          data: new CWorkerEvent({event: evt, is_error: true})
+        });
+        evt.preventDefault();
+      }
+      this.#worker.onmessageerror = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.MessageError,
+          data: new CWorkerEvent({event: evt, is_error: true})
+        });
+        evt.preventDefault();
+      }
+      this.#worker.onmessage = (evt) => {
+        this.report({
+          event_fired: PROTOCOL_EVENT.Message,
+          data: new CWorkerEvent({event: evt, is_error: false})
+        });
+        evt.preventDefault();
+      }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("CWorkerProtocol construction error.", err);
+    }
+  }
+}
+
+// ============================================================================
 // [PUBLIC API] ===============================================================
 // ============================================================================
+
+/**
+ * Will put a currently running async task to sleep for a specified delay
+ * in milliseconds.
+ * @param {number} delay Time is milliseconds to delay the task.
+ * @returns {Promise<void>} The promise to await on for the delay.
+ * A rejected promise represents an API violation.
+ * @example
+ * // From within an async function, sleep 2 seconds.
+ * await async_sleep(2000);
+ */
+export function async_sleep(delay) {
+  return new Promise((resolve, reject) => {
+    try {
+      json_check_type({type: "number", data: delay, should_throw: true});
+      setTimeout(() => {
+        resolve();
+      }, delay);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      reject(`async_sleep() error. ${err}`);
+    }
+  });
+}
+
+/**
+ * Will execute an asynchronous task and get its result in the future.
+ * @template T The data to be processed through the {@link CFuture}.
+ * @param {object} params The named parameters.
+ * @param {CTaskCB<T>} params.task The task to run.
+ * @param {T} [params.data] The optional data to pass to the task.
+ * @param {number} [params.delay=0] The delay to schedule the task in the
+ * future. Defaults to 0 if not specified.
+ * @param {boolean} [params.execute=true] Flag to indicate to immediately
+ * execute the future or not to execute it and leave it to developer's
+ * choice. Defaults to true if not specified.
+ * @returns {CFuture<T>} An object to execute the asynchronous task. You can
+ * also re-execute the future by calling the {@link CFuture.execute} method.
+ * @example
+ * // Schedule a task for getting a future result and write it to the
+ * // console.
+ * let future = async_task({
+ *   task: (data) => { return data + 20; },
+ *   data: 22,
+ *   delay: 1000,
+ *   execute: true,
+ * });
+ * let result = await future.result();
+ * console.log("result = ", result.value());
+ */
+export function async_task({task, data, delay=0, execute=true}) {
+  try {
+    let future = new CFuture({task: task, data: data, delay: delay});
+    if (execute) {
+      future.execute();
+    }
+    return future;
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("async_task() error.", err);
+  }
+}
+
+/**
+ * Create an asynchronous timer set on a specified interval. When the event
+ * is fired, the rx_handler will receive the event.
+ * @param {object} params The named parameters
+ * @param {string} params.name Identification for the protocol.
+ * @param {number} params.interval The interval the timer protocol will
+ * fire a {@link CTimerEvent}.
+ * @param {import("./codemelted_core.js")
+ *  .CProtocolEventHandler<CTimerEvent>} params.rx_handler The receive
+ * handler for processing the event.
+ * @returns {CTimerProtocol}
+ * @example
+ * // TBD
+ */
+export function async_timer({name, interval, rx_handler}) {
+  try {
+    return new CTimerProtocol({
+      name: name,
+      interval: interval,
+      rx_handler: rx_handler
+    });
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("async_task() error.", err);
+  }
+}
+
+/**
+ * Creates an background worker to offload processing to a background thread.
+ * @param {object} params The named parameters.
+ * @param {string} params.name The optional name to give to the
+ * protocol.
+ * @param {CWorkerOptions} [params.options] Options for further
+ * configuration of the worker. Defaults to a "module" type.
+ * @param {import("./codemelted_core.js")
+ *  .CProtocolEventHandler<CWorkerEvent>} params.rx_handler The receive
+ * handler for data and state changes.
+ * @param {string} params.url The URL associated with the worker thread.
+ * @returns {CWorkerProtocol}
+ * @example
+ * // TBD
+ */
+export function async_worker({
+  name,
+  options = {type: "module"},
+  rx_handler,
+  url})
+{
+  try {
+    return new CWorkerProtocol({
+      name: name,
+      options: options,
+      rx_handler: rx_handler,
+      url: url,
+    });
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("async_task() error.", err);
+  }
+}
+
+/**
+ * Holds the current log level of the module
+ * @private
+ * @type {LOGGER}
+ */
+let _logger_level = LOGGER.Error;
+
+/**
+ * Holds the logger handler for post logging events.
+ * @private
+ * @type {CLogHandler?}
+ */
+let _logger_handler = null;
+
+/**
+ * Sets the logger handler for post logging processing.
+ * @param {CLogHandler} [handler] The handler to utilize.
+ * @returns {void}
+ * @example
+ * // To set a logger for post logging processing
+ * function log_handler(record) {
+ *   // Do something with the log record.
+ * }
+ * logger_handler(log_handler);
+ *
+ * // To unset it
+ * logger_handler();
+ */
+export function logger_handler(handler) {
+  try {
+    if (handler === null || handler === undefined) {
+      _logger_handler = null;
+    } else {
+      json_check_type({
+        type: "function",
+        data: handler,
+        count: 1,
+        should_throw: true
+      });
+      _logger_handler = handler;
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_handler() error.", err);
+  }
+}
+
+/**
+ * Sets / retrieves the current module log level.
+ * @param {object | undefined} [level] The optional log level to set
+ * based on the {@link LOGGER} object configuration.
+ * @returns {string} The string representation of the log level.
+ * @example
+ * // To determine the current logger level
+ * let logger_level = logger_level();
+ *
+ * // To set the module logger level
+ * logger_level(LOGGER.info);
+ *
+ * // To turn off all logging
+ * logger_level(LOGGER.Off);
+ */
+export function logger_level(level) {
+  try {
+    if (level) {
+      json_check_type({type: "object", data: level, should_throw: true});
+      json_has_key({data: level, key: "level", should_throw: true});
+      json_has_key({data: level, key: "label", should_throw: true});
+      _logger_level = level;
+    }
+    // @ts-ignore Property exists on the struct.
+    return _logger_level.label;
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_level() error.", err);
+  }
+}
+
+/**
+ * Logs an event with the module logger.
+ * @param {object} params The named parameters.
+ * @param {LOGGER} params.level The log level for the logged event.
+ * @param {any} params.data The data to log with the event.
+ * @returns {void}
+ * @example
+ * // When the logger is on and you want to log an event
+ * // It will only log if the log level is set to log those events.
+ * logger_log({level: Logger.Warning, data: "A thing happened"});
+ */
+export function logger_log({level, data}) {
+  try {
+    json_check_type({type: "object", data: level, should_throw: true});
+    json_has_key({data: level, key: "level", should_throw: true});
+    json_has_key({data: level, key: "label", should_throw: true});
+    if (!data) {
+      throw new CModuleError(CModuleError.TYPE_VIOLATION);
+    }
+
+    // Check to see if our logging is on or off.
+    // @ts-ignore Property exists on the struct.
+    if (_logger_level.label == "OFF") {
+      return;
+    }
+
+    // It's on, go create the log record and go log some stuff.
+    const record = new CLogRecord({level: level, data: data});
+    // @ts-ignore Property exists on the struct.
+    if (record.level().level >= _logger_level.level) {
+      // @ts-ignore Property exists on the struct.
+      switch (record.level().label) {
+        case "DEBUG":
+        case "INFO":
+          console.log(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+        case "WARNING":
+          console.warn(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+          break;
+        case "ERROR":
+          console.error(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+          break;
+      }
+
+      if (_logger_handler) {
+        _logger_handler(record);
+      }
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_log() error.", err);
+  }
+}
 
 /**
  * Decodes a string of data which has been encoded using Base64 encoding.
@@ -821,6 +1589,22 @@ export function json_stringify(data) {
   } catch (ex) {
     return null;
   }
+}
+
+/**
+ * @private
+ * TO BE IMPLEMENTED
+ */
+export function npu_compute() {
+  throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+}
+
+/**
+ * @private
+ * TO BE IMPLEMENTED
+ */
+export function npu_math() {
+  throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
 }
 
 /**

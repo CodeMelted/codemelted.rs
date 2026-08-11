@@ -35,6 +35,11 @@ import {
   CProtocol,
 } from "./codemelted_core.js";
 
+// Module only available in a Browser runtime.
+if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
+  throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+}
+
 // ============================================================================
 // [ENUM DEFINITION] ==========================================================
 // ============================================================================
