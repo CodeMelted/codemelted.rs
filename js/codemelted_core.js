@@ -436,6 +436,7 @@ export class CFuture {
    */
   #do_execute() {
     return new Promise((resolve) => {
+      // @ts-ignore node returns an object instead of a number
       this.#timeout_id = setTimeout(() => {
         try {
           let answer = this.#task(this.#data);
@@ -648,6 +649,12 @@ export class CResult {
  * @returns {T} The result of the task completing.
  * @template T The data associated with the CResult object accessed via the
  * result() function call.
+ */
+
+/**
+ * NOTE: Defined to support proper typing in the JSDocs when type checking
+ *       in a TypeScript environment.
+ * @typedef {object} HTMLElement
  */
 
 // ============================================================================
@@ -887,8 +894,8 @@ export class CTimerProtocol extends CProtocol {
     });
     try {
       json_check_type({type: "number", data: interval, should_throw: true});
-      // @ts-ignore node returns an object.
       this.#interval = interval;
+      // @ts-ignore node returns an object.
       this.#timer_id = globalThis.setInterval(() => {
         this.report({
           event_fired: PROTOCOL_EVENT.Message,
@@ -1613,8 +1620,8 @@ export function npu_math() {
  * @param {object} params The named parameters.
  * @param {EVENT_REQUEST} params.request The request to carry out.
  * @param {string} params.type The event handler identifier.
- * @param {import("./codemelted_core").CEventHandler} params.handler The handler called
- * when the identified event is triggered or being removed.
+ * @param {import("./codemelted_core.js").CEventHandler} params.handler The
+ * handler called when the identified event is triggered or being removed.
  * @param {EventTarget} [params.target=globalThis] The element to attach an
  * event handler to if it supports it.
  * @returns {void}

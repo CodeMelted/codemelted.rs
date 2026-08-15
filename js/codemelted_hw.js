@@ -34,7 +34,7 @@ import {
   json_check_type,
   runtime_query,
   QUERY_REQUEST,
-} from "./codemelted_core";
+} from "./codemelted_core.js";
 
 // Module only available in a Browser runtime.
 if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {

@@ -48,6 +48,9 @@ function deploy_crate {
   } else {
     cargo publish --dry-run
   }
+  if ($LASTEXITCODE -ne 0) {
+    throw "cargo publish failed"
+  }
 }
 
 # Takes care of deploying the full build of the project to the
@@ -70,7 +73,7 @@ function deploy([string]$option) {
   switch ($option) {
     "crate" { deploy_crate }
     "website" { deploy_website }
-    default { Write-Warning "ERROR: Invalid parameter specified." }
+    default { throw "Invalid parameter specified." }
   }
 }
 
@@ -84,15 +87,13 @@ function make_rust {
   cargo clean
   cargo doc --no-deps --lib
   if ($LASTEXITCODE -ne 0) {
-    Write-Warning "ERROR (make failed): cargo doc"
-    exit 1
+    throw "make failed (cargo doc)."
   }
   Set-Location $PSScriptRoot/mdbook
   mdbook clean
   mdbook build
   if ($LASTEXITCODE -ne 0) {
-    Write-Warning "ERROR (make failed): mdbook build"
-    exit 1
+    throw "make failed (mdbook build)"
   }
   Set-Location $PSScriptRoot
   message "codemelted.rs build of code and documentation completed."
@@ -105,8 +106,7 @@ function make_js {
   Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
   typedoc
   if ($LASTEXITCODE -ne 0) {
-    Write-Warning "ERROR (make failed): typedoc"
-    exit 1
+    throw "make failed (typedoc)"
   }
 
   # Finish up the the prepping of the documentation
@@ -121,15 +121,20 @@ function make_website {
   make_rust
   make_js
   Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
-  New-Item -Path docs/codemelted.rs -ItemType Directory
-  New-Item -Path docs/mdbook -ItemType Directory
-  New-Item -Path docs/js -ItemType Directory
-  New-Item -Path docs/support -ItemType Directory
-  Copy-Item -Path mdbook/book/* -Destination docs/mdbook -Force -Recurse
-  Copy-Item -Path target/doc/* -Destination docs/codemelted.rs -Force -Recurse
-  Copy-Item -Path js/docs/* -Destination docs/js -Force -Recurse
-  Copy-Item -Path support/* -Destination docs/support -Force -Recurse
-  Move-Item -Path docs/support/index.html -Destination docs -Force
+  New-Item -Path docs/codemelted.rs -ItemType Directory -ErrorAction Stop
+  New-Item -Path docs/mdbook -ItemType Directory -ErrorAction Stop
+  New-Item -Path docs/js -ItemType Directory -ErrorAction Stop
+  New-Item -Path docs/support -ItemType Directory -ErrorAction Stop
+  Copy-Item -Path mdbook/book/* -Destination docs/mdbook -Force -Recurse `
+    -ErrorAction Stop
+  Copy-Item -Path target/doc/* -Destination docs/codemelted.rs -Force `
+    -Recurse -ErrorAction Stop
+  Copy-Item -Path js/docs/* -Destination docs/js -Force -Recurse `
+    -ErrorAction Stop
+  Copy-Item -Path support/* -Destination docs/support -Force -Recurse `
+    -ErrorAction Stop
+  Move-Item -Path docs/support/index.html -Destination docs -Force `
+    -ErrorAction Stop
   message "rs.codemelted.com website completed."
 }
 
@@ -139,7 +144,7 @@ function make([string]$option) {
     "" { make_website }
     "rust" { make_rust }
     "js" { make_js }
-    default { Write-Warning "ERROR: Invalid parameter specified." }
+    default { throw "Invalid parameter specified." }
   }
 }
 
@@ -150,16 +155,21 @@ function make([string]$option) {
 # Helper function to handle creating the coverage results.
 function lcov_to_html() {
   if ($IsLinux -or $IsMacOS) {
-    genhtml -o coverage --ignore-errors unused,inconsistent,inconsistent `
+    genhtml -o coverage --ignore-errors unused,inconsistent,inconsistent,range `
       --dark-mode coverage/lcov.info
+    if ($LASTEXITCODE -ne 0) {
+      throw "lcov_to_html failed. no coverage file produced"
+    }
   } else {
     $exists = Test-Path -Path $GEN_HTML_PERL_SCRIPT -PathType Leaf
     if ($exists) {
       perl $GEN_HTML_PERL_SCRIPT -o coverage coverage/lcov.info
-    }
-    else {
-      Write-Host "WARNING: genhtml not installed for windows. Run " +
-      "'choco install lcov' for pwsh terminal as Admin to install it."
+      if ($LASTEXITCODE -ne 0) {
+        throw "lcov_to_html failed. no coverage file produced"
+      }
+    } else {
+      throw "genhtml not installed for windows. Run " +
+        "'choco install lcov' for pwsh terminal as Admin to install it."
     }
   }
 }
@@ -168,20 +178,19 @@ function lcov_to_html() {
 function test_js {
   message "Now testing JavaScript modules."
   Set-Location $PSScriptRoot/js
-  Copy-Item *.js /tests -Force
-  New-Item -ItemType Directory docs -ErrorAction Ignore
+  Copy-Item *.js $PSScriptRoot/js/tests -Force -ErrorAction Stop
+  New-Item -ItemType Directory $PSScriptRoot/js/docs -ErrorAction Ignore
   Set-Location $PSScriptRoot/js/tests
 
   # First we test bun and see how that goes.
   message "Testing bun runtime."
   bun test --coverage --coverage-reporter=lcov bun.test.ts
   if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERROR (test failed): bun"
-    Set-Location $PSScriptRoot
-    exit 1
+    throw "test failed (bun)"
   } else {
     lcov_to_html
-    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-bun -Force
+    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-bun `
+      -Force -ErrorAction Stop
     message "bun testing completed."
   }
 
@@ -190,13 +199,12 @@ function test_js {
   deno test --allow-env --allow-net --allow-read --allow-sys --allow-write `
     --coverage=coverage --no-config deno.test.ts
   if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERROR (test failed): deno"
-    Set-Location $PSScriptRoot
-    exit 1
+    throw "test failed (deno)"
   } else {
     deno coverage --lcov > coverage/lcov.info
     lcov_to_html
-    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-deno -Force
+    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-deno `
+      -Force -ErrorAction Stop
     message "deno testing completed."
   }
 
@@ -205,23 +213,27 @@ function test_js {
   New-Item -ItemType Directory coverage
   node --test ./node.test.js
   if ($LASTEXITCODE -ne 0) {
-    Write-Host "ERROR: node tests failed!"
-    Set-Location $PSScriptRoot
-    exit 1
+    throw "test failed (node)"
   } else {
     node --experimental-test-coverage --test-reporter=lcov `
       --test-reporter-destination=coverage/lcov.info ./node.test.js
     lcov_to_html
-    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-node -Force
+    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-node `
+      -Force -ErrorAction Stop
     message "node testing completed."
   }
 
   # Setup to do Browser Runtime Testing
-  New-Item -ItemType Directory $PSScriptRoot/js/docs/coverage-browser -Force
-  Copy-Item coverage-browser.html $PSScriptRoot/docs/js/coverage-browser/index.html -Force
-  Copy-Item browser.test.js $PSScriptRoot/js/docs/coverage-browser -Force
-  Copy-Item worker.test.js $PSScriptRoot/js/docs/coverage-browser -Force
-  Copy-Item codemelted*.js $PSScriptRoot/js/docs/coverage-browser -Force
+  New-Item -ItemType Directory $PSScriptRoot/js/docs/coverage-browser `
+    -Force -ErrorAction Stop
+  Copy-Item coverage-browser.html $PSScriptRoot/js/docs/coverage-browser/index.html `
+    -Force -ErrorAction Stop
+  Copy-Item browser.test.js $PSScriptRoot/js/docs/coverage-browser -Force `
+    -ErrorAction Stop
+  Copy-Item worker.test.js $PSScriptRoot/js/docs/coverage-browser -Force `
+    -ErrorAction Stop
+  Copy-Item codemelted*.js $PSScriptRoot/js/docs/coverage-browser -Force `
+    -ErrorAction Stop
 
   Set-Location $PSScriptRoot
   message "JavaScript module V8 runtime testing completed." +
@@ -234,8 +246,7 @@ function test_rust {
   message "Now testing the codemelted.rs modules"
   cargo test
   if ($LASTEXITCODE -ne 0) {
-    Write-Warning "ERROR (test failed): cargo test"
-    exit 1
+    throw "test failed (cargo)"
   }
   message "codemelted.rs module testing completed."
 }
@@ -249,7 +260,7 @@ function test([string]$option) {
     }
     "js" { test_js }
     "rust" { test_rust }
-    default { Write-Warning "ERROR: Invalid parameter specified." }
+    default { throw "Invalid parameter specified." }
   }
 }
 
@@ -257,10 +268,16 @@ function test([string]$option) {
 # [Main execution of the script] ==============================================
 # =============================================================================
 
-$option = $args[1] ?? ""
-switch ($args[0]) {
-  "--deploy" { deploy $option }
-  "--make" { make $option }
-  "--test" { test $option }
-  default { Write-Warning "ERROR: Invalid parameter specified." }
+try {
+  $option = $args[1] ?? ""
+  switch ($args[0]) {
+    "--deploy" { deploy $option }
+    "--make" { make $option }
+    "--test" { test $option }
+    default { throw "Invalid parameter specified." }
+  }
+} catch {
+  Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
+  Set-Location $PSScriptRoot
+  exit 1
 }
