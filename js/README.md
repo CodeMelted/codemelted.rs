@@ -2,7 +2,7 @@
   <br /><img style="width: 100%; max-width: 375px;" src="https://codemelted.com/assets/images/logo-codemelted-rs.png" /><br />
 </center>
 
-<mark>WORDS</mark>
+Welcome to the *codemelted JavaScript modules*. These represent seven ES6 modules wrapping the Web APIs providing easy to utilize APIs to build web based applications. These include Single Page Applications (SPAs) / Progressive Web Applications (PWAs), general website development, and the development of desktop / mobile applications utilizing Rust TAURI crate. It also provides proper JSDoc bindings so you can utilize both JavaScript / TypeScript for your project. Finally, care was taken to utilize the core module of these modules within your preferred V8 (Bun, Deno, Node) runtime for backend cloud / server side development.
 
 <center>
   <br />
@@ -43,7 +43,7 @@ The following model reflects how this project is built, tested, and delivered fo
 
 ## Module Hierarchy
 
-The codemelted JavaScript modules is organized into seven modules. The `codemelted_core.js` module works in all runtimes. The `codemelted_disk.js`, `codemelted_hw.js`, `codemelted_storage.js`, and `codemelted_ui.js` work only in a Browser runtime. Including them into any V8 runtime will result in a module error. Lastly the `codemelted_db.js` and `codemelted_network.js` modules work within the Browser and Worker (a.k.a Service / Web Worker Background threads) runtimes.
+The codemelted JavaScript modules is organized into seven modules. The `codemelted_core.js` module works in all runtimes. The `codemelted_disk.js`, `codemelted_hw.js`, `codemelted_storage.js`, and `codemelted_ui.js` work only in a Browser runtime. Including them into any V8 runtime will result in a thrown module error. Lastly the `codemelted_db.js` and `codemelted_network.js` modules work within the Browser and Worker (a.k.a Service / Web Worker Background threads) runtimes. It to will result in a thrown module error.
 
 ```mermaid
 classDiagram

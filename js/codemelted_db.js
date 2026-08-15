@@ -26,7 +26,17 @@
  * @module codemelted_db
  */
 
-import { CModuleError } from "./codemelted_core.js";
+import {
+  CModuleError,
+  QUERY_REQUEST,
+  runtime_query
+} from "./codemelted_core.js";
+
+// Module only available in a Browser / Worker runtimes
+if (!runtime_query({request: QUERY_REQUEST.IsBrowser}) &&
+    !runtime_query({request: QUERY_REQUEST.IsWorkerRuntime})) {
+  throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+}
 
 // ============================================================================
 // [DATA DEFINITION] ==========================================================

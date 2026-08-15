@@ -23,11 +23,135 @@
 # IN THE SOFTWARE.
 # =============================================================================
 
+# =============================================================================
+# [General Definitions] =======================================================
+# =============================================================================
+
 [string]$GEN_HTML_PERL_SCRIPT = "c:/ProgramData/chocolatey/lib/lcov/tools/bin/genhtml"
 
+# Helper function to format message output from the build script.
+function message([string]$msg) {
+  Write-Host
+  Write-Host "MESSAGE: $msg"
+  Write-Host
+}
+
+# =============================================================================
+# [deploy Options] ============================================================
+# =============================================================================
+
+# Will publish the codemelted crate for consumption into a Rust project.
+function deploy_crate {
+  $answer = Read-Host -Prompt "Publish Crate (y/N)?"
+  if ($answer -eq "y") {
+    cargo publish
+  } else {
+    cargo publish --dry-run
+  }
+}
+
+# Takes care of deploying the full build of the project to the
+# rs.codemelted.com domain.
+function deploy_website {
+  message "Now uploading rs.codemelted.com content."
+  Move-Item -Path docs -Destination rs -ErrorAction Stop
+  Compress-Archive -Path rs -DestinationPath rs.zip -Force
+  $hostService = $env:CODEMELTED_USER_AND_IP + $env:CODEMELTED_HOME
+  scp rs.zip $hostService
+  ssh $env:CODEMELTED_USER_AND_IP
+  Remove-Item -Path rs.zip
+  Remove-Item -Path rs -Recurse -Force
+  Set-Location $PSScriptRoot
+  message "Upload completed."
+}
+
+# Takes care of deploying the different aspects of this project.
+function deploy([string]$option) {
+  switch ($option) {
+    "crate" { deploy_crate }
+    "website" { deploy_website }
+    default { Write-Warning "ERROR: Invalid parameter specified." }
+  }
+}
+
+# =============================================================================
+# [make Options] ==============================================================
+# =============================================================================
+
+# Handles the making of the rust based components of the project.
+function make_rust {
+  message "Now building the codemelted.rs Rust code and docs."
+  cargo clean
+  cargo doc --no-deps --lib
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "ERROR (make failed): cargo doc"
+    exit 1
+  }
+  Set-Location $PSScriptRoot/mdbook
+  mdbook clean
+  mdbook build
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "ERROR (make failed): mdbook build"
+    exit 1
+  }
+  Set-Location $PSScriptRoot
+  message "codemelted.rs build of code and documentation completed."
+}
+
+# Handles the making of the typedoc for the JavaScript modules.
+function make_js {
+  message "Now building codemelted JavaScript modules."
+  Set-Location $PSScriptRoot/js
+  Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
+  typedoc
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "ERROR (make failed): typedoc"
+    exit 1
+  }
+
+  # Finish up the the prepping of the documentation
+  Set-Location $PSScriptRoot
+  message "codemelted JavaScript modules build completed."
+}
+
+# Runs the whole make_rust, make_js, then assembles all the output for the
+# rs.codemelted.com domain website.
+function make_website {
+  message "Now building the rs.codemelted.com website."
+  make_rust
+  make_js
+  Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
+  New-Item -Path docs/codemelted.rs -ItemType Directory
+  New-Item -Path docs/mdbook -ItemType Directory
+  New-Item -Path docs/js -ItemType Directory
+  New-Item -Path docs/support -ItemType Directory
+  Copy-Item -Path mdbook/book/* -Destination docs/mdbook -Force -Recurse
+  Copy-Item -Path target/doc/* -Destination docs/codemelted.rs -Force -Recurse
+  Copy-Item -Path js/docs/* -Destination docs/js -Force -Recurse
+  Copy-Item -Path support/* -Destination docs/support -Force -Recurse
+  Move-Item -Path docs/support/index.html -Destination docs -Force
+  message "rs.codemelted.com website completed."
+}
+
+# Performs the make based on the specified option.
+function make([string]$option) {
+  switch ($option) {
+    "" { make_website }
+    "rust" { make_rust }
+    "js" { make_js }
+    default { Write-Warning "ERROR: Invalid parameter specified." }
+  }
+}
+
+# =============================================================================
+# [test Options] ==============================================================
+# =============================================================================
+
+# Helper function to handle creating the coverage results.
 function lcov_to_html() {
   if ($IsLinux -or $IsMacOS) {
-    genhtml -o coverage --ignore-errors unused,inconsistent,inconsistent --dark-mode coverage/lcov.info
+    genhtml -o coverage --ignore-errors unused,inconsistent,inconsistent `
+      --dark-mode coverage/lcov.info
   } else {
     $exists = Test-Path -Path $GEN_HTML_PERL_SCRIPT -PathType Leaf
     if ($exists) {
@@ -40,132 +164,103 @@ function lcov_to_html() {
   }
 }
 
-# Helper function to format message output from the build script.
-function message([string]$msg) {
-  Write-Host
-  Write-Host "MESSAGE: $msg"
-  Write-Host
+# Handles testing the JavaScript modules within all the different runtimes.
+function test_js {
+  message "Now testing JavaScript modules."
+  Set-Location $PSScriptRoot/js
+  Copy-Item *.js /tests -Force
+  New-Item -ItemType Directory docs -ErrorAction Ignore
+  Set-Location $PSScriptRoot/js/tests
+
+  # First we test bun and see how that goes.
+  message "Testing bun runtime."
+  bun test --coverage --coverage-reporter=lcov bun.test.ts
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR (test failed): bun"
+    Set-Location $PSScriptRoot
+    exit 1
+  } else {
+    lcov_to_html
+    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-bun -Force
+    message "bun testing completed."
+  }
+
+  # Do the deno tests
+  message "Testing deno runtime."
+  deno test --allow-env --allow-net --allow-read --allow-sys --allow-write `
+    --coverage=coverage --no-config deno.test.ts
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR (test failed): deno"
+    Set-Location $PSScriptRoot
+    exit 1
+  } else {
+    deno coverage --lcov > coverage/lcov.info
+    lcov_to_html
+    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-deno -Force
+    message "deno testing completed."
+  }
+
+  # Do node tests
+  message "Testing node runtime."
+  New-Item -ItemType Directory coverage
+  node --test ./node.test.js
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: node tests failed!"
+    Set-Location $PSScriptRoot
+    exit 1
+  } else {
+    node --experimental-test-coverage --test-reporter=lcov `
+      --test-reporter-destination=coverage/lcov.info ./node.test.js
+    lcov_to_html
+    Move-Item -Path coverage -Destination $PSScriptRoot/js/docs/coverage-node -Force
+    message "node testing completed."
+  }
+
+  # Setup to do Browser Runtime Testing
+  New-Item -ItemType Directory $PSScriptRoot/js/docs/coverage-browser -Force
+  Copy-Item coverage-browser.html $PSScriptRoot/docs/js/coverage-browser/index.html -Force
+  Copy-Item browser.test.js $PSScriptRoot/js/docs/coverage-browser -Force
+  Copy-Item worker.test.js $PSScriptRoot/js/docs/coverage-browser -Force
+  Copy-Item codemelted*.js $PSScriptRoot/js/docs/coverage-browser -Force
+
+  Set-Location $PSScriptRoot
+  message "JavaScript module V8 runtime testing completed." +
+    "Execute python3 -m http.server to complete browser testing " +
+    "and validation of the rs.codemelted.com domain."
 }
 
+# Handles the execution of testing the rust based code.
+function test_rust {
+  message "Now testing the codemelted.rs modules"
+  cargo test
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "ERROR (test failed): cargo test"
+    exit 1
+  }
+  message "codemelted.rs module testing completed."
+}
+
+# Handles the testing of the different aspects of the project
+function test([string]$option) {
+  switch ($option) {
+    "" {
+      test_js
+      test_rust
+    }
+    "js" { test_js }
+    "rust" { test_rust }
+    default { Write-Warning "ERROR: Invalid parameter specified." }
+  }
+}
+
+# =============================================================================
+# [Main execution of the script] ==============================================
+# =============================================================================
+
+$option = $args[1] ?? ""
 switch ($args[0]) {
-  "--deploy" {
-    message "Now uploading codemelted.com/developer content."
-    Move-Item -Path docs -Destination rs -ErrorAction Stop
-    Compress-Archive -Path rs -DestinationPath rs.zip -Force
-    $hostService = $env:CODEMELTED_USER_AND_IP + $env:CODEMELTED_HOME
-    scp rs.zip $hostService
-    ssh $env:CODEMELTED_USER_AND_IP
-    Remove-Item -Path rs.zip
-    Remove-Item -Path rs -Recurse -Force
-    Set-Location $PSScriptRoot
-    message "Upload completed."
-  }
-  "--make" {
-    message "Now building the codemelted.rs documentation."
-    # cargo clean
-    # cargo doc --no-deps --lib
-    # Set-Location $PSScriptRoot/mdbook
-    # mdbook clean
-    # mdbook build
-    # Set-Location $PSScriptRoot
-    # message "codemelted.rs documentation completed."
-
-    message "Now building codemelted.js module."
-    Set-Location $PSScriptRoot/js
-    Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
-    jsdoc ./codemelted.js --readme ./README.md --destination docs
-    if ($LASTEXITCODE -eq 0) {
-      Copy-Item doc-theme/jsdoc-default.css -Destination docs/styles
-      Copy-Item models -Destination docs/ -Recurse
-      Copy-Item codemelted.js -Destination docs
-      Set-Location $PSScriptRoot
-    } else {
-      Write-Host "ERROR: jsdoc failed!"
-      Set-Location $PSScriptRoot
-      return
-    }
-
-    message "build completed."
-
-    # message "codemelted.rs Now building docs website."
-    # Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
-    # New-Item -Path docs/codemelted.rs -ItemType Directory
-    # New-Item -Path docs/mdbook -ItemType Directory
-    # New-Item -Path docs/js -ItemType Directory
-    # New-Item -Path docs/support -ItemType Directory
-    # Copy-Item -Path mdbook/book/* -Destination docs/mdbook -Force -Recurse
-    # Copy-Item -Path target/doc/* -Destination docs/codemelted.rs -Force -Recurse
-    # Copy-Item -Path js/docs/* -Destination docs/js -Force -Recurse
-    # Copy-Item -Path support/* -Destination docs/support -Force -Recurse
-    # Move-Item -Path docs/support/index.html -Destination docs -Force
-    message "codemelted.rs docs website completed."
-  }
-  "--test" {
-    $option = $args[1]
-    if ($option -eq "js" -or [string]::IsNullOrWhiteSpace($option)) {
-      message "Now testing codemelted.js."
-      Set-Location $PSScriptRoot/js
-
-      # Do the bun tests
-      bun test --coverage --coverage-reporter=lcov bun.test.ts
-      if ($LASTEXITCODE -eq 0) {
-        lcov_to_html
-        Move-Item -Path coverage -Destination docs/coverage-bun -Force
-      } else {
-        Write-Host "ERROR: bun tests failed!"
-        Set-Location $PSScriptRoot
-        exit 1
-      }
-
-      # Do the deno tests
-      New-Item -ItemType Directory docs -ErrorAction Ignore
-      deno test --allow-env --allow-net --allow-read --allow-sys --allow-write --coverage=coverage --no-config deno.test.ts
-      if ($LASTEXITCODE -eq 0) {
-        deno coverage --lcov > coverage/lcov.info
-        lcov_to_html
-        Move-Item -Path coverage -Destination docs/coverage-deno -Force
-      } else {
-        Write-Host "ERROR: deno tests failed!"
-        Set-Location $PSScriptRoot
-        exit 1
-      }
-
-      # Now do the nodejs tests
-      New-Item -ItemType Directory coverage
-      node --test ./node.test.js
-      if ($LASTEXITCODE -eq 0) {
-        node --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info ./node.test.js
-        lcov_to_html
-        Move-Item -Path coverage -Destination docs/coverage-node -Force
-      } else {
-        Write-Host "ERROR: node tests failed!"
-        Set-Location $PSScriptRoot
-        exit 1
-      }
-
-      # Setup to do Browser Runtime Testing
-      New-Item -ItemType Directory docs/coverage-browser -Force
-      Copy-Item coverage-browser.html docs/coverage-browser/index.html -Force
-      Copy-Item browser.test.js docs/coverage-browser -Force
-      Copy-Item worker.test.js docs/coverage-browser -Force
-      Copy-Item codemelted.js docs/coverage-browser -Force
-
-      Set-Location $PSScriptRoot
-      message "codemelted.js testing completed."
-    }
-    if ($option -eq "rust" -or [string]::IsNullOrWhiteSpace($option)) {
-      message "Now testing the codemelted.rs module"
-      cargo test
-      message "codemelted.rs module testing completed."
-    }
-  }
-  "--publish" {
-    $answer = Read-Host -Prompt "Publish Crate (y/N)?"
-    if ($answer -eq "y") {
-      cargo publish
-    } else {
-      cargo publish --dry-run
-    }
-  }
+  "--deploy" { deploy $option }
+  "--make" { make $option }
+  "--test" { test $option }
   default { Write-Warning "ERROR: Invalid parameter specified." }
 }

@@ -24,4 +24,4 @@ docs/
 .DS_Store
 *.zip
 developer/
-js/tests/codemelted.js
+js/tests/codemelted*.js

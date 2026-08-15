@@ -26,7 +26,20 @@
  * @module codemelted_hw
  */
 
-import { CProtocol, CModuleError, PROTOCOL_EVENT, PROTOCOL_TYPE, runtime_query, QUERY_REQUEST, json_check_type } from "./codemelted_core";
+import {
+  CProtocol,
+  CModuleError,
+  PROTOCOL_EVENT,
+  PROTOCOL_TYPE,
+  json_check_type,
+  runtime_query,
+  QUERY_REQUEST,
+} from "./codemelted_core";
+
+// Module only available in a Browser runtime.
+if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
+  throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+}
 
 // ============================================================================
 // [DATA DEFINITIONS] =========================================================
