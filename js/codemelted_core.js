@@ -1700,6 +1700,14 @@ export function runtime_event({
   target = globalThis,
 }) {
   try {
+    const supported = runtime_query({
+      request: QUERY_REQUEST.AskRuntime,
+      name: "addEventListener",
+      obj: target
+    });
+    if (!supported) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
     json_check_type({type: "string", data: type, should_throw: true});
     json_check_type({
       type: "function",
@@ -1881,8 +1889,9 @@ export function runtime_query({request, name="", obj = globalThis}) {
         return is_defined({property: "localStorage"});
       case QUERY_REQUEST.IsIFrame:
         try {
-          // @ts-ignore This will be within the browser context
-          return globalThis.self === globalThis.top;
+          return is_defined({property: "HTMLElement"}) &&
+            // @ts-ignore This will be within the browser context
+            globalThis.self === globalThis.top;
         } catch {
           return false;
         }
