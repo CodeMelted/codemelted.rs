@@ -1,0 +1,33 @@
+---
+title: codemelted_disk.js Module Hierarchy
+---
+classDiagram
+  direction LR
+  namespace codemelted_core_module["codemelted_core"] {
+    class CModuleError {}
+    class CResult {}
+    class QUERY_REQUEST {}
+    class codemelted_core {
+      <<public api>>
+      + json_check_type()
+      + json_has_value()
+      + runtime_query()
+    }
+  }
+  namespace codemelted_disk_module["codemelted_disk"] {
+    class DISK_DATA_TYPE {
+      + ArrayBuffer
+      + Text
+      + Uint8Array
+    }
+    class codemelted_disk {
+      <<public api>>
+      + disk_read_file() Promise~CResult~
+      + disk_write_file() Promise~CResult~
+    }
+  }
+  codemelted_disk --> DISK_DATA_TYPE: consumes
+  codemelted_disk --> CResult: creates
+  codemelted_disk --> CModuleError: throws
+  codemelted_disk --> QUERY_REQUEST: uses
+  codemelted_disk --> codemelted_core: uses

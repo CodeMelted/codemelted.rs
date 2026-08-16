@@ -5,11 +5,9 @@
  * domain use cases of Async I/O, JSON, Logger, Numerical Processing Unit
  * (NPU), and Runtime. It also provides the base CProtocol to support
  * asynchronous that exist within this and the other supporting modules. The
- * <b>See</b> section below contains the references that inspired this API.
  * <br><br>
  * <img style="width: 100%;" src="models/codemelted_core.png" />
  * <br><br>
- * <b>AUTHOR:</b> Mark L. Shaffer <br>
  * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
@@ -136,8 +134,8 @@ export const LOGGER = Object.freeze({
  * width of the vertical scroll bar, if one is present.
  * @property {string} IsAudio Determines if audio is available in the
  * runtime.
- * @property {string} IsBeacon Determines if the {@link network_beacon} is
- * available to the runtime.
+ * @property {string} IsBeacon Determines if the network_beacon is available
+ * to the runtime.
  * @property {string} IsBroadcastChannel Determines if a BroadcastChannel
  * protocol is available.
  * @property {string} IsBrowser Determine if the runtime is a Web Browser.
@@ -154,8 +152,8 @@ export const LOGGER = Object.freeze({
  * available to the runtime.
  * @property {string} IsMidi Determines if MIDI devices are available.
  * @property {string} IsNode Determines if the runtime is Node.
- * @property {string} IsOpen Determines if {@link runtime_open} is available
- * to the runtime.
+ * @property {string} IsOpen Determines if ui_open is available to the
+ * runtime.
  * @property {string} IsOrientation Determines if Orientation is available
  * (i.e. GPS and 3D space device orientation.)
  * @property {string} IsPwa Determines if the browser window represents an

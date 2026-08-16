@@ -1,9 +1,13 @@
 // @ts-check
 /**
- * <b>ABOUT:</b> Tell me something about this module.<br>
- * <b>AUTHOR:</b> Mark L. Shaffer <br>
- * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved.
+ * <b>ABOUT:</b> Focuses on implementing the asynchronous CProtocol object
+ * for the various client side hardware connections a web app can make. These
+ * protocols will have varied support to be sure to check for availability
+ * prior to using.
  * <br><br>
+ * <mark>UNDER DEVELOPMENT - importing will throw CModuleError</mark>
+ * <br><br>
+ * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,6 +28,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * @module codemelted_hw
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/USB
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Web_MIDI_API
  */
 
 import {
@@ -40,6 +49,9 @@ import {
 if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
   throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
 }
+
+// Under development, not ready for prime time.
+throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
 
 // ============================================================================
 // [DATA DEFINITIONS] =========================================================
@@ -67,9 +79,8 @@ if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
  */
 
 /**
- * Defined to support proper typing in the JSDocs when type checking in a
- * TypeScript environment.
- * @typedef {object} DeviceOrientationEvent
+ * @typedef {object} DeviceOrientationEvent Defined to support proper typing
+ * in the JSDocs when type checking in a TypeScript environment.
  * @property {boolean} absolute A boolean that indicates whether or not the
  * device is providing orientation data absolutely.
  * @property {number?} alpha A number representing the motion of the device
@@ -86,11 +97,11 @@ if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
  */
 
 /**
- * The GeolocationCoordinates interface represents the position and
- * altitude of the device on Earth, as well as the accuracy with which
- * these  properties are calculated. The geographic position information is
- * provided in terms of World Geodetic System coordinates (WGS84).
- * @typedef {object} GeolocationCoordinates
+ * @typedef {object} GeolocationCoordinates The GeolocationCoordinates
+ * interface represents the position and altitude of the device on Earth,
+ * as well as the accuracy with which these  properties are calculated. The
+ * geographic position information is provided in terms of World Geodetic
+ * System coordinates (WGS84).
  * @property {number} latitude Returns a double representing the position's
  * latitude in decimal degrees.
  * @property {number} longitude Returns a double representing the position's
@@ -115,6 +126,7 @@ if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
  */
 
 /**
+ * @private
  * Represents the geodetic data captured from the
  * {@link PROTOCOL_TYPE.Orientation} opened protocol.
  */
@@ -380,6 +392,7 @@ export class CGeodeticEvent {
 }
 
 /**
+ * @private
  * Represents the data to send to a connected {@link PROTOCOL_TYPE}
  * SerialPort protocol. Supports raising High / Low signals, writing bytes,
  * and requesting a read of the current data available on the port and the
@@ -471,6 +484,9 @@ export class CSerialPortData {
   }
 }
 
+/**
+ * @private
+ */
 export class CSerialPortEvent {
 
 }
@@ -489,10 +505,8 @@ class CBluetoothProtocol extends CProtocol {
 
 }
 
-
-
-
 /**
+ * @private
  * <mark>UNDER DEVELOPMENT</mark>
  * @template T
  * @extends {CProtocol<T>}
@@ -502,6 +516,7 @@ class CMidiProtocol extends CProtocol {
 }
 
 /**
+ * @private
  * Creates the ability to get a devices geodetic orientation
  * (GPS location, 3D orientation).
  * @extends {CProtocol<CGeodeticEvent>}
@@ -780,8 +795,6 @@ export class COrientationProtocol extends CProtocol {
 class CUsbProtocol extends CProtocol {
 
 }
-
-
 
 // /**
 //  * The SerialPort interface of the Web Serial API provides access to a

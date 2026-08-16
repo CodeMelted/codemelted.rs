@@ -1,0 +1,36 @@
+---
+title: codemelted_storage.js Module Hierarchy
+---
+classDiagram
+  direction LR
+  namespace codemelted_core_module["codemelted_core"] {
+    class CModuleError {}
+    class CResult {}
+    class QUERY_REQUEST {}
+    class codemelted_core {
+      <<public api>>
+      + json_check_type()
+      + runtime_query()
+    }
+  }
+  namespace codemelted_storage_module["codemelted_storage"] {
+    class STORAGE_TYPE {
+      + Cookie
+      + Local
+      + Session
+    }
+    class codemelted_storage {
+      <<public api>>
+      + storage_clear() Promise~void~
+      + storage_get() Promise~string | null~
+      + storage_key() Promise~string | null~
+      + storage_length() Promise~number~
+      + storage_remove() Promise~void~
+      + storage_set() Promise~void~
+    }
+  }
+  codemelted_storage --> STORAGE_TYPE: consumes
+  codemelted_storage --> CResult: creates
+  codemelted_storage --> CModuleError: throws
+  codemelted_storage --> QUERY_REQUEST: uses
+  codemelted_storage --> codemelted_core: uses

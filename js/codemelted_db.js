@@ -1,9 +1,12 @@
 // @ts-check
 /**
- * <b>ABOUT:</b> Something something star wars.<br>
- * <b>AUTHOR:</b> Mark L. Shaffer <br>
- * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved.
+ * <b>ABOUT:</b> Implements APIs to interface with the IndexedDB available in
+ * browser and worker runtimes. This allows for storing of more complex data
+ * utilizing a NoSQL type database.
  * <br><br>
+ * <mark>UNDER DEVELOPMENT - importing will throw CModuleError</mark>
+ * <br><br>
+ * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,6 +27,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * @module codemelted_db
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/WorkerGlobalScope/indexedDB
  */
 
 import {
@@ -37,6 +41,9 @@ if (!runtime_query({request: QUERY_REQUEST.IsBrowser}) &&
     !runtime_query({request: QUERY_REQUEST.IsWorkerRuntime})) {
   throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
 }
+
+// Under development, not ready for prime time.
+throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
 
 // ============================================================================
 // [DATA DEFINITION] ==========================================================

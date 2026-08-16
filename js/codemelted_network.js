@@ -1,9 +1,13 @@
 // @ts-check
 /**
- * <b>ABOUT:</b> Something Something star wars.
- * <b>AUTHOR:</b> Mark L. Shaffer <br>
- * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved.
+ * <b>ABOUT:</b> Provides a series of client side asynchronous CProtocol based
+ * object for communicating over various network based APIs. Also provides
+ * functions for performing REST API services calls to manage data on an
+ * external server / cloud services.
  * <br><br>
+ * <mark>UNDER DEVELOPMENT - importing will throw CModuleError</mark>
+ * <br><br>
+ * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,6 +28,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * @module codemelted_network
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Beacon_API
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/EventSource
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/WebTransport
  */
 
 import {
@@ -42,11 +53,15 @@ if (!runtime_query({request: QUERY_REQUEST.IsBrowser}) &&
   throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
 }
 
+// Under development, not ready for prime time.
+throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
+
 // ============================================================================
 // [DATA DEFINITION] ==========================================================
 // ============================================================================
 
 /**
+ * @private
  * Identifies event handled by the {@link PROTOCOL_TYPE.BroadcastChannel}
  * protocol.
  */
@@ -91,6 +106,7 @@ export class CBroadcastChannelEvent {
 }
 
 /**
+ * @private
  * Identifies event handled by the {@link PROTOCOL_TYPE.EventSource}
  * protocol.
  */
@@ -185,6 +201,7 @@ export class CEventSourceEvent {
 }
 
 /**
+ * @private
  * The result of a  {@link network_fetch} call containing any data from the
  * call along with the HTTP Status Code  of the transaction.
  */
@@ -275,6 +292,7 @@ export class CFetchResult {
 }
 
 /**
+ * @private
  * Represents the data to send to a connected web socket to a server. Supports
  * the {@link PROTOCOL_TYPE} WebSocket protocol.
  */
@@ -323,6 +341,7 @@ export class CWebSocketData {
 }
 
 /**
+ * @private
  * Represents a firing timer for an open {@link PROTOCOL_TYPE} WebSocket.
  */
 export class CWebSocketEvent {
@@ -466,6 +485,7 @@ export class CWebSocketEvent {
 // ============================================================================
 
 /**
+ * @private
  * This protocol represents a named channel that any browsing context of a
  * given origin can subscribe to. It allows communication between different
  * documents (in different windows, tabs, frames, iframes, or worker) of the
@@ -559,6 +579,7 @@ export class CBroadcastChannelProtocol extends CProtocol {
 }
 
 /**
+ * @private
  * Opens a persistent connection to an HTTP server, which sends events in
  * text/event-stream format. The connection remains open until terminate is
  * called.
@@ -655,6 +676,7 @@ export class CEventSourceProtocol extends CProtocol {
 }
 
 /**
+ * @private
  * Creates a WebSocket connection to a server allowing a dedicated
  * bi-directional exchange of data. This socket will continuously attempt
  * reconnecting to the server on connection loss until the protocol is
@@ -814,6 +836,7 @@ class CWebTransportProtocol extends CProtocol {
 // ============================================================================
 
 /**
+ * @private
  * Sends an HTTP POST request containing a small amount of data to a web
  * server.
  * @param {object} params The named parameters
@@ -839,6 +862,7 @@ export function network_beacon({url, data}) {
 }
 
 /**
+ * @private
  * Provides the ability to make requests from a hosted server REST API.
  * @param {object} params The named parameters
  * @param {string} params.url The URL to the server REST API to

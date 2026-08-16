@@ -1,9 +1,7 @@
 // @ts-check
 /**
  * <b>ABOUT:</b> Tell me something about this module.<br>
- * <b>AUTHOR:</b> Mark L. Shaffer <br>
- * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved.
- * <br><br>
+ * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -98,7 +96,7 @@ export const ACTION_REQUEST = Object.freeze({
 });
 
 /**
- * Provides the request actions of the {@link runtime_notify} function.
+ * Provides the request actions of the {@link ui_notify} function.
  * @readonly
  * @enum {string}
  * @property {string} Alert Alert a user to a condition.
@@ -123,7 +121,7 @@ export const NOTIFY_REQUEST = Object.freeze({
 });
 
 /**
- * Identifies the schema to {@link runtime_open} with the browser desktop
+ * Identifies the schema to {@link ui_open} with the browser desktop
  * services.
  * @readonly
  * @enum {string}
@@ -144,7 +142,7 @@ export const SCHEMA_TYPE = Object.freeze({
 });
 
 /**
- * Supports the target parameter of the {@link runtime_open} action which handles
+ * Supports the target parameter of the {@link ui_open} action which handles
  * opening related apps based on the specified {@link SCHEMA_TYPE}.
  * @readonly
  * @enum {string}

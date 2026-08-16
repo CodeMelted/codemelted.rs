@@ -1,9 +1,11 @@
 // @ts-check
 /**
- * <b>ABOUT:</b> Something Something star wars.
- * <b>AUTHOR:</b> Mark L. Shaffer <br>
- * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved.
+ * <b>ABOUT:</b> Provides the ability to store key / value string pairs in
+ * a series of storage methods available within the Browser runtime.
  * <br><br>
+ * <img style="width: 100%;" src="models/codemelted_storage.png" />
+ * <br><br>
+ * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,6 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * @module codemelted_storage
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage
  */
 
 import {
@@ -82,12 +87,10 @@ export async function storage_clear(type = STORAGE_TYPE.Local) {
         if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         const cookies = await globalThis.cookieStore.getAll();
         for (const cookie of cookies) {
           let name = cookie.name;
           if (name) {
-            // @ts-ignore Will exist in browser context
             await globalThis.cookieStore.delete(name);
           }
         }
@@ -96,14 +99,12 @@ export async function storage_clear(type = STORAGE_TYPE.Local) {
         if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         globalThis.localStorage.clear();
         break;
       case STORAGE_TYPE.Session:
         if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         globalThis.sessionStorage.clear();
         break;
       default:
@@ -138,7 +139,6 @@ export async function storage_get({type = STORAGE_TYPE.Local, key}) {
         if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         let entry = await globalThis.cookieStore.get(key)
         return entry
           ? entry.value != undefined
@@ -149,13 +149,11 @@ export async function storage_get({type = STORAGE_TYPE.Local, key}) {
         if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         return globalThis.localStorage.getItem(key);
       case STORAGE_TYPE.Session:
         if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         return globalThis.sessionStorage.getItem(key);
       default:
         throw new CModuleError(CModuleError.MISUSE);
@@ -190,7 +188,6 @@ export async function storage_key({type = STORAGE_TYPE.Local, index}) {
         if (!runtime_query({request: QUERY_REQUEST.IsCookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         const cookies = await globalThis.cookieStore.getAll();
         const key = cookies.at(index)?.name;
         return key != undefined
@@ -200,18 +197,14 @@ export async function storage_key({type = STORAGE_TYPE.Local, index}) {
         if (!runtime_query({request: QUERY_REQUEST.IsLocalStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         return index < globalThis.localStorage.length
-          // @ts-ignore Will exist in browser context
           ? globalThis.localStorage.key(index)
           : null;
       case STORAGE_TYPE.Session:
         if (!runtime_query({request: QUERY_REQUEST.IsSessionStorage})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
-        // @ts-ignore Will exist in browser context
         return index < globalThis.sessionStorage.length
-          // @ts-ignore Will exist in browser context
           ? globalThis.sessionStorage.key(index)
           : null;
       default:

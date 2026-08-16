@@ -1,9 +1,12 @@
 // @ts-check
 /**
- * <b>ABOUT:</b> Something something star wars.<br>
- * <b>AUTHOR:</b> Mark L. Shaffer <br>
- * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved.
+ * <b>ABOUT:</b> Provides the mechanism for a web app to open or save a file
+ * to disk. It attempts to make use of the modern Web APIs but will fall back
+ * to classic methods in the event those are not available. <br>
  * <br><br>
+ * <img style="width: 100%;" src="models/codemelted_disk.png" />
+ * <br><br>
+ * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,12 +27,17 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * @module codemelted_disk
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/File_System_API
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLAnchorElement/download
+ * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/file
+ * @see https://web.dev/articles/files/save-a-file
  */
 
 import {
   CModuleError,
   CResult,
   json_check_type,
+  json_has_value,
   QUERY_REQUEST,
   runtime_query
 } from "./codemelted_core.js";
@@ -70,7 +78,7 @@ export const DISK_DATA_TYPE = Object.freeze({
  * disk.
  * @param {string} [params.accept="*"] A comma separated list of either file
  * extensions or mime types representing files
- * @returns {Promise<CResult<ArrayBuffer | string | Uint8Array | void>>} The
+ * @returns {Promise<CResult<ArrayBuffer | string | Uint8Array | null>>} The
  * data read from the particular file or null if an error occurred or no file
  * was selected.
  * A rejected promise represents a module API violation.
@@ -86,19 +94,16 @@ export const DISK_DATA_TYPE = Object.freeze({
  * }
  */
 export function disk_read_file({data_type, accept="*"}) {
-  try {
-    // Validate the data before attempting the save
-    if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    } else if (!(data_type in DISK_DATA_TYPE)) {
-      throw new CModuleError(
-        `${CModuleError.MISUSE}: ${data_type} specified not supported`
-      );
-    }
-    json_check_type({type: "string", data: accept, should_throw: true});
+  return new Promise((resolve, reject) => {
+    try {
+      json_has_value({
+        obj: DISK_DATA_TYPE,
+        value: data_type,
+        should_throw: true
+      });
+      json_check_type({type: "string", data: accept, should_throw: true});
 
-    // Go read the file from disk.
-    return new Promise((resolve) => {
+      // Go read the file from disk.
       // Build our in-memory control to select the file.
       // @ts-ignore document will exist in browser context.
       const w = globalThis.document.createElement('input');
@@ -137,11 +142,11 @@ export function disk_read_file({data_type, accept="*"}) {
 
       // Kick it off.
       w.click();
-    });
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("disk_read_file() error.", err);
-  }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      reject(err);
+    }
+  });
 }
 
 /**
@@ -165,44 +170,75 @@ export function disk_read_file({data_type, accept="*"}) {
  * }
  */
 export function disk_write_file({data, filename}) {
-  try {
-    // Validate the data before attempting the save
-    if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+  // Async function for the modern way so we can call it within the promise
+  const modern_save_file = async (
+    /** @type {ArrayBuffer | string | Uint8Array} */ data,
+    /** @type {any} */ filename
+  ) => {
+    try {
+      // Show the file save dialog.
+      // @ts-ignore Experimental but available
+      const handle = await showSaveFilePicker({
+        filename,
+      });
+      // Write the blob to the file.
+      const writable = await handle.createWritable();
+      // @ts-ignore Typescript does not know what is happening here.
+      const blob = new Blob([data]);
+      await writable.write(blob);
+      await writable.close();
+      return new CResult();
+    } catch (err) {
+      return new CResult({error: err});
     }
-    const valid_type = json_check_type({type: ArrayBuffer, data: data}) ||
-      json_check_type({type: "string", data: data}) ||
-      json_check_type({type: Uint8Array, data: data});
-    if (!valid_type) {
-      throw new CModuleError(CModuleError.TYPE_VIOLATION);
-    }
-    json_check_type({type: "string", data: filename, should_throw: true});
-
-    // Spawn an immediate executing future to attempt the save.
-    return new Promise((resolve, reject) => {
-      try {
-        // @ts-ignore Typescript does not know what is happening here.
-        const blob = new Blob([data]);
-        const blobURL = URL.createObjectURL(blob);
-        // @ts-ignore document will exist in browser context.
-        const a = globalThis.document.createElement('a');
-        a.href = blobURL;
-        a.download = filename;
-        a.style.display = "none";
-        // @ts-ignore document will exist in browser context.
-        globalThis.document.body.append(a);
-        a.click();
-        setTimeout(() => {
-          URL.revokeObjectURL(blobURL);
-          a.remove();
-          resolve(new CResult());
-        }, 1000);
-      } catch (err) {
-        resolve(new CResult({error: err}));
+  };
+  return new Promise((resolve, reject) => {
+    try {
+      const valid_type = json_check_type({type: ArrayBuffer, data: data}) ||
+        json_check_type({type: "string", data: data}) ||
+        json_check_type({type: Uint8Array, data: data});
+      if (!valid_type) {
+        throw new CModuleError(CModuleError.TYPE_VIOLATION);
       }
-    });
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("disk_write_file() error.", err);
-  }
+      json_check_type({type: "string", data: filename, should_throw: true});
+
+      // Determine if we can perform the modern way of saving a file
+      const is_modern_available = !runtime_query({
+        request: QUERY_REQUEST.IsIFrame
+      }) && runtime_query({
+        request: QUERY_REQUEST.AskRuntime,
+        name: "showSaveFilePicker"
+      });
+
+      if (is_modern_available) {
+        // We have the modern way available, present the save file picker.
+        modern_save_file(data, filename).then((value) => {
+          resolve(value);
+        });
+      } else {
+        // Traditional download with name specified shall be utilized.
+        try {
+          // @ts-ignore Typescript does not know what is happening here.
+          const blob = new Blob([data]);
+          const blobURL = URL.createObjectURL(blob);
+          // @ts-ignore document will exist in browser context.
+          const a = globalThis.document.createElement('a');
+          a.href = blobURL;
+          a.download = filename;
+          a.style.display = "none";
+          // @ts-ignore document will exist in browser context.
+          a.click();
+          setTimeout(() => {
+            URL.revokeObjectURL(blobURL);
+            resolve(new CResult());
+          }, 1000);
+        } catch (err) {
+          resolve(new CResult({error: err}));
+        }
+      }
+    } catch (err) {
+      CModuleError.handle_error(err);
+      reject(err);
+    }
+  });
 }
