@@ -1146,7 +1146,7 @@ export function async_sleep(delay) {
       }, delay);
     } catch (err) {
       CModuleError.handle_error(err);
-      reject(`async_sleep() error. ${err}`);
+      reject(err);
     }
   });
 }
@@ -1746,10 +1746,11 @@ export function runtime_query({request, name="", obj = globalThis}) {
    */
   const is_defined = ({property, obj = globalThis}) => {
     json_check_type({type: "string", data: property, should_throw: true});
+    let defined = false;
     if (json_check_type({type: "object", data: obj})) {
-      return property in obj;
+      defined = property in obj;
     }
-    return false;
+    return defined;
   };
 
   try {

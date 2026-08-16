@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * @file Web Worker runtime tests for the <code>codemelted.js</code> module.
  * @author Mark Shaffer
@@ -21,6 +22,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
 // import {
 //   // MODULE SYNTAX ERRORS
 //   CModuleError,

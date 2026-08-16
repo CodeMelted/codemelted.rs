@@ -1,5 +1,5 @@
 /**
- * @file Bun V8 runtime tests for the <code>codemelted.js</code> module.
+ * @file Bun V8 runtime tests for the codemelted JavaScript modules.
  * @author Mark Shaffer
  * @copyright © 2024-26 Mark Shaffer. All Rights Reserved.
  * @license MIT <br />
@@ -48,7 +48,6 @@ import {
   async_sleep,
   async_task,
   CFuture,
-  CProtocolEventHandler,
   CTimerEvent,
   async_timer,
   async_worker,
@@ -144,9 +143,9 @@ describe("codemelted_core.js Validation", () => {
       type: PROTOCOL_TYPE.Timer
     });
     expect(obj.name()).toBe("test_id");
-    expect(obj.type(), PROTOCOL_TYPE.Timer);
+    expect(obj.type()).toBe(PROTOCOL_TYPE.Timer);
     expect(() => obj.post_message()).toThrow<CModuleError>();
-    expect(() => obj.terminate(), CModuleError).toThrow<CModuleError>();
+    expect(() => obj.terminate()).toThrow<CModuleError>();
   });
 
   test("CResult Object Test", () => {
@@ -204,13 +203,13 @@ describe("codemelted_core.js Validation", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => async_task({task: "duh"})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => async_task({task: task, delay: "duh"})).toThrow();
+    expect(() => async_task({task: task, delay: "duh"})).toThrow<CModuleError>();
 
     // Now lets play with our future.
     let future: CFuture<number> = async_task({task: task, data: 22, delay: 500});
     expect(future.has_completed()).toBe(false);
     let result = await future.result();
-    expect(result.value() === 42).toBe(true);
+    expect(result.value()).toBe(42);
     expect(result.is_error()).toBe(false);
     expect(result.is_ok()).toBe(true);
     expect(future.has_completed()).toBe(true);
@@ -541,7 +540,7 @@ describe("codemelted_core.js Validation", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => runtime_query({request: QUERY_REQUEST.AskRuntime, obj: 42})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => runtime_defined({request: QUERY_REQUEST.AskRuntime, name: 42})).toThrow<CModuleError>();
+    expect(() => runtime_query({request: QUERY_REQUEST.AskRuntime, name: 42})).toThrow<CModuleError>();
 
     // Now go perform all the queries.
     expect(runtime_query({request: QUERY_REQUEST.AskRuntime, name: "Bun"})).toBe(true);
