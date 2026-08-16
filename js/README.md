@@ -31,13 +31,17 @@ Welcome to the *codemelted JavaScript modules*. These represent seven ES6 module
 
 The domain use case model reflects what the the codemelted JavaScript modules implement. The use cases are spread across seven modules exposing objects and functions to support their identified functionality. The following model reflects how the codemelted JavaScript modules fit into the overall *codemelted.rs Project*.
 
-<img style= "width: 100%; max-width: 700px;" src="https://codemelted.com/rs/mdbook/models/use-case-model.png" />
+<center>
+  <img style= "width: 100%; max-width: 700px;" src="https://codemelted.com/rs/mdbook/models/use-case-model.png" />
+</center>
 
 ## Project Build Process
 
 The following model reflects how this project is built, tested, and delivered for consumption by a software engineer. The `build.ps1` PowerShell script ensures testing on all different platforms the *codemelted.rs Project* supports.
 
-<img style= "width: 100%; max-width: 700px;" src="https://codemelted.com/rs/mdbook/models/cargo-build-process.png" />
+<center>
+  <img style= "width: 100%; max-width: 700px;" src="https://codemelted.com/rs/mdbook/models/cargo-build-process.png" />
+</center>
 
 # GETTING STARTED
 
@@ -45,43 +49,9 @@ The following model reflects how this project is built, tested, and delivered fo
 
 The codemelted JavaScript modules is organized into seven modules. The `codemelted_core.js` module works in all runtimes. The `codemelted_disk.js`, `codemelted_hw.js`, `codemelted_storage.js`, and `codemelted_ui.js` work only in a Browser runtime. Including them into any V8 runtime will result in a thrown module error. Lastly the `codemelted_db.js` and `codemelted_network.js` modules work within the Browser and Worker (a.k.a Service / Web Worker Background threads) runtimes. It to will result in a thrown module error.
 
-```mermaid
-classDiagram
-  direction BT
-  namespace all["All Runtimes"] {
-    class codemelted_core {
-      <<module>>
-    }
-  }
-  namespace browser["Browser Only"] {
-    class codemelted_disk {
-      <<module>>
-    }
-    class codemelted_hw {
-      <<module>>
-    }
-    class codemelted_storage {
-      <<module>>
-    }
-    class codemelted_ui {
-      <<module>>
-    }
-  }
-  namespace browser_worker["Browser / Worker Only"] {
-    class codemelted_db {
-      <<module>>
-    }
-    class codemelted_network {
-      <<module>>
-    }
-  }
-  codemelted_disk --> codemelted_core: uses
-  codemelted_hw --> codemelted_core: uses
-  codemelted_storage --> codemelted_core: uses
-  codemelted_ui --> codemelted_core: uses
-  codemelted_db --> codemelted_core: uses
-  codemelted_network --> codemelted_core: uses
-```
+<center>
+  <img style="width: 100%; max-width: 700px;" src="models/module_hierarchy.png" />
+</center>
 
 The modules are hosted on GitHub and delivered via the `jsdelivr` CDN. The following represents the URLs for accessing the modules. These can be utilized with `import` statements or as part of the `<script type="module"></script>` tags of a website.
 

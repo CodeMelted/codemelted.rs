@@ -16,5 +16,4 @@
   ],
   "out": "docs",
   "ignoredHighlightLanguages": ["mermaid"],
-  "plugin": ["@boneskull/typedoc-plugin-mermaid"]
 }

@@ -1,0 +1,112 @@
+---
+title: codemelted_core.js Module Hierarchy
+---
+classDiagram
+  direction LR
+  namespace codemelted_core["codemelted_core"] {
+    class public_api {
+      +async_sleep() Promise~void~
+      +async_task() CFuture~T~
+      +async_timer() CTimerProtocol
+      +async_worker() CWorkerProtocol
+      +json_atob() string | null
+      +json_btoa() boolean
+      +json_check_type() boolean
+      +json_create_array() array
+      +json_create_object() object
+      +json_has_key() boolean
+      +json_parse() any | null
+      +json_stringify() string | null
+      +logger_handler() void
+      +logger_level() string
+      +logger_log() void
+      +npu_compute() object
+      +npu_math() number
+      +runtime_event() void
+      +runtime_query() boolean
+    }
+    class EVENT_REQUEST
+    class LOGGER
+    class QUERY_REQUEST
+    class PROTOCOL_EVENT
+    class PROTOCOL_TYPE
+
+    class CEventHandler {
+      +callback(Event evt)
+    }
+    class CFuture~T~ {
+      cancel() void
+      execute(T data) void
+      has_completed() boolean
+      result() Promise~CResult~T~~
+    }
+    class CLogHandler {
+      +callback(record: CLogRecord)
+    }
+    class CLogRecord {
+      +time() Date
+      +level() LOGGER
+      +data() any
+    }
+    class CModuleError {
+      +MISUSE: string
+      +NOT_IMPLEMENTED: string
+      +TYPE_VIOLATION: string
+      +UNSUPPORTED_RUNTIME: string
+      +handle_error(any err) void
+      toString() string
+    }
+    class CResult~T~ {
+      error() string | Error | null
+      is_error() boolean
+      is_ok() boolean
+      value() T
+    }
+    class CTaskCB~T~ {
+      +callback(T data) T
+    }
+
+    class CProtocolEvent~T~ {
+      +protocol() CProtocol~T~
+      +data() T
+      +event_fired() PROTOCOL_EVENT
+    }
+    class CProtocolEventHandler {
+      +callback(CProtocolEvent evt) void
+    }
+    class CProtocol~T~ {
+      #report() void
+      +name() string
+      +type() PROTOCOL_TYPE
+      +post_message() void
+      +terminate() void
+    }
+
+    class CTimerEvent
+    class CTimerProtocol
+    class CWorkerEvent
+    class CWorkerOptions
+    class CWorkerProtocol
+  }
+
+  CProtocol --> CProtocolEvent: creates
+  CProtocol --> CProtocolEventHandler: consumes
+  CTimerProtocol --> CTimerEvent: fires
+  CTimerProtocol --|> CProtocol: implements
+  CWorkerProtocol --> CWorkerOptions: consumes
+  CWorkerProtocol --> CWorkerEvent: fires
+  CWorkerProtocol --|> CProtocol: implements
+  EVENT_REQUEST --> public_api: consumes
+  LOGGER --> public_api: consumes
+  QUERY_REQUEST --> public_api: consumes
+  PROTOCOL_EVENT --> public_api: consumes
+  PROTOCOL_TYPE --> public_api: consumes
+  CTaskCB --> public_api: consumes
+  public_api --> CModuleError: throws
+  public_api --> CResult: creates
+  public_api --> CEventHandler: consume
+  public_api --> CLogHandler: consumes
+  public_api --> CLogRecord: creates
+  public_api --> CFuture: creates
+  public_api --> CTimerProtocol: creates
+  public_api --> CWorkerProtocol: creates

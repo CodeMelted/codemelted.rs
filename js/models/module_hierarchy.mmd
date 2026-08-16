@@ -1,0 +1,38 @@
+---
+title: codemelted JavaScript Module Hierarchy
+---
+classDiagram
+  direction BT
+  namespace all["All Runtimes"] {
+    class codemelted_core {
+      <<module>>
+    }
+  }
+  namespace browser["Browser Only"] {
+    class codemelted_disk {
+      <<module>>
+    }
+    class codemelted_hw {
+      <<module>>
+    }
+    class codemelted_storage {
+      <<module>>
+    }
+    class codemelted_ui {
+      <<module>>
+    }
+  }
+  namespace browser_worker["Browser / Worker Only"] {
+    class codemelted_db {
+      <<module>>
+    }
+    class codemelted_network {
+      <<module>>
+    }
+  }
+  codemelted_disk --> codemelted_core: uses
+  codemelted_hw --> codemelted_core: uses
+  codemelted_storage --> codemelted_core: uses
+  codemelted_ui --> codemelted_core: uses
+  codemelted_db --> codemelted_core: uses
+  codemelted_network --> codemelted_core: uses

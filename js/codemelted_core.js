@@ -1,9 +1,16 @@
 // @ts-check
 /**
- * <b>ABOUT:</b> Something something star wars.
- * <b>AUTHOR:</b> Mark L. Shaffer <br>
- * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved.
+ * <b>ABOUT:</b> Represents the core of the codemelted JavaScript modules. It
+ * is the core to all the other codemelted_xxx.js modules. It covers the
+ * domain use cases of Async I/O, JSON, Logger, Numerical Processing Unit
+ * (NPU), and Runtime. It also provides the base CProtocol to support
+ * asynchronous that exist within this and the other supporting modules. The
+ * <b>See</b> section below contains the references that inspired this API.
  * <br><br>
+ * <img style="width: 100%;" src="models/codemelted_core.png" />
+ * <br><br>
+ * <b>AUTHOR:</b> Mark L. Shaffer <br>
+ * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,7 +30,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * <br><br>
+ * <br>
  * <script>
  * function open_test(url) {
  *   let height = 600;
@@ -44,6 +51,16 @@
  * <button style="cursor: pointer;" onclick="open_test('coverage-node/js/index.html');">NodeJS</button>
  * <br>
  * @module codemelted_core
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/console
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/EventTarget
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Location
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Screen
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Window
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Worker
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
+ * @see https://doc.rust-lang.org/std/result/
+ * @see https://en.cppreference.com/cpp/thread/future
  */
 
 // ============================================================================
@@ -64,7 +81,9 @@ export const EVENT_REQUEST = Object.freeze({
 });
 
 /**
- * Holds the logger configuration information for log level and labels.
+ * Holds the logger configuration information for log level and labels for
+ * the {@link logger_level} and {@link logger_log} functions.
+ *
  * @readonly
  * @enum {object}
  * @property {object} Debug   level (0) / label "DEBUG"
@@ -283,8 +302,8 @@ export const PROTOCOL_EVENT = Object.freeze({
 });
 
 /**
- * Provides the different asynchronous protocols one can open via the
- * {@link protocol_open} function.
+ * Provides the different asynchronous {@link CProtocol} that can be created
+ * via the codemelted modules.
  * @readonly
  * @enum {string}
  * @property {string} Audio
@@ -294,14 +313,16 @@ export const PROTOCOL_EVENT = Object.freeze({
  * @property {string} Gamepad
  * @property {string} MIDI
  * @property {string} Orientation
- * @property {string} Timer
+ * @property {string} Timer Supports the creation of the
+ *  {@link CTimerProtocol}
  * @property {string} SerialPort
  * @property {string} TextToSpeech
  * @property {string} USB
  * @property {string} WebSocket
  * @property {string} WebRTC
  * @property {string} WebTransport
- * @property {string} Worker
+ * @property {string} Worker Supports the creation of the
+ *  {@link CWorkerProtocol}
  */
 export const PROTOCOL_TYPE = Object.freeze({
   Audio: "audio",
@@ -340,7 +361,7 @@ export const PROTOCOL_TYPE = Object.freeze({
  * call.
  */
 export class CFuture {
-  /** @type {T | undefined} */
+  /** @type {T} */
   #data;
   /** @type {number} */
   #delay;
@@ -359,6 +380,9 @@ export class CFuture {
     if (!this.has_completed()) {
       globalThis.clearTimeout(this.#timeout_id);
       this.#timeout_id = -1;
+      this.#result = new Promise((resolve) => {
+        resolve(new CResult({error: "future canceled"}));
+      })
     }
   }
 
@@ -412,7 +436,7 @@ export class CFuture {
    * kick-off the future task.
    * @param {object} params The named parameters.
    * @param {CTaskCB<T>} params.task The task to run.
-   * @param {T} [params.data] The optional data to pass to the task.
+   * @param {T} params.data The optional data to pass to the task.
    * @param {number} [params.delay=0] The delay to schedule the task in the
    * future. Defaults to 0 if not specified.
    */
@@ -496,8 +520,8 @@ export class CLogRecord {
   constructor({level, data}) {
     try {
       json_check_type({type: "object", data: level, should_throw: true});
-      json_has_key({data: level, key: "level", should_throw: true});
-      json_has_key({data: level, key: "label", should_throw: true});
+      json_has_key({obj: level, key: "level", should_throw: true});
+      json_has_key({obj: level, key: "label", should_throw: true});
       this.#level = level;
       this.#data = data;
     } catch (err) {
@@ -630,7 +654,7 @@ export class CResult {
       this.#value = value;
       if (error instanceof Error || typeof error === "string") {
         this.#error = error;
-      } else if (typeof error === "object") {
+      } else if (typeof error === "object" && error != null) {
         this.#error = JSON.stringify(error);
       } else {
         // Assumed to be null at this point
@@ -645,7 +669,7 @@ export class CResult {
 
 /**
  * @callback CTaskCB The task to run as part of the {@link async_task} call.
- * @param {T} [data] Optional data to pass to the task.
+ * @param {T} data Data to pass to the task.
  * @returns {T} The result of the task completing.
  * @template T The data associated with the CResult object accessed via the
  * result() function call.
@@ -704,9 +728,9 @@ export class CProtocolEvent {
   constructor({protocol, data, event_fired}) {
     try {
       json_check_type({type: CProtocol, data: protocol, should_throw: true});
-      json_has_key({
-        data: PROTOCOL_EVENT,
-        key: event_fired,
+      json_has_value({
+        obj: PROTOCOL_EVENT,
+        value: event_fired,
         should_throw: true
       });
       this.#protocol = protocol;
@@ -851,7 +875,7 @@ export class CTimerEvent {
 
 /**
  * Creates an asynchronous timer that fires on the specified interval until
- * terminated.
+ * terminated via the {@link async_timer} function.
  * @extends {CProtocol<CTimerEvent>}
  */
 export class CTimerProtocol extends CProtocol {
@@ -996,7 +1020,7 @@ export class CWorkerEvent {
 
 /**
  * Constructs a dedicated background worker off the JavaScript runtime main
- * thread.
+ * thread via the {@link async_worker} function.
  * @extends {CProtocol<CWorkerEvent>}
  */
 export class CWorkerProtocol extends CProtocol {
@@ -1132,12 +1156,9 @@ export function async_sleep(delay) {
  * @template T The data to be processed through the {@link CFuture}.
  * @param {object} params The named parameters.
  * @param {CTaskCB<T>} params.task The task to run.
- * @param {T} [params.data] The optional data to pass to the task.
+ * @param {T} params.data The optional data to pass to the task.
  * @param {number} [params.delay=0] The delay to schedule the task in the
  * future. Defaults to 0 if not specified.
- * @param {boolean} [params.execute=true] Flag to indicate to immediately
- * execute the future or not to execute it and leave it to developer's
- * choice. Defaults to true if not specified.
  * @returns {CFuture<T>} An object to execute the asynchronous task. You can
  * also re-execute the future by calling the {@link CFuture.execute} method.
  * @example
@@ -1152,12 +1173,9 @@ export function async_sleep(delay) {
  * let result = await future.result();
  * console.log("result = ", result.value());
  */
-export function async_task({task, data, delay=0, execute=true}) {
+export function async_task({task, data, delay=0}) {
   try {
     let future = new CFuture({task: task, data: data, delay: delay});
-    if (execute) {
-      future.execute();
-    }
     return future;
   } catch (err) {
     CModuleError.handle_error(err);
@@ -1223,152 +1241,6 @@ export function async_worker({
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("async_task() error.", err);
-  }
-}
-
-/**
- * Holds the current log level of the module
- * @private
- * @type {LOGGER}
- */
-let _logger_level = LOGGER.Error;
-
-/**
- * Holds the logger handler for post logging events.
- * @private
- * @type {CLogHandler?}
- */
-let _logger_handler = null;
-
-/**
- * Sets the logger handler for post logging processing.
- * @param {CLogHandler} [handler] The handler to utilize.
- * @returns {void}
- * @example
- * // To set a logger for post logging processing
- * function log_handler(record) {
- *   // Do something with the log record.
- * }
- * logger_handler(log_handler);
- *
- * // To unset it
- * logger_handler();
- */
-export function logger_handler(handler) {
-  try {
-    if (handler === null || handler === undefined) {
-      _logger_handler = null;
-    } else {
-      json_check_type({
-        type: "function",
-        data: handler,
-        count: 1,
-        should_throw: true
-      });
-      _logger_handler = handler;
-    }
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("logger_handler() error.", err);
-  }
-}
-
-/**
- * Sets / retrieves the current module log level.
- * @param {object | undefined} [level] The optional log level to set
- * based on the {@link LOGGER} object configuration.
- * @returns {string} The string representation of the log level.
- * @example
- * // To determine the current logger level
- * let logger_level = logger_level();
- *
- * // To set the module logger level
- * logger_level(LOGGER.info);
- *
- * // To turn off all logging
- * logger_level(LOGGER.Off);
- */
-export function logger_level(level) {
-  try {
-    if (level) {
-      json_check_type({type: "object", data: level, should_throw: true});
-      json_has_key({data: level, key: "level", should_throw: true});
-      json_has_key({data: level, key: "label", should_throw: true});
-      _logger_level = level;
-    }
-    // @ts-ignore Property exists on the struct.
-    return _logger_level.label;
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("logger_level() error.", err);
-  }
-}
-
-/**
- * Logs an event with the module logger.
- * @param {object} params The named parameters.
- * @param {LOGGER} params.level The log level for the logged event.
- * @param {any} params.data The data to log with the event.
- * @returns {void}
- * @example
- * // When the logger is on and you want to log an event
- * // It will only log if the log level is set to log those events.
- * logger_log({level: Logger.Warning, data: "A thing happened"});
- */
-export function logger_log({level, data}) {
-  try {
-    json_check_type({type: "object", data: level, should_throw: true});
-    json_has_key({data: level, key: "level", should_throw: true});
-    json_has_key({data: level, key: "label", should_throw: true});
-    if (!data) {
-      throw new CModuleError(CModuleError.TYPE_VIOLATION);
-    }
-
-    // Check to see if our logging is on or off.
-    // @ts-ignore Property exists on the struct.
-    if (_logger_level.label == "OFF") {
-      return;
-    }
-
-    // It's on, go create the log record and go log some stuff.
-    const record = new CLogRecord({level: level, data: data});
-    // @ts-ignore Property exists on the struct.
-    if (record.level().level >= _logger_level.level) {
-      // @ts-ignore Property exists on the struct.
-      switch (record.level().label) {
-        case "DEBUG":
-        case "INFO":
-          console.log(
-            record.time().toISOString(),
-            // @ts-ignore Property exists on the struct.
-            record.level().label,
-            record.data()
-          );
-        case "WARNING":
-          console.warn(
-            record.time().toISOString(),
-            // @ts-ignore Property exists on the struct.
-            record.level().label,
-            record.data()
-          );
-          break;
-        case "ERROR":
-          console.error(
-            record.time().toISOString(),
-            // @ts-ignore Property exists on the struct.
-            record.level().label,
-            record.data()
-          );
-          break;
-      }
-
-      if (_logger_handler) {
-        _logger_handler(record);
-      }
-    }
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("logger_log() error.", err);
   }
 }
 
@@ -1524,29 +1396,61 @@ export function json_create_object(data) {
 /**
  * Determines if the specified object has the specified property.
  * @param {object} params
- * @param {object} params.data The object to check.
+ * @param {object} params.obj The object to check.
  * @param {string} params.key The property to find.
  * @param {boolean} [params.should_throw=false] Whether to throw instead
  * of returning a value upon failure.
  * @returns {boolean} true if property was found, false otherwise.
  * @example
  * // Check if object has field
- * if (json_has_key({data: obj, key: "id"})) {
+ * if (json_has_key({obj: obj, key: "id"})) {
  *   // Do your processing
  * }
  *
  * // Throw if not expected
- * json_has_key({data: obj, key: "id", should_throw: true});
+ * json_has_key({obj: obj, key: "id", should_throw: true});
  */
-export function json_has_key({data, key, should_throw = false}) {
+export function json_has_key({obj, key, should_throw = false}) {
   try {
-    json_check_type({type: "object", data: data, should_throw: true});
+    json_check_type({type: "object", data: obj, should_throw: true});
     json_check_type({type: "string", data: key, should_throw: true});
-    var hasKey = key in data;
-    if (should_throw && !hasKey) {
+    var has_key = key in obj;
+    if (should_throw && !has_key) {
       throw new CModuleError(CModuleError.TYPE_VIOLATION);
     }
-    return hasKey;
+    return has_key;
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("json_has_key() error.", err);
+  }
+}
+
+/**
+ * Determines if the specified object has the specified value
+ * @param {object} params
+ * @param {object} params.obj The object to check.
+ * @param {string} params.value The value to find.
+ * @param {boolean} [params.should_throw=false] Whether to throw instead
+ * of returning a value upon failure.
+ * @returns {boolean} true if property was found, false otherwise.
+ * @example
+ * // Check if object has field
+ * if (json_has_value({obj: obj, value: "id"})) {
+ *   // Do your processing
+ * }
+ *
+ * // Throw if not expected
+ * json_has_value({obj: obj, value: "id", should_throw: true});
+ */
+export function json_has_value({obj, value, should_throw = false}) {
+  try {
+    json_check_type({type: "object", data: obj, should_throw: true});
+    json_check_type({type: "string", data: value, should_throw: true});
+    const has_value = Object.values(obj).includes(value);
+    if (should_throw && !has_value) {
+      throw new CModuleError(CModuleError.TYPE_VIOLATION);
+    }
+    return has_value;
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("json_has_key() error.", err);
@@ -1595,6 +1499,152 @@ export function json_stringify(data) {
       : null;
   } catch (ex) {
     return null;
+  }
+}
+
+/**
+ * Holds the current log level of the module
+ * @private
+ * @type {LOGGER}
+ */
+let _logger_level = LOGGER.Error;
+
+/**
+ * Holds the logger handler for post logging events.
+ * @private
+ * @type {CLogHandler?}
+ */
+let _logger_handler = null;
+
+/**
+ * Sets the logger handler for post logging processing.
+ * @param {CLogHandler} [handler] The handler to utilize.
+ * @returns {void}
+ * @example
+ * // To set a logger for post logging processing
+ * function log_handler(record) {
+ *   // Do something with the log record.
+ * }
+ * logger_handler(log_handler);
+ *
+ * // To unset it
+ * logger_handler();
+ */
+export function logger_handler(handler) {
+  try {
+    if (handler === null || handler === undefined) {
+      _logger_handler = null;
+    } else {
+      json_check_type({
+        type: "function",
+        data: handler,
+        count: 1,
+        should_throw: true
+      });
+      _logger_handler = handler;
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_handler() error.", err);
+  }
+}
+
+/**
+ * Sets / retrieves the current module log level.
+ * @param {object | undefined} [level] The optional log level to set
+ * based on the {@link LOGGER} object configuration.
+ * @returns {string} The string representation of the log level.
+ * @example
+ * // To determine the current logger level
+ * let logger_level = logger_level();
+ *
+ * // To set the module logger level
+ * logger_level(LOGGER.info);
+ *
+ * // To turn off all logging
+ * logger_level(LOGGER.Off);
+ */
+export function logger_level(level) {
+  try {
+    if (level) {
+      json_check_type({type: "object", data: level, should_throw: true});
+      json_has_key({obj: level, key: "level", should_throw: true});
+      json_has_key({obj: level, key: "label", should_throw: true});
+      _logger_level = level;
+    }
+    // @ts-ignore Property exists on the struct.
+    return _logger_level.label;
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_level() error.", err);
+  }
+}
+
+/**
+ * Logs an event with the module logger.
+ * @param {object} params The named parameters.
+ * @param {LOGGER} params.level The log level for the logged event.
+ * @param {any} params.data The data to log with the event.
+ * @returns {void}
+ * @example
+ * // When the logger is on and you want to log an event
+ * // It will only log if the log level is set to log those events.
+ * logger_log({level: Logger.Warning, data: "A thing happened"});
+ */
+export function logger_log({level, data}) {
+  try {
+    json_check_type({type: "object", data: level, should_throw: true});
+    json_has_key({obj: level, key: "level", should_throw: true});
+    json_has_key({obj: level, key: "label", should_throw: true});
+    if (!data) {
+      throw new CModuleError(CModuleError.TYPE_VIOLATION);
+    }
+
+    // Check to see if our logging is on or off.
+    // @ts-ignore Property exists on the struct.
+    if (_logger_level.label == "OFF") {
+      return;
+    }
+
+    // It's on, go create the log record and go log some stuff.
+    const record = new CLogRecord({level: level, data: data});
+    // @ts-ignore Property exists on the struct.
+    if (record.level().level >= _logger_level.level) {
+      // @ts-ignore Property exists on the struct.
+      switch (record.level().label) {
+        case "DEBUG":
+        case "INFO":
+          console.log(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+        case "WARNING":
+          console.warn(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+          break;
+        case "ERROR":
+          console.error(
+            record.time().toISOString(),
+            // @ts-ignore Property exists on the struct.
+            record.level().label,
+            record.data()
+          );
+          break;
+      }
+
+      if (_logger_handler) {
+        _logger_handler(record);
+      }
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("logger_log() error.", err);
   }
 }
 
@@ -1741,7 +1791,7 @@ export function runtime_query({request, name="", obj = globalThis}) {
           // @ts-ignore json_check_type will throw if not set properly
           return cs.getPropertyValue(name) ?? "";
         }
-        return null;
+        return "";
       case QUERY_REQUEST.DevicePixelRatio:
         return is_defined({property: "HTMLElement"})
           // @ts-ignore This is in a browser context
@@ -1785,6 +1835,7 @@ export function runtime_query({request, name="", obj = globalThis}) {
               globalThis.location.search)
             ).get(name);
           }
+          return null;
       case QUERY_REQUEST.Height:
         return is_defined({property: "HTMLElement"})
           // @ts-ignore This is in a browser context
@@ -1809,10 +1860,10 @@ export function runtime_query({request, name="", obj = globalThis}) {
         return is_defined({property: "HTMLAudioElement"});
       case QUERY_REQUEST.IsBeacon:
         return is_defined({property: "sendBeacon",
-                                 obj: globalThis["navigator"]});
+                           obj: globalThis["navigator"]});
       case QUERY_REQUEST.IsBluetooth:
         return is_defined({property: "bluetooth",
-                                       obj: globalThis["navigator"]});
+                           obj: globalThis["navigator"]});
       case QUERY_REQUEST.IsBroadcastChannel:
         return is_defined({property: "BroadcastChannel"});
       case QUERY_REQUEST.IsBrowser:
@@ -1826,7 +1877,7 @@ export function runtime_query({request, name="", obj = globalThis}) {
       case QUERY_REQUEST.IsEventSource:
         return is_defined({property: "EventSource"});
       case QUERY_REQUEST.IsLocalStorage:
-        return runtime_query({request: QUERY_REQUEST.IsLocalStorage});
+        return is_defined({property: "localStorage"});
       case QUERY_REQUEST.IsIFrame:
         try {
           // @ts-ignore This will be within the browser context
@@ -1836,7 +1887,7 @@ export function runtime_query({request, name="", obj = globalThis}) {
         }
       case QUERY_REQUEST.IsMidi:
         return is_defined({property: "requestMIDIAccess",
-                                       obj: globalThis["navigator"]});
+                           obj: globalThis["navigator"]});
       case QUERY_REQUEST.IsNode:
         return is_defined({property: "process"}) &&
           !is_defined({property: "Deno"}) &&
@@ -1845,7 +1896,7 @@ export function runtime_query({request, name="", obj = globalThis}) {
         return is_defined({property: "open"});
       case QUERY_REQUEST.IsOrientation:
         return is_defined({property: "geolocation",
-                                       obj: globalThis["navigator"]});
+                           obj: globalThis["navigator"]});
       case QUERY_REQUEST.IsPwa:
         return is_defined({property: "matchMedia"}) &&
           // @ts-ignore This is in a browser context
@@ -1857,24 +1908,23 @@ export function runtime_query({request, name="", obj = globalThis}) {
           globalThis.isSecureContext;
       case QUERY_REQUEST.IsSerialPort:
         return is_defined({property: "serial",
-                                       obj: globalThis["navigator"]});
+                           obj: globalThis["navigator"]});
       case QUERY_REQUEST.IsSessionStorage:
-        return runtime_query({request: QUERY_REQUEST.IsSessionStorage});
-
+        return is_defined({property: "sessionStorage"});
       case QUERY_REQUEST.IsShare:
         return is_defined({property: "share",
-                                       obj: globalThis["navigator"]});
+                           obj: globalThis["navigator"]});
       case QUERY_REQUEST.IsTextToSpeech:
         return is_defined({property: "SpeechSynthesisUtterance"});
       case QUERY_REQUEST.IsTouchEnabled:
         return is_defined({property: "maxTouchPoints",
-                                       obj: globalThis["navigator"]}) &&
+                           obj: globalThis["navigator"]}) &&
           // @ts-ignore This is in a browser context
           globalThis.navigator.maxTouchPoints > 0;
       case QUERY_REQUEST.IsUsb:
         return is_defined({property: "navigator"}) &&
           is_defined({property: "usb",
-                                  obj: globalThis["navigator"]});
+                      obj: globalThis["navigator"]});
       case QUERY_REQUEST.IsWebSocket:
         return is_defined({property: "WebSocket"});
       case QUERY_REQUEST.IsWorkerAvailable:
@@ -1948,7 +1998,7 @@ export function runtime_query({request, name="", obj = globalThis}) {
         return is_defined({property: "HTMLElement"})
           // @ts-ignore This is in a browser context
           ? globalThis.screen.orientation.type
-          : -1;
+          : "UNKNOWN";
       case QUERY_REQUEST.ScreenTop:
         return is_defined({property: "HTMLElement"})
           // @ts-ignore This is in a browser context

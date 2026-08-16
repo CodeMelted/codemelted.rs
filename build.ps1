@@ -103,13 +103,16 @@ function make_rust {
 function make_js {
   message "Now building codemelted JavaScript modules."
   Set-Location $PSScriptRoot/js
-  Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
+  Remove-Item -Path $PSScriptRoot/js/docs -Force -Recurse `
+    -ErrorAction SilentlyContinue
   typedoc
   if ($LASTEXITCODE -ne 0) {
     throw "make failed (typedoc)"
   }
 
   # Finish up the the prepping of the documentation
+  Copy-Item $PSScriptRoot/js/models $PSScriptRoot/js/docs -Force -Recurse `
+    -ErrorAction Stop
   Set-Location $PSScriptRoot
   message "codemelted JavaScript modules build completed."
 }
@@ -155,8 +158,11 @@ function make([string]$option) {
 # Helper function to handle creating the coverage results.
 function lcov_to_html() {
   if ($IsLinux -or $IsMacOS) {
-    genhtml -o coverage --ignore-errors unused,inconsistent,inconsistent,range `
-      --dark-mode coverage/lcov.info
+    genhtml -o coverage --ignore-errors empty,unused,inconsistent,inconsistent,range `
+      --dark-mode coverage/lcov.info --exclude 'codemelted_db.js' `
+      --exclude 'codemelted_disk.js' --exclude 'codemelted_hw.js' `
+      --exclude 'codemelted_network.js' --exclude 'codemelted_storage.js' `
+      --exclude 'codemelted_ui.js'
     if ($LASTEXITCODE -ne 0) {
       throw "lcov_to_html failed. no coverage file produced"
     }

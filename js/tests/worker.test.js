@@ -77,14 +77,14 @@
 // } from "./codemelted.js";
 
 
-// // ============================================================================
-// // [SETUP HANDLERS] ===========================================================
-// // ============================================================================
+// ============================================================================
+// [SETUP HANDLERS] ===========================================================
+// ============================================================================
 
-// self.onmessage = (evt) => {
-//   if (evt.data === "test_post_message") {
-//     self.postMessage("Hello From Worker!");
-//   } else if (evt.data === "test_on_error") {
-//     throw "We got an error!";
-//   }
-// };
+self.onmessage = (evt) => {
+  if (evt.data === "test_post_message") {
+    self.postMessage("Hello From Worker!");
+  } else if (evt.data === "test_on_error") {
+    throw "We got an error!";
+  }
+};
