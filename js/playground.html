@@ -11,69 +11,31 @@
   <link rel="stylesheet" href="https://codemelted.com/assets/css/scrollbars.css">
 
   <style>
-    codemelted-ui-button img {
-      vertical-align: middle;
-    }
-    codemelted-ui-button button {
-      color: white;
-      font-weight: bold;
-      text-align: left;
-      width: 100%;
-      padding: 5px;
-      background-color: transparent;
-      border-style: inset;
-      border: 1px solid transparent;
-      padding-left: 25px;
-    }
-    codemelted-ui-button button:hover {
-      background-color: blue;
-    }
 
-    codemelted-ui-expansion-tile summary:hover {
-      background-color: blue;
-    }
-    codemelted-ui-expansion-tile details {
-      border: 1px solid black;
-    }
    </style>
 </head><body><div class="content-main">
 <center>
-  <button id="btn_post_message">Post Message</button>
+  <codemelted-ui-button
+    id="test_button"
+    cm_tooltip="We be testing buttons"
+    cm_label="Test / Test"
+    cm_img_src="https://codemelted.com/assets/images/icon-me.jpg"
+    cm_style="background-color: black; width: 150px; height: 150px;"
+  ></codemelted-ui-button>
 </center>
 
 
 
 <script type="module">
   import {
-    CONNECT_REQUEST,
-    CBroadcastChannelProtocol,
-    CTimerResult,
-    async_timer,
-    network_connect
-  } from "./codemelted.js";
+    CButtonComponent
+  } from "./codemelted_ui.js";
 
-  let channel1 = network_connect({
-    request: CONNECT_REQUEST.BroadcastChannel,
-    url: "test_channel",
-  });
+  let button = document.getElementById("test_button");
+  button.onclick = (evt) => {
+    alert("We got clicked!");
+  }
+  console.log("button = ", button);
 
-  let channel2 = network_connect({
-    request: CONNECT_REQUEST.BroadcastChannel,
-    url: "test_channel",
-  });
-
-  let timer = async_timer({
-    interval: 1000,
-    task: async () => {
-      let evt = await channel2.get_message();
-      console.log("evt = ", evt);
-    }
-  });
-
-  document.getElementById("btn_post_message").onclick = async (evt) => {
-    let data = prompt("Enter Something");
-    let result = await channel1.post_message(data);
-    console.log("post result = ", result);
-  };
 </script>
 </div></body></html>

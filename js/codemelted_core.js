@@ -99,6 +99,45 @@ export const LOGGER = Object.freeze({
 });
 
 /**
+ * The math formula to execute with the {@link npu_math} call.
+ * @readonly
+ * @enum {string}
+ * @property {string} GeodeticDistance
+ * Distance in meters between two WGS84 points. The parameters for the
+ * formula are start_latitude / start_longitude / end_latitude / end_longitude
+ * @property {string} GeodeticHeading
+ * Heading in °N true North 0 - 359. The parameters for the
+ * formula are start_latitude / start_longitude / end_latitude / end_longitude
+ * @property {string} GeodeticSpeed
+ * Speed in meters per second between two WGS84 points. The parameters for the
+ * formula are start_milliseconds / start_latitude / start_longitude /
+ * end_milliseconds / end_latitude / end_longitude
+ * @property {string} TemperatureCelsiusToFahrenheit
+ * °F = (°C x 9/5) + 32
+ * @property {string} TemperatureCelsiusToKelvin
+ * °K = °C + 273.15
+ * @property {string} TemperatureFahrenheitToCelsius
+ * °C = (°F − 32) × 5/9
+ * @property {string} TemperatureFahrenheitToKelvin
+ * °K = (°F − 32) × 5/9 + 273.15
+ * @property {string} TemperatureKelvinToCelsius
+ * °C = °K − 273.15
+ * @property {string} TemperatureKelvinToFahrenheit
+ * °F = (°K − 273.15) × 9/5 + 32
+ */
+export const MATH_FORMULA = Object.freeze({
+  GeodeticDistance: "geodetic_distance",
+  GeodeticHeading: "geodetic_heading",
+  GeodeticSpeed: "geodetic_speed",
+  TemperatureCelsiusToFahrenheit: "temperature_celsius_to_fahrenheit",
+  TemperatureCelsiusToKelvin: "temperature_celsius_to_kelvin",
+  TemperatureFahrenheitToCelsius: "temperature_fahrenheit_to_celsius",
+  TemperatureFahrenheitToKelvin: "temperature_fahrenheit_to_kelvin",
+  TemperatureKelvinToCelsius: "temperature_kelvin_to_celsius",
+  TemperatureKelvinToFahrenheit: "temperature_kelvin_to_fahrenheit"
+});
+
+/**
  * Provides a {@link runtime_query} request to learn about the particular
  * environment.
  * @readonly
@@ -171,6 +210,8 @@ export const LOGGER = Object.freeze({
  * @property {string} IsTouchEnabled Identifies if the browser is accessible
  * via a touch device.
  * @property {string} IsUsb Determines if USB is available to the runtime.
+ * @property {string} IsVibrate Determines if the vibrate function is
+ * available to the runtime.
  * @property {string} IsWebSocket Determines if WebSocket is available to the
  * runtime.
  * @property {string} IsWorkerAvailable Determines if a Worker can be created
@@ -249,6 +290,7 @@ export const QUERY_REQUEST = Object.freeze({
   IsTextToSpeech: "is_text_to_speech",
   IsTouchEnabled: "is_touch_enabled",
   IsUsb: "is_usb",
+  IsVibrate: "is_vibrate",
   IsWebSocket: "is_websocket",
   IsWorkerAvailable: "is_worker_available",
   IsWorkerRuntime: "is_worker_runtime",
@@ -1866,8 +1908,10 @@ export function runtime_query({request, name="", obj = globalThis}) {
       case QUERY_REQUEST.IsAudio:
         return is_defined({property: "HTMLAudioElement"});
       case QUERY_REQUEST.IsBeacon:
-        return is_defined({property: "sendBeacon",
-                           obj: globalThis["navigator"]});
+        return is_defined({
+          property: "sendBeacon",
+          obj: globalThis["navigator"]
+        });
       case QUERY_REQUEST.IsBluetooth:
         return is_defined({property: "bluetooth",
                            obj: globalThis["navigator"]});
@@ -1894,8 +1938,10 @@ export function runtime_query({request, name="", obj = globalThis}) {
           return false;
         }
       case QUERY_REQUEST.IsMidi:
-        return is_defined({property: "requestMIDIAccess",
-                           obj: globalThis["navigator"]});
+        return is_defined({
+          property: "requestMIDIAccess",
+          obj: globalThis["navigator"]
+        });
       case QUERY_REQUEST.IsNode:
         return is_defined({property: "process"}) &&
           !is_defined({property: "Deno"}) &&
@@ -1903,8 +1949,10 @@ export function runtime_query({request, name="", obj = globalThis}) {
       case QUERY_REQUEST.IsOpen:
         return is_defined({property: "open"});
       case QUERY_REQUEST.IsOrientation:
-        return is_defined({property: "geolocation",
-                           obj: globalThis["navigator"]});
+        return is_defined({
+          property: "geolocation",
+          obj: globalThis["navigator"]
+        });
       case QUERY_REQUEST.IsPwa:
         return is_defined({property: "matchMedia"}) &&
           // @ts-ignore This is in a browser context
@@ -1915,24 +1963,36 @@ export function runtime_query({request, name="", obj = globalThis}) {
           // @ts-ignore This is in a browser context
           globalThis.isSecureContext;
       case QUERY_REQUEST.IsSerialPort:
-        return is_defined({property: "serial",
-                           obj: globalThis["navigator"]});
+        return is_defined({
+          property: "serial",
+          obj: globalThis["navigator"]
+        });
       case QUERY_REQUEST.IsSessionStorage:
         return is_defined({property: "sessionStorage"});
       case QUERY_REQUEST.IsShare:
-        return is_defined({property: "share",
-                           obj: globalThis["navigator"]});
+        return is_defined({
+          property: "share",
+          obj: globalThis["navigator"]
+        });
       case QUERY_REQUEST.IsTextToSpeech:
         return is_defined({property: "SpeechSynthesisUtterance"});
       case QUERY_REQUEST.IsTouchEnabled:
-        return is_defined({property: "maxTouchPoints",
-                           obj: globalThis["navigator"]}) &&
+        return is_defined({
+          property: "maxTouchPoints",
+          obj: globalThis["navigator"]
+        }) &&
           // @ts-ignore This is in a browser context
           globalThis.navigator.maxTouchPoints > 0;
       case QUERY_REQUEST.IsUsb:
-        return is_defined({property: "navigator"}) &&
-          is_defined({property: "usb",
-                      obj: globalThis["navigator"]});
+        return is_defined({
+          property: "usb",
+          obj: globalThis["navigator"]
+        });
+      case QUERY_REQUEST.IsVibrate:
+        return is_defined({
+          property: "vibrate",
+          obj: globalThis["navigator"]
+        });
       case QUERY_REQUEST.IsWebSocket:
         return is_defined({property: "WebSocket"});
       case QUERY_REQUEST.IsWorkerAvailable:

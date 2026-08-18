@@ -22,6 +22,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * @module codemelted_ui
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements
  */
 
 import {
@@ -43,7 +44,7 @@ if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
 // ============================================================================
 
 /**
- * Provides the request actions for the {@link runtime_action} function call.
+ * Provides the request actions for the {@link ui_action} function call.
  * @readonly
  * @enum {string}
  * @property {string} Copy Copies the specified text to the system clipboard.
@@ -107,6 +108,9 @@ export const ACTION_REQUEST = Object.freeze({
  * user.
  * @property {string} Prompt Prompt the user for input.
  * @property {string} SnackBar Tell the user something happened passively.
+ * @property {string} SystemNotification Provides an operating system
+ * notification even when the page is not active. Requires permission to be
+ * granted to the website.
  * @property {string} Wait Tell the user to wait for an action to complete.
  */
 export const NOTIFY_REQUEST = Object.freeze({
@@ -116,7 +120,8 @@ export const NOTIFY_REQUEST = Object.freeze({
   Confirm: "confirm",
   Custom: "custom",
   Prompt: "prompt",
-  SnackBar: "snackbar",
+  SnackBar: "snack_bar",
+  SystemNotification: "system_notification",
   Wait: "wait",
 });
 
@@ -193,7 +198,6 @@ class CTextToSpeechProtocol extends CProtocol {
 
 }
 
-
 // ============================================================================
 // [PUBLIC API] ===============================================================
 // ============================================================================
@@ -222,7 +226,7 @@ class CTextToSpeechProtocol extends CProtocol {
  * @example
  * // TBD
  */
-export async function runtime_action({
+export async function ui_action({
   request,
   data,
   target_origin="*",
@@ -231,19 +235,14 @@ export async function runtime_action({
   y
 }) {
   try {
-    if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-
     let value = null;
     switch (request) {
       case ACTION_REQUEST.Copy:
         json_check_type({type: "string", data: data, should_throw: true});
-        // @ts-ignore This is in a browser context
+        // @ts-ignore Data was checked above.
         await globalThis.navigator.clipboard.writeText(data);
         break;
       case ACTION_REQUEST.Focus:
-        // @ts-ignore This is in a browser context
         globalThis.focus();
         break;
       case ACTION_REQUEST.MoveBy:
@@ -259,15 +258,12 @@ export async function runtime_action({
         globalThis.moveTo(x, y);
         break;
       case ACTION_REQUEST.Paste:
-        // @ts-ignore This is in a browser context
         value = await globalThis.navigator.clipboard.readText();
         break;
       case ACTION_REQUEST.PostMessage:
-        // @ts-ignore This is in a browser context
         globalThis.postMessage(data, target_origin);
         break;
       case ACTION_REQUEST.Print:
-        // @ts-ignore This is in a browser context
         globalThis.print();
         break;
       case ACTION_REQUEST.ResizeBy:
@@ -301,10 +297,16 @@ export async function runtime_action({
         globalThis.scrollTo(x, y);
         break;
       case ACTION_REQUEST.Share:
+        if (!runtime_query({request: QUERY_REQUEST.IsShare})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         // @ts-ignore This is in a browser context
         await globalThis.navigator.share(data);
         break;
       case ACTION_REQUEST.Vibrate:
+        if (!runtime_query({request: QUERY_REQUEST.IsVibrate})) {
+          throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+        }
         json_check_type({type: Array, data: pattern, should_throw: true});
         // @ts-ignore Will exist in the browser context
         value = globalThis.navigator.vibrate(pattern);
@@ -330,13 +332,11 @@ export async function runtime_action({
  * @param {string} params.message The message to associate with the request.
  * @returns {Promise<boolean | string | void>} The data associated with the
  * notification request. Any rejected promise is an API violation.
+ * @example
+ * // TBD
  */
 export async function ui_notify({request, message}) {
   try {
-    if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
-      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
-    }
-
     let value;
     switch (request) {
       case NOTIFY_REQUEST.Alert:
@@ -349,7 +349,6 @@ export async function ui_notify({request, message}) {
         // @ts-ignore This is in a browser context
         value = globalThis.confirm(data);
         break;
-
       case NOTIFY_REQUEST.Prompt:
         json_check_type({type: "string", data: message, should_throw: true});
         // @ts-ignore This is in a browser context
@@ -498,3 +497,285 @@ export function ui_open({
     throw new CModuleError("runtime_online() error.", err);
   }
 }
+
+// ============================================================================
+// [UI Components] ============================================================
+// ============================================================================
+
+/**
+ * @callback CAttributeChangeCB Callback to handle any changes in
+ * observedAttributes within the base {@link CHtmlComponent} class.
+ * @param {string} name The name of the observable attribute fired.
+ * @param {string} old_value The old value associated with the attribute.
+ * @param {string} new_value The nw value to apply to the attribute.
+ * @returns {void}
+ */
+
+/**
+ * @callback CHtmlComponentCB A generalized callback for the void no parameter
+ * {@link CHtmlComponent} class. Allows for the constructor to define these
+ * callbacks and the base class to invoke them allowing for a cleaner
+ * definition of the implementing HTML custom component.
+ */
+
+/**
+ * Sets up the base class for defining custom HTMLElements to build a user
+ * interface for a Single Page App (SPA) / Progressive Web App (PWA) or
+ * Rust desktop / mobile TAURI app.
+ * @abstract
+ * @extends {HTMLElement}
+ */
+export class CHtmlComponent extends HTMLElement {
+  /**
+   * Holds the list of observable attributes that implementing custom
+   * components can respond to so outside changes can be made in the
+   * shadow dom.
+   * @readonly
+   * @type {string[]}
+   */
+  static observedAttributes = [ ];
+
+  /** @type {CHtmlComponentCB | undefined} */
+  #adopted_cb;
+  /** @type {CAttributeChangeCB | undefined} */
+  #attribute_changed_cb;
+  /** @type {CHtmlComponentCB | undefined} */
+  #connected_cb;
+  /** @type {CHtmlComponentCB | undefined} */
+  #connected_move_cb;
+  /** @type {CHtmlComponentCB | undefined} */
+  #disconnected_cb;
+  /** @type {ShadowRoot} */
+  #shadow_root;
+
+  /**
+   * Creates the HTMLElement and attaches a closed shadow DOM to only allow
+   * styling via this component.
+   * @param {object} params The named parameters
+   * @param {CHtmlComponentCB} [params.adopted_cb] The callback that handles
+   * the {@link adoptedCallback} method.
+   * @param {CAttributeChangeCB} [params.attribute_changed_cb] The callback
+   * that handles the {@link attributeChangedCallback} method.
+   * @param {CHtmlComponentCB} [params.connected_cb] The callback that handles
+   * the {@link connectedCallback} method.
+   * @param {CHtmlComponentCB} [params.connected_move_cb] The callback that handles
+   * the {@link connectedMoveCallback} method.
+   * @param {CHtmlComponentCB} [params.disconnected_cb] The callback that handles
+   * the {@link disconnectedCallback} method.
+   */
+  constructor({
+    adopted_cb,
+    attribute_changed_cb,
+    connected_cb,
+    connected_move_cb,
+    disconnected_cb
+  }) {
+    super();
+    try {
+      if (adopted_cb) {
+        json_check_type({
+          type: "function",
+          data: adopted_cb,
+          count: 0,
+          should_throw: true
+        });
+      }
+      if (attribute_changed_cb) {
+        json_check_type({
+          type: "function",
+          data: attribute_changed_cb,
+          count: 3,
+          should_throw: true
+        });
+      }
+      if (connected_cb) {
+        json_check_type({
+          type: "function",
+          data: connected_cb,
+          count: 0,
+          should_throw: true
+        });
+      }
+      if (connected_move_cb) {
+        json_check_type({
+          type: "function",
+          data: connected_move_cb,
+          count: 0,
+          should_throw: true
+        });
+      }
+      if (disconnected_cb) {
+        json_check_type({
+          type: "function",
+          data: disconnected_cb,
+          count: 0,
+          should_throw: true
+        });
+      }
+      this.#adopted_cb = adopted_cb;
+      this.#attribute_changed_cb = attribute_changed_cb;
+      this.#connected_cb = connected_cb;
+      this.#connected_move_cb = connected_move_cb;
+      this.#disconnected_cb = disconnected_cb;
+      this.#shadow_root = this.attachShadow({mode: "closed"});
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError(CModuleError.MISUSE);
+    }
+  }
+
+  /**
+   * Provides access to the shadow DOM for constructing the custom component.
+   * @protected
+   * @readonly
+   * @type {ShadowRoot}
+   */
+  get shadow_root() { return this.#shadow_root; }
+
+  // /**
+  //  * Provides the ability to query the DOM for a given css_value by
+  //  * variable name. The design of this function is if a variable name is not
+  //  * what is specified, it is assumed to be the actual property so it is
+  //  * returned instead.
+  //  * @param {string} attr The variable name to search
+  //  * @returns {string} The value of the CssVariable or the attr returned
+  //  * as it is assumed to be the actual style.
+  //  */
+  // get_css_value(attr) {
+  //   let css_value = runtime_query({
+  //     request: QUERY_REQUEST.CssVariable,
+  //     name: attr
+  //   });
+  //   // @ts-ignore It will return a string value
+  //   return css_value.length > 0
+  //     // @ts-ignore It will return a string value
+  //     ? css_value
+  //     : attr;
+  // }
+
+  /**
+   * Called each time the element is moved to a new document.
+   * @returns {void}
+   */
+  adoptedCallback() { this.#adopted_cb?.(); }
+
+  /**
+   * Called when attributes are changed, added, removed, or replaced.
+   * @param {string} name The name of a observedAttributes allowing access
+   * into the internals of the custom component.
+   * @param {string} old_value The original value held by the attribute.
+   * @param {string} new_value The new value to apply.
+   * @returns {void}
+   */
+  attributeChangedCallback(name, old_value, new_value) {
+    this.#attribute_changed_cb?.(name, old_value, new_value);
+  }
+
+  /**
+   * Called each time the element is added to the document. The specification
+   * recommends that, as far as possible, developers should implement custom
+   * element setup in this callback rather than the constructor.
+   * @returns {void}
+   */
+  connectedCallback() { this.#connected_cb?.(); }
+
+  /**
+   * When defined, this is called instead of connectedCallback() and
+   * disconnectedCallback() each time the element is moved to a different
+   * place in the DOM via Element.moveBefore(). Use this to avoid running
+   * initialization/cleanup code in the connectedCallback() and
+   * disconnectedCallback() callbacks when the element is not actually
+   * being added to or removed from the DOM. See Lifecycle callbacks and
+   * state-preserving moves for more details.
+   * @returns {void}
+   */
+  connectedMoveCallback() { this.#connected_move_cb?.(); }
+
+  /**
+   * Called each time the element is removed from the document.
+   * @returns {void}
+   */
+  disconnectedCallback() { this.#disconnected_cb?.(); }
+
+  /**
+   * Forces a refresh of the component.
+   * @returns {void}
+   */
+  refresh() {
+    const display = this.style.display;
+    this.style.display = "";
+    this.style.display = display;
+  }
+
+  /**
+   * Utility function to register a custom component if it has not already
+   * been defined.
+   * @param {string} name The name of the component.
+   * @param {any} element_def The constructor definition.
+   */
+  static register_component(name, element_def) {
+    const is_defined =  !!customElements.get(name);
+    if (!is_defined) {
+      customElements.define(name, element_def);
+    }
+  }
+}
+
+/**
+ * Provides a Material3 icon based button where the icon is to the left of
+ * the label (if specified) or it is just the icon.
+ * <br><br>
+ * <b>DECLARE:</b><br>
+ * ```html
+ * <cm-icon-button
+ *   cm_icon="emoji or URL"
+ *   cm_label="Label (optional)"
+ *   cm_tooltip="Tooltip (optional)"
+ * ></cm-icon-button>
+ * ```
+ * <br><br>
+ * <b>STYLE:</b><br>
+ * ```css
+ *
+ * ```
+ * @extends {CHtmlComponent}
+ */
+class CIconButton extends CHtmlComponent {
+  constructor() {
+    super({
+      connected_cb: () => {
+        try {
+          // Get the attributes and validate them.
+          this.title = this.getAttribute("cm_tooltip") ?? "";
+          let label = this.getAttribute("cm_label") ?? "";
+          let icon = this.getAttribute("cm_icon") ?? "";
+
+          // Setup our style
+          // TODO: Setup :host
+          // TODO: Have :host fill container
+          let style = `
+            <style>
+
+            </style>
+          `;
+
+          // Now go build the component
+          if (label.length === 1) {
+
+          } else if (label.length > 1) {
+
+          } else {
+            throw new CModuleError(
+              `${CModuleError.MISUSE}: cm_icon must be emoji or url`
+            );
+          }
+
+        } catch (err) {
+          CModuleError.handle_error(err);
+          throw new CModuleError(CModuleError.MISUSE, err);
+        }
+      }
+    });
+  }
+}
+CHtmlComponent.register_component("cm-icon-button", CIconButton);
