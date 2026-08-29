@@ -27,7 +27,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * @module codemelted_network
+ * @module network
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Beacon_API
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API
  * @see https://developer.mozilla.org/en-US/docs/Web/API/EventSource
@@ -43,13 +43,13 @@ import {
   json_check_type,
   PROTOCOL_EVENT,
   PROTOCOL_TYPE,
-  QUERY_REQUEST,
-  runtime_query
-} from "./codemelted_core.js";
+  AVAILABILITY_REQUEST,
+  runtime_available
+} from "./core.js";
 
 // Module only available in a Browser / Worker runtimes
-if (!runtime_query({request: QUERY_REQUEST.IsBrowser}) &&
-    !runtime_query({request: QUERY_REQUEST.IsWorkerRuntime})) {
+if (!runtime_available({request: AVAILABILITY_REQUEST.Browser}) &&
+    !runtime_available({request: AVAILABILITY_REQUEST.WorkerRuntime})) {
   throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
 }
 
@@ -553,7 +553,7 @@ export class CBroadcastChannelProtocol extends CProtocol {
       type: PROTOCOL_TYPE.BroadcastChannel
     });
     try {
-      if (!runtime_query({request: QUERY_REQUEST.IsBroadcastChannel})) {
+      if (!runtime_available({request: AVAILABILITY_REQUEST.BroadcastChannel})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       this.#channel = new globalThis.BroadcastChannel(url);
@@ -623,7 +623,7 @@ export class CEventSourceProtocol extends CProtocol {
       type: PROTOCOL_TYPE.EventSource
     });
     try {
-      if (!runtime_query({request: QUERY_REQUEST.IsEventSource})) {
+      if (!runtime_available({request: AVAILABILITY_REQUEST.EventSource})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({
@@ -746,7 +746,7 @@ class CWebSocketProtocol extends CProtocol {
       type: PROTOCOL_TYPE.WebSocket
     });
     try {
-      if (!runtime_query({request: QUERY_REQUEST.IsWebSocket})) {
+      if (!runtime_available({request: AVAILABILITY_REQUEST.WebSocket})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({type: "string", data: url, should_throw: true});
@@ -837,6 +837,25 @@ class CWebTransportProtocol extends CProtocol {
 
 /**
  * @private
+ */
+export function network_query() {
+    // case QUERY_REQUEST.Online:
+    //   return is_defined({
+    //     property: "onLine",
+    //     obj: globalThis["navigator"]
+    //   })
+    //     // @ts-ignore Property exists in a browser runtime.
+    //     ? globalThis.navigator.onLine
+    //     : false;
+    // case QUERY_REQUEST.Hostname:
+    //   return is_defined({property: "HTMLElement"})
+    //     // @ts-ignore Property exists in a browser runtime.
+    //     ? globalThis.location.hostname
+    //     : "UNKNOWN";
+}
+
+/**
+ * @private
  * Sends an HTTP POST request containing a small amount of data to a web
  * server.
  * @param {object} params The named parameters
@@ -849,7 +868,7 @@ class CWebTransportProtocol extends CProtocol {
 export function network_beacon({url, data}) {
   try {
 
-    if (!runtime_query({request: QUERY_REQUEST.IsBeacon})) {
+    if (!runtime_available({request: AVAILABILITY_REQUEST.Beacon})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
     json_check_type({type: "string", data: url, should_throw: true});

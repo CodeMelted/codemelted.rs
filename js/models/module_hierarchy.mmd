@@ -3,36 +3,76 @@ title: codemelted JavaScript Module Hierarchy
 ---
 classDiagram
   direction BT
-  namespace all["All Runtimes"] {
-    class codemelted_core {
+  %%  Setup our codemelted namespace.
+  namespace codemelted {
+    class core {
+      <<module>>
+    }
+    class disk {
+      <<module>>
+    }
+    class hw {
+      <<module>>
+    }
+    class storage {
+      <<module>>
+    }
+    class ui {
+      <<module>>
+    }
+    class db {
+      <<module>>
+    }
+    class network {
       <<module>>
     }
   }
-  namespace browser["Browser Only"] {
-    class codemelted_disk {
-      <<module>>
-    }
-    class codemelted_hw {
-      <<module>>
-    }
-    class codemelted_storage {
-      <<module>>
-    }
-    class codemelted_ui {
-      <<module>>
-    }
+
+  %%  Model the codemelted module exports to the runtimes within the namespace
+  db <-- core
+  disk <-- core
+  hw <-- core
+  network <-- core
+  storage <-- core
+  ui <-- core
+
+  %% Setup our supported runtimes
+  class rte_browser {
+    <<module>>
   }
-  namespace browser_worker["Browser / Worker Only"] {
-    class codemelted_db {
-      <<module>>
-    }
-    class codemelted_network {
-      <<module>>
-    }
+  class rte_bun {
+    <<module>>
   }
-  codemelted_disk --> codemelted_core: uses
-  codemelted_hw --> codemelted_core: uses
-  codemelted_storage --> codemelted_core: uses
-  codemelted_ui --> codemelted_core: uses
-  codemelted_db --> codemelted_core: uses
-  codemelted_network --> codemelted_core: uses
+  class rte_deno {
+    <<module>>
+  }
+  class rte_node {
+    <<module>>
+  }
+  class rte_tauri {
+    <<module>>
+  }
+  class rte_worker {
+    <<module>>
+  }
+
+  %% Now model our runtime exports for what will be included by a consuming
+  %% project
+  rte_browser <-- disk
+  rte_browser <-- hw
+  rte_browser <-- ui
+  rte_browser <-- storage
+  rte_browser <-- db
+  rte_browser <-- network
+
+  rte_tauri <-- rte_browser
+
+  rte_worker <-- db
+  rte_worker <-- network
+
+  rte_bun <-- core
+  rte_deno <-- network
+  rte_deno <-- storage
+  rte_node <-- core
+
+  note "Reflects the exports from the core module to each runtime module.\nSimply include the runtime module to gain all functionality available to\nthat runtime."

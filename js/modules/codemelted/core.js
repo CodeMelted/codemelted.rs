@@ -48,7 +48,7 @@
  * <button style="cursor: pointer;" onclick="open_test('coverage-deno/js/index.html');">Deno</button>
  * <button style="cursor: pointer;" onclick="open_test('coverage-node/js/index.html');">NodeJS</button>
  * <br>
- * @module codemelted_core
+ * @module core
  * @see https://developer.mozilla.org/en-US/docs/Web/API/console
  * @see https://developer.mozilla.org/en-US/docs/Web/API/EventTarget
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Location
@@ -64,6 +64,92 @@
 // ============================================================================
 // [ENUM DEFINITIONS] =========================================================
 // ============================================================================
+
+/**
+ * Determines if a particular object, function, or feature is available
+ * within the current runtime.
+ * @readonly
+ * @enum {string}
+ * @property {string} AskRuntime When performing a search for a specific
+ * definition on a particular object or globalThis namespace.
+ * @property {string} Audio Determines if audio is available in the
+ * runtime.
+ * @property {string} Beacon Determines if the network_beacon is available
+ * to the runtime.
+ * @property {string} BroadcastChannel Determines if a BroadcastChannel
+ * protocol is available.
+ * @property {string} Browser Determine if the runtime is a Web Browser.
+ * @property {string} Bun Determines if the runtime is Bun.
+ * @property {string} Bluetooth Determines if bluetooth is available.
+ * @property {string} Deno Determines if the runtime is Deno.
+ * @property {string} CookieStore Determines if cookie store is
+ * available to the runtime.
+ * @property {string} EventSource Determines if an EventSource protocol
+ * is available.
+ * @property {string} IFrame Determines if a web site is running under
+ * an iframe or not.
+ * @property {string} LocalStorage Determines if local storage is
+ * available to the runtime.
+ * @property {string} Midi Determines if MIDI devices are available.
+ * @property {string} Node Determines if the runtime is Node.
+ * @property {string} Open Determines if ui_open is available to the
+ * runtime.
+ * @property {string} Orientation Determines if Orientation is available
+ * (i.e. GPS and 3D space device orientation.)
+ * @property {string} Pwa Determines if the browser window represents an
+ * installed Progressive Web Application.
+ * @property {string} SerialPort Determines if SerialPort protocols are
+ * available.
+ * @property {string} SecureContext indicating whether the current context
+ * is secure (true) or not (false).
+ * @property {string} Share Determines if sharing is available to the
+ * runtime.
+ * @property {string} SessionStorage Determines if session storage is
+ * available to the runtime.
+ * @property {string} TextToSpeech Determines if text-to-speech is
+ * available to the runtime.
+ * @property {string} TouchEnabled Identifies if the browser is accessible
+ * via a touch device.
+ * @property {string} Usb Determines if USB is available to the runtime.
+ * @property {string} Vibrate Determines if the vibrate function is
+ * available to the runtime.
+ * @property {string} WebSocket Determines if WebSocket is available to the
+ * runtime.
+ * @property {string} WorkerAvailable Determines if a Worker can be created
+ * with the runtime.
+ * @property {string} WorkerRuntime Determines if the runtime is a Worker
+ * runtime.
+ */
+export const AVAILABILITY_REQUEST = Object.freeze({
+  AskRuntime: "ask_runtime",
+  Audio: "audio",
+  Beacon: "beacon",
+  BroadcastChannel: "broadcast_channel",
+  Browser: "browser",
+  Bun: "bun",
+  Bluetooth: "bluetooth",
+  CookieStore: "cookie_store",
+  Deno: "deno",
+  EventSource: "event_source",
+  IFrame: "iframe",
+  LocalStorage: "local_storage",
+  Midi: "midi",
+  Node: "node",
+  Open: "open",
+  Orientation: "orientation",
+  Pwa: "pwa",
+  SerialPort: "serial_port",
+  SecureContext: "secure_context",
+  SessionStorage: "session_storage",
+  Share: "share",
+  TextToSpeech: "text_to_speech",
+  TouchEnabled: "touch_enabled",
+  Usb: "usb",
+  Vibrate: "vibrate",
+  WebSocket: "websocket",
+  WorkerAvailable: "worker_available",
+  WorkerRuntime: "worker_runtime",
+});
 
 /**
  * Provides the request actions of the {@link runtime_event} function.
@@ -142,8 +228,7 @@ export const MATH_FORMULA = Object.freeze({
  * environment.
  * @readonly
  * @enum {string}
- * @property {string} AskRuntime When performing a search for a specific
- * definition on a particular object or globalThis namespace.
+
  * @property {string} AvailableHeight the height of the screen, in pixels,
  * minus permanent or semipermanent user interface features displayed by
  * the operating system, such as the Taskbar on Windows.
@@ -171,52 +256,6 @@ export const MATH_FORMULA = Object.freeze({
  * @property {string} InnerWidth interior width of the window in pixels
  * (that is, the width of the window's layout viewport). That includes the
  * width of the vertical scroll bar, if one is present.
- * @property {string} IsAudio Determines if audio is available in the
- * runtime.
- * @property {string} IsBeacon Determines if the network_beacon is available
- * to the runtime.
- * @property {string} IsBroadcastChannel Determines if a BroadcastChannel
- * protocol is available.
- * @property {string} IsBrowser Determine if the runtime is a Web Browser.
- * @property {string} IsBun Determines if the runtime is Bun.
- * @property {string} IsBluetooth Determines if bluetooth is available.
- * @property {string} IsDeno Determines if the runtime is Deno.
- * @property {string} IsCookieStore Determines if cookie store is
- * available to the runtime.
- * @property {string} IsEventSource Determines if an EventSource protocol
- * is available.
- * @property {string} IsIframe Will determine if the document is within an
- * iframe or not.
- * @property {string} IsLocalStorage Determines if local storage is
- * available to the runtime.
- * @property {string} IsMidi Determines if MIDI devices are available.
- * @property {string} IsNode Determines if the runtime is Node.
- * @property {string} IsOpen Determines if ui_open is available to the
- * runtime.
- * @property {string} IsOrientation Determines if Orientation is available
- * (i.e. GPS and 3D space device orientation.)
- * @property {string} IsPwa Determines if the browser window represents an
- * installed Progressive Web Application.
- * @property {string} IsSerialPort Determines if SerialPort protocols are
- * available.
- * @property {string} IsSecureContext indicating whether the current context
- * is secure (true) or not (false).
- * @property {string} IsShare Determines if sharing is available to the
- * runtime.
- * @property {string} IsSessionStorage Determines if session storage is
- * available to the runtime.
- * @property {string} IsTextToSpeech Determines if text-to-speech is
- * available to the runtime.
- * @property {string} IsTouchEnabled Identifies if the browser is accessible
- * via a touch device.
- * @property {string} IsUsb Determines if USB is available to the runtime.
- * @property {string} IsVibrate Determines if the vibrate function is
- * available to the runtime.
- * @property {string} IsWebSocket Determines if WebSocket is available to the
- * runtime.
- * @property {string} IsWorkerAvailable Determines if a Worker can be created
- * with the runtime.
- * @property {string} IsWorkerRuntime Determines if the runtime is a Worker.
  * @property {string} Name The name of the particular JS runtime.
  * @property {string} Online Identifies if their is an Internet connection.
  * @property {string} OuterHeight the height in pixels of the whole browser
@@ -252,7 +291,6 @@ export const MATH_FORMULA = Object.freeze({
  * @property {string} Width the width of the screen.
  */
 export const QUERY_REQUEST = Object.freeze({
-  AskRuntime: "ask_runtime",
   AvailableHeight: "available_height",
   AvailableWidth: "available_width",
   ColorDepth: "color_depth",
@@ -267,33 +305,6 @@ export const QUERY_REQUEST = Object.freeze({
   Hostname: "hostname",
   InnerHeight: "inner_height",
   InnerWidth: "inner_width",
-  IsAudio: "is_audio",
-  IsBeacon: "is_beacon",
-  IsBroadcastChannel: "is_broadcast_channel",
-  IsBrowser: "is_browser",
-  IsBun: "is_bun",
-  IsBluetooth: "is_bluetooth",
-  IsCookieStore: "is_cookie_store",
-  IsDeno: "is_deno",
-  IsEventSource: "is_event_source",
-  IsIFrame: "is_iframe",
-  IsLocalStorage: "is_local_storage",
-  IsMidi: "is_midi",
-  IsNode: "is_node",
-  IsOpen: "is_open",
-  IsOrientation: "is_orientation",
-  IsPwa: "is_pwa",
-  IsSerialPort: "is_serial_port",
-  IsSecureContext: "is_secure_context",
-  IsSessionStorage: "is_session_storage",
-  IsShare: "is_share",
-  IsTextToSpeech: "is_text_to_speech",
-  IsTouchEnabled: "is_touch_enabled",
-  IsUsb: "is_usb",
-  IsVibrate: "is_vibrate",
-  IsWebSocket: "is_websocket",
-  IsWorkerAvailable: "is_worker_available",
-  IsWorkerRuntime: "is_worker_runtime",
   Name: "name",
   Online: "online",
   OuterHeight: "outer_height",
@@ -1068,6 +1079,21 @@ export class CWorkerProtocol extends CProtocol {
   #worker;
 
   /**
+   * Identifies the number of background threads are available to the worker.
+   * @returns {number}
+   */
+  static cpu_count() {
+    return runtime_available({
+      request: AVAILABILITY_REQUEST.AskRuntime,
+      name: "hardwareConcurrency",
+      obj: globalThis["navigator"]
+    })
+      // @ts-ignore This will be within the browser context
+      ? globalThis.navigator.hardwareConcurrency
+      : 1;
+  }
+
+  /**
    * Sends a message, which can be of any kind of Object, to the background
    * worker for processing based on how it was setup to be processed.
    * @override
@@ -1125,7 +1151,7 @@ export class CWorkerProtocol extends CProtocol {
       type: PROTOCOL_TYPE.Worker
     });
     try {
-      if (!runtime_query({request: QUERY_REQUEST.IsWorkerAvailable})) {
+      if (!runtime_available({request: AVAILABILITY_REQUEST.WorkerAvailable})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({type: "string", data: url, should_throw: true});
@@ -1705,6 +1731,142 @@ export function npu_math() {
 }
 
 /**
+ *
+ * @param {object} params The named parameters.
+ * @param {AVAILABILITY_REQUEST} params.request The item to query about the runtime.
+ * @param {string} [params.name = ""] An additional name to aid in the query.
+ * @param {object} [params.obj = globalThis] The object to check for a given
+ * named feature. Only valid with the {@link QUERY_REQUEST.AskRuntime}
+ * request.
+ * @returns {boolean}
+ */
+export function runtime_available({request, name="", obj = globalThis}) {
+  /**
+   * Internal lookup function.
+   * @private
+   * @param {object} params The named parameters.
+   * @param {string} params.property The property to look up.
+   * @param {object} [params.obj=globalThis] The object to check.
+   * @returns  true if defined, false otherwise.
+   */
+  const is_available = ({property, obj = globalThis}) => {
+    json_check_type({type: "object", data: obj, should_throw: true});
+    json_check_type({type: "string", data: property, should_throw: true});
+    let available = false;
+    if (json_check_type({type: "object", data: obj})) {
+      available = property in obj;
+    }
+    return available;
+  };
+
+  try {
+    switch (request) {
+      case AVAILABILITY_REQUEST.AskRuntime:
+        return is_available({property: name, obj: obj});
+      case AVAILABILITY_REQUEST.Audio:
+        return is_available({property: "HTMLAudioElement"});
+      case AVAILABILITY_REQUEST.Beacon:
+        return is_available({
+          property: "sendBeacon",
+          obj: globalThis["navigator"]
+        });
+      case AVAILABILITY_REQUEST.Bluetooth:
+        return is_available({property: "bluetooth",
+                           obj: globalThis["navigator"]});
+      case AVAILABILITY_REQUEST.BroadcastChannel:
+        return is_available({property: "BroadcastChannel"});
+      case AVAILABILITY_REQUEST.Browser:
+        return is_available({property: "HTMLElement"});
+      case AVAILABILITY_REQUEST.Bun:
+        return is_available({property: "Bun"});
+      case AVAILABILITY_REQUEST.Deno:
+        return is_available({property: "Deno"});
+      case AVAILABILITY_REQUEST.CookieStore:
+        return is_available({property: "cookieStore"});
+      case AVAILABILITY_REQUEST.EventSource:
+        return is_available({property: "EventSource"});
+      case AVAILABILITY_REQUEST.LocalStorage:
+        return is_available({property: "localStorage"});
+      case AVAILABILITY_REQUEST.IFrame:
+        try {
+          return is_available({property: "HTMLElement"}) &&
+            // @ts-ignore This will be within the browser context
+            globalThis.self === globalThis.top;
+        } catch {
+          return false;
+        }
+      case AVAILABILITY_REQUEST.Midi:
+        return is_available({
+          property: "requestMIDIAccess",
+          obj: globalThis["navigator"]
+        });
+      case AVAILABILITY_REQUEST.Node:
+        return is_available({property: "process"}) &&
+          !is_available({property: "Deno"}) &&
+          !is_available({property: "Bun"});
+      case AVAILABILITY_REQUEST.Open:
+        return is_available({property: "open"});
+      case AVAILABILITY_REQUEST.Orientation:
+        return is_available({
+          property: "geolocation",
+          obj: globalThis["navigator"]
+        });
+      case AVAILABILITY_REQUEST.Pwa:
+        return is_available({property: "matchMedia"}) &&
+          // @ts-ignore This is in a browser context
+          globalThis.matchMedia("(display-mode: standalone)"
+        ).matches;
+      case AVAILABILITY_REQUEST.SecureContext:
+        return is_available({property: "isSecureContext"}) &&
+          // @ts-ignore This is in a browser context
+          globalThis.isSecureContext;
+      case AVAILABILITY_REQUEST.SerialPort:
+        return is_available({
+          property: "serial",
+          obj: globalThis["navigator"]
+        });
+      case AVAILABILITY_REQUEST.SessionStorage:
+        return is_available({property: "sessionStorage"});
+      case AVAILABILITY_REQUEST.Share:
+        return is_available({
+          property: "share",
+          obj: globalThis["navigator"]
+        });
+      case AVAILABILITY_REQUEST.TextToSpeech:
+        return is_available({property: "SpeechSynthesisUtterance"});
+      case AVAILABILITY_REQUEST.TouchEnabled:
+        return is_available({
+          property: "maxTouchPoints",
+          obj: globalThis["navigator"]
+        }) &&
+          // @ts-ignore This is in a browser context
+          globalThis.navigator.maxTouchPoints > 0;
+      case AVAILABILITY_REQUEST.Usb:
+        return is_available({
+          property: "usb",
+          obj: globalThis["navigator"]
+        });
+      case AVAILABILITY_REQUEST.Vibrate:
+        return is_available({
+          property: "vibrate",
+          obj: globalThis["navigator"]
+        });
+      case AVAILABILITY_REQUEST.WebSocket:
+        return is_available({property: "WebSocket"});
+      case AVAILABILITY_REQUEST.WorkerAvailable:
+        return is_available({property: "Worker"});
+      case AVAILABILITY_REQUEST.WorkerRuntime:
+        return is_available({property: "WorkerGlobalScope"});
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("runtime_available() error.", err);
+  }
+}
+
+/**
  * Adds or removes an event handler to the JavaScript runtime or
  * individual element.
  * @param {object} params The named parameters.
@@ -1740,8 +1902,8 @@ export function runtime_event({
   target = globalThis,
 }) {
   try {
-    const supported = runtime_query({
-      request: QUERY_REQUEST.AskRuntime,
+    const supported = runtime_available({
+      request: AVAILABILITY_REQUEST.AskRuntime,
       name: "addEventListener",
       obj: target
     });
@@ -1784,324 +1946,7 @@ export function runtime_event({
  * // TBD
  */
 export function runtime_query({request, name="", obj = globalThis}) {
-  /**
-   * Internal lookup function.
-   * @private
-   * @param {object} params The named parameters.
-   * @param {string} params.property The property to look up.
-   * @param {object} [params.obj=globalThis] The object to check.
-   * @returns  true if defined, false otherwise.
-   */
-  const is_defined = ({property, obj = globalThis}) => {
-    json_check_type({type: "string", data: property, should_throw: true});
-    let defined = false;
-    if (json_check_type({type: "object", data: obj})) {
-      defined = property in obj;
-    }
-    return defined;
-  };
 
-  try {
-    json_check_type({type: "string", data: name, should_throw: true});
-    json_check_type({type: "object", data: obj, should_throw: true});
-    switch (request) {
-      case QUERY_REQUEST.AskRuntime:
-        return is_defined({property: name, obj: obj});
-      case QUERY_REQUEST.AvailableHeight:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screen.availHeight
-          : -1;
-      case QUERY_REQUEST.AvailableWidth:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screen.availWidth
-          : -1;
-      case QUERY_REQUEST.ColorDepth:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screen.colorDepth
-          : -1;
-      case QUERY_REQUEST.CpuCount:
-        return is_defined({
-          property: "hardwareConcurrency",
-          obj: globalThis["navigator"]
-        })
-          // @ts-ignore This will be within the browser context
-          ? globalThis.navigator.hardwareConcurrency
-          : -1
-      case QUERY_REQUEST.CssVariable:
-        if (is_defined({property: "HTMLElement"})) {
-          // @ts-ignore exists in a browser context
-          let cs = globalThis.window.getComputedStyle(
-            // @ts-ignore exists in a browser context
-            globalThis.document.documentElement
-          );
-          // @ts-ignore json_check_type will throw if not set properly
-          return cs.getPropertyValue(name) ?? "";
-        }
-        return "";
-      case QUERY_REQUEST.DevicePixelRatio:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.devicePixelRatio
-          : -1;
-      case QUERY_REQUEST.ElementById:
-        if (is_defined({property: "HTMLElement"})) {
-          // @ts-ignore exists in a browser context
-          let el = globalThis.document.getElementById(name);
-          if (!el) {
-            throw new CModuleError(CModuleError.MISUSE + name + " not found");
-          }
-          return el;
-        }
-        return null;
-      case QUERY_REQUEST.ElementsByClassName:
-        if (is_defined({property: "HTMLElement"})) {
-          // @ts-ignore exists in a browser context
-          let col1 = globalThis.document.getElementsByClassName(name);
-          if (col1.length === 0) {
-            throw new CModuleError(CModuleError.MISUSE + name + " not found");
-          }
-          // @ts-ignore This will be a collection of HTMLElement objects.
-          return Array.from(col1);
-        }
-        return null;
-      case QUERY_REQUEST.ElementsByTagName:
-        if (is_defined({property: "HTMLElement"})) {
-          // @ts-ignore exists in a browser context
-          let col2 = globalThis.document.getElementsByTagName(name);
-          if (col2.length === 0) {
-            throw new CModuleError(CModuleError.MISUSE + name + " not found");
-          }
-          // @ts-ignore This will be a collection of HTMLElement objects.
-          return Array.from(col2);
-        }
-        return null;
-      case QUERY_REQUEST.Environment:
-          if (is_defined({property: "HTMLElement"})) {
-            return (new URLSearchParams(
-              globalThis.location.search)
-            ).get(name);
-          }
-          return null;
-      case QUERY_REQUEST.Height:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screen.height
-          : -1;
-      case QUERY_REQUEST.Hostname:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore Property exists in a browser runtime.
-          ? globalThis.location.hostname
-          : "UNKNOWN";
-      case QUERY_REQUEST.InnerHeight:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.innerHeight
-          : -1;
-      case QUERY_REQUEST.InnerWidth:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.innerWidth
-          : -1;
-      case QUERY_REQUEST.IsAudio:
-        return is_defined({property: "HTMLAudioElement"});
-      case QUERY_REQUEST.IsBeacon:
-        return is_defined({
-          property: "sendBeacon",
-          obj: globalThis["navigator"]
-        });
-      case QUERY_REQUEST.IsBluetooth:
-        return is_defined({property: "bluetooth",
-                           obj: globalThis["navigator"]});
-      case QUERY_REQUEST.IsBroadcastChannel:
-        return is_defined({property: "BroadcastChannel"});
-      case QUERY_REQUEST.IsBrowser:
-        return is_defined({property: "HTMLElement"});
-      case QUERY_REQUEST.IsBun:
-        return is_defined({property: "Bun"});
-      case QUERY_REQUEST.IsDeno:
-        return is_defined({property: "Deno"});
-      case QUERY_REQUEST.IsCookieStore:
-        return is_defined({property: "cookieStore"});
-      case QUERY_REQUEST.IsEventSource:
-        return is_defined({property: "EventSource"});
-      case QUERY_REQUEST.IsLocalStorage:
-        return is_defined({property: "localStorage"});
-      case QUERY_REQUEST.IsIFrame:
-        try {
-          return is_defined({property: "HTMLElement"}) &&
-            // @ts-ignore This will be within the browser context
-            globalThis.self === globalThis.top;
-        } catch {
-          return false;
-        }
-      case QUERY_REQUEST.IsMidi:
-        return is_defined({
-          property: "requestMIDIAccess",
-          obj: globalThis["navigator"]
-        });
-      case QUERY_REQUEST.IsNode:
-        return is_defined({property: "process"}) &&
-          !is_defined({property: "Deno"}) &&
-          !is_defined({property: "Bun"});
-      case QUERY_REQUEST.IsOpen:
-        return is_defined({property: "open"});
-      case QUERY_REQUEST.IsOrientation:
-        return is_defined({
-          property: "geolocation",
-          obj: globalThis["navigator"]
-        });
-      case QUERY_REQUEST.IsPwa:
-        return is_defined({property: "matchMedia"}) &&
-          // @ts-ignore This is in a browser context
-          globalThis.matchMedia("(display-mode: standalone)"
-        ).matches;
-      case QUERY_REQUEST.IsSecureContext:
-        return is_defined({property: "isSecureContext"}) &&
-          // @ts-ignore This is in a browser context
-          globalThis.isSecureContext;
-      case QUERY_REQUEST.IsSerialPort:
-        return is_defined({
-          property: "serial",
-          obj: globalThis["navigator"]
-        });
-      case QUERY_REQUEST.IsSessionStorage:
-        return is_defined({property: "sessionStorage"});
-      case QUERY_REQUEST.IsShare:
-        return is_defined({
-          property: "share",
-          obj: globalThis["navigator"]
-        });
-      case QUERY_REQUEST.IsTextToSpeech:
-        return is_defined({property: "SpeechSynthesisUtterance"});
-      case QUERY_REQUEST.IsTouchEnabled:
-        return is_defined({
-          property: "maxTouchPoints",
-          obj: globalThis["navigator"]
-        }) &&
-          // @ts-ignore This is in a browser context
-          globalThis.navigator.maxTouchPoints > 0;
-      case QUERY_REQUEST.IsUsb:
-        return is_defined({
-          property: "usb",
-          obj: globalThis["navigator"]
-        });
-      case QUERY_REQUEST.IsVibrate:
-        return is_defined({
-          property: "vibrate",
-          obj: globalThis["navigator"]
-        });
-      case QUERY_REQUEST.IsWebSocket:
-        return is_defined({property: "WebSocket"});
-      case QUERY_REQUEST.IsWorkerAvailable:
-        return is_defined({property: "Worker"});
-      case QUERY_REQUEST.IsWorkerRuntime:
-        return is_defined({property: "WorkerGlobalScope"});
-      case QUERY_REQUEST.Name:
-        if (is_defined({property: "HTMLElement"})) {
-          // @ts-ignore Will exist in browser context
-          const userAgent = globalThis.navigator.userAgent.toLowerCase();
-          if (userAgent.includes("firefox/")) {
-            return "firefox";
-          } else if (userAgent.includes("opr/")
-              || userAgent.includes("presto/")) {
-            return "opera";
-          } else if (userAgent.includes("mobile/")
-              || userAgent.includes("version/")) {
-            return "safari";
-          } else if (userAgent.includes("edg/")) {
-            return "edge";
-          } else if (userAgent.includes("chrome/")) {
-            return "chrome";
-          } else {
-            return "UNKNOWN BROwSER";
-          }
-        } else if (is_defined({property: "Bun"})) {
-          return "bun";
-        } else if (is_defined({property: "Deno"})) {
-          return "deno";
-        } else if (is_defined({property: "process"})) {
-          return "node";
-        } else if (is_defined({property: "WorkerGlobalScope"})) {
-          return "worker";
-        } else {
-          return "UNKNOWN V8 RUNTIME";
-        }
-      case QUERY_REQUEST.Online:
-        return is_defined({
-          property: "onLine",
-          obj: globalThis["navigator"]
-        })
-          // @ts-ignore Property exists in a browser runtime.
-          ? globalThis.navigator.onLine
-          : false;
-      case QUERY_REQUEST.OuterHeight:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.outerHeight
-          : -1;
-      case QUERY_REQUEST.OuterWidth:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.outerWidth
-          : -1;
-      case QUERY_REQUEST.PixelDepth:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screen.pixelDepth
-          : -1;
-      case QUERY_REQUEST.ScreenLeft:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screenLeft
-          : -1;
-      case QUERY_REQUEST.ScreenOrientationAngle:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screen.orientation.angle
-          : -1;
-      case QUERY_REQUEST.ScreenOrientationType:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screen.orientation.type
-          : "UNKNOWN";
-      case QUERY_REQUEST.ScreenTop:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screenTop
-          : -1;
-      case QUERY_REQUEST.ScreenX:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screenX
-          : -1;
-      case QUERY_REQUEST.ScreenY:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screenY
-          : -1;
-      case QUERY_REQUEST.ScrollX:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.scrollX
-          : -1;
-      case QUERY_REQUEST.ScrollY:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.scrollY
-          : -1;
-      case QUERY_REQUEST.Width:
-        return is_defined({property: "HTMLElement"})
-          // @ts-ignore This is in a browser context
-          ? globalThis.screen.width
-          : -1;
-      default:
-        throw new CModuleError(CModuleError.MISUSE);
-    }
-  } catch (err) {
-    CModuleError.handle_error(err);
-    throw new CModuleError("runtime_request() error.", err);
-  }
+
+
 }

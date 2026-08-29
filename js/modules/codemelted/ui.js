@@ -1,6 +1,9 @@
 // @ts-check
 /**
- * <b>ABOUT:</b> Tell me something about this module.<br>
+ * <b>ABOUT:</b> Something Something Star Wars.
+ * <br><br>
+ * <mark>NEED MODEL</mark
+ * <br><br>
  * <b>COPYRIGHT:</b> © 2025 - 2026 Mark Shaffer. All Rights Reserved. <br>
  * <b>LICENSE:</b> MIT License
  * <br><br>
@@ -21,7 +24,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * @module codemelted_ui
+ * @module ui
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements
  */
 
@@ -29,13 +32,13 @@ import {
   CModuleError,
   CResult,
   json_check_type,
-  runtime_query,
-  QUERY_REQUEST,
+  runtime_available,
+  AVAILABILITY_REQUEST,
   CProtocol,
-} from "./codemelted_core.js";
+} from "./core.js";
 
 // Module only available in a Browser runtime.
-if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
+if (!runtime_available({request: AVAILABILITY_REQUEST.Browser})) {
   throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
 }
 
@@ -297,14 +300,14 @@ export async function ui_action({
         globalThis.scrollTo(x, y);
         break;
       case ACTION_REQUEST.Share:
-        if (!runtime_query({request: QUERY_REQUEST.IsShare})) {
+        if (!runtime_available({request: AVAILABILITY_REQUEST.Share})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         // @ts-ignore This is in a browser context
         await globalThis.navigator.share(data);
         break;
       case ACTION_REQUEST.Vibrate:
-        if (!runtime_query({request: QUERY_REQUEST.IsVibrate})) {
+        if (!runtime_available({request: AVAILABILITY_REQUEST.Vibrate})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
         json_check_type({type: Array, data: pattern, should_throw: true});
@@ -321,6 +324,46 @@ export async function ui_action({
       throw new CModuleError("runtime_action() error.", err);
     }
     return new CResult({error: err});
+  }
+}
+
+export class ui_document({request, name}) {
+  try {
+    switch (request) {
+      case QUERY_REQUEST.CssVariable:
+        let cs = globalThis.window.getComputedStyle(
+          globalThis.document.documentElement
+        );
+        return cs.getPropertyValue(name) ?? "";
+      case QUERY_REQUEST.ElementById:
+        let el = globalThis.document.getElementById(name);
+        if (!el) {
+          throw new CModuleError(CModuleError.MISUSE + name + " not found");
+        }
+        return el;
+      case QUERY_REQUEST.ElementsByClassName:
+        // @ts-ignore exists in a browser context
+        let col1 = globalThis.document.getElementsByClassName(name);
+        if (col1.length === 0) {
+          throw new CModuleError(CModuleError.MISUSE + name + " not found");
+        }
+        return Array.from(col1);
+      case QUERY_REQUEST.ElementsByTagName:
+        let col2 = globalThis.document.getElementsByTagName(name);
+        if (col2.length === 0) {
+          throw new CModuleError(CModuleError.MISUSE + name + " not found");
+        }
+        return Array.from(col2);
+      case QUERY_REQUEST.Environment:
+          return (new URLSearchParams(
+            globalThis.location.search)
+          ).get(name);
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("ui_document() error.", err);
   }
 }
 
@@ -361,6 +404,58 @@ export async function ui_notify({request, message}) {
   } catch (err) {
     CModuleError.handle_error(err);
     throw new CModuleError("runtime_message() error.", err);
+  }
+}
+
+export function ui_screen({}) {
+  try {
+    json_check_type({type: "string", data: name, should_throw: true});
+    json_check_type({type: "object", data: obj, should_throw: true});
+    switch (request) {
+      case QUERY_REQUEST.AvailableHeight:
+        return globalThis.screen.availHeight;
+      case QUERY_REQUEST.AvailableWidth:
+        return globalThis.screen.availWidth;
+      case QUERY_REQUEST.ColorDepth:
+        return globalThis.screen.colorDepth;
+      case QUERY_REQUEST.DevicePixelRatio:
+        return globalThis.devicePixelRatio;
+      case QUERY_REQUEST.Height:
+        return globalThis.screen.height;
+      case QUERY_REQUEST.InnerHeight:
+        return globalThis.innerHeight;
+      case QUERY_REQUEST.InnerWidth:
+        return globalThis.innerWidth;
+      case QUERY_REQUEST.OuterHeight:
+        return globalThis.outerHeight;
+      case QUERY_REQUEST.OuterWidth:
+        return globalThis.outerWidth;
+      case QUERY_REQUEST.PixelDepth:
+        return globalThis.screen.pixelDepth;
+      case QUERY_REQUEST.ScreenLeft:
+        return globalThis.screenLeft;
+      case QUERY_REQUEST.ScreenOrientationAngle:
+        return globalThis.screen.orientation.angle;
+      case QUERY_REQUEST.ScreenOrientationType:
+        return globalThis.screen.orientation.type;
+      case QUERY_REQUEST.ScreenTop:
+        return globalThis.screenTop;
+      case QUERY_REQUEST.ScreenX:
+        return globalThis.screenX;
+      case QUERY_REQUEST.ScreenY:
+        return globalThis.screenY;
+      case QUERY_REQUEST.ScrollX:
+        return globalThis.scrollX;
+      case QUERY_REQUEST.ScrollY:
+        return globalThis.scrollY
+      case QUERY_REQUEST.Width:
+        return globalThis.screen.width
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("ui_screen() error.", err);
   }
 }
 
@@ -407,7 +502,7 @@ export function ui_open({
 }) {
   try {
     // Ensure the runtime function is available
-    if (!runtime_query({request: QUERY_REQUEST.IsOpen})) {
+    if (!runtime_available({request: AVAILABILITY_REQUEST.Open})) {
       throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
     }
 

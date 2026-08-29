@@ -26,19 +26,19 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * @module codemelted_db
+ * @module db
  * @see https://developer.mozilla.org/en-US/docs/Web/API/WorkerGlobalScope/indexedDB
  */
 
 import {
   CModuleError,
-  QUERY_REQUEST,
-  runtime_query
-} from "./codemelted_core.js";
+  AVAILABILITY_REQUEST,
+  runtime_available
+} from "./core.js";
 
 // Module only available in a Browser / Worker runtimes
-if (!runtime_query({request: QUERY_REQUEST.IsBrowser}) &&
-    !runtime_query({request: QUERY_REQUEST.IsWorkerRuntime})) {
+if (!runtime_available({request: AVAILABILITY_REQUEST.Browser}) &&
+    !runtime_available({request: AVAILABILITY_REQUEST.WorkerRuntime})) {
   throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
 }
 

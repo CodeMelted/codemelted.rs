@@ -2,7 +2,7 @@
 /**
  * <b>ABOUT:</b> Provides the mechanism for a web app to open or save a file
  * to disk. It attempts to make use of the modern Web APIs but will fall back
- * to classic methods in the event those are not available. <br>
+ * to classic methods in the event those are not available.
  * <br><br>
  * <img style="width: 100%;" src="models/codemelted_disk.png" />
  * <br><br>
@@ -26,7 +26,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * @module codemelted_disk
+ * @module disk
  * @see https://developer.mozilla.org/en-US/docs/Web/API/File_System_API
  * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLAnchorElement/download
  * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/input/file
@@ -34,16 +34,17 @@
  */
 
 import {
+  AVAILABILITY_REQUEST,
   CModuleError,
   CResult,
   json_check_type,
   json_has_value,
   QUERY_REQUEST,
-  runtime_query
-} from "./codemelted_core.js";
+  runtime_available,
+} from "./core.js";
 
 // Module only available in a Browser runtime.
-if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
+if (!runtime_available({request: AVAILABILITY_REQUEST.Browser})) {
   throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
 }
 
@@ -203,10 +204,10 @@ export function disk_write_file({data, filename}) {
       json_check_type({type: "string", data: filename, should_throw: true});
 
       // Determine if we can perform the modern way of saving a file
-      const is_modern_available = !runtime_query({
-        request: QUERY_REQUEST.IsIFrame
-      }) && runtime_query({
-        request: QUERY_REQUEST.AskRuntime,
+      const is_modern_available = !runtime_available({
+        request: AVAILABILITY_REQUEST.IFrame
+      }) && runtime_available({
+        request: AVAILABILITY_REQUEST.AskRuntime,
         name: "showSaveFilePicker"
       });
 

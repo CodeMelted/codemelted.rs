@@ -27,7 +27,7 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * @module codemelted_hw
+ * @module hw
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API
  * @see https://developer.mozilla.org/en-US/docs/Web/API/USB
@@ -41,12 +41,12 @@ import {
   PROTOCOL_EVENT,
   PROTOCOL_TYPE,
   json_check_type,
-  runtime_query,
-  QUERY_REQUEST,
-} from "./codemelted_core.js";
+  runtime_available,
+  AVAILABILITY_REQUEST,
+} from "./core.js";
 
 // Module only available in a Browser runtime.
-if (!runtime_query({request: QUERY_REQUEST.IsBrowser})) {
+if (!runtime_available({request: AVAILABILITY_REQUEST.Browser})) {
   throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
 }
 
@@ -576,7 +576,7 @@ export class COrientationProtocol extends CProtocol {
           `${CModuleError.MISUSE}: only one COrientationProtocol can exist`
         );
       }
-      if (!runtime_query({request: QUERY_REQUEST.IsOrientation})) {
+      if (!runtime_available({request: AVAILABILITY_REQUEST.Orientation})) {
         throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
       }
       json_check_type({type: "object", data: options, should_throw: true});
