@@ -5,12 +5,6 @@
     "checkJs": true
   },
   "files": [
-    "./codemelted_core.js",
-    "./codemelted_db.js",
-    "./codemelted_disk.js",
-    "./codemelted_hw.js",
-    "./codemelted_network.js",
-    "./codemelted_storage.js",
-    "./codemelted_ui.js"
+    "./codemelted.js",
   ]
 }

@@ -1,19 +1,13 @@
 {
-  "name": "codemelted JavaScript Modules",
+  "name": "codemelted.js Module",
   "excludeExternals": true,
   "excludeProtected": true,
   "excludePrivate": true,
   "darkHighlightTheme": "dark-plus",
-  "readme": "./README.md",
   "entryPoints": [
-    "./codemelted_core.js",
-    "./codemelted_db.js",
-    "./codemelted_disk.js",
-    "./codemelted_hw.js",
-    "./codemelted_network.js",
-    "./codemelted_storage.js",
-    "./codemelted_ui.js"
+    "./codemelted.js",
   ],
   "out": "docs",
   "ignoredHighlightLanguages": ["mermaid"],
+  "plugin": ["typedoc-plugin-mermaid"]
 }
