@@ -8,6 +8,5 @@
     "./codemelted.js",
   ],
   "out": "docs",
-  "ignoredHighlightLanguages": ["mermaid"],
-  "plugin": ["typedoc-plugin-mermaid"]
+  "ignoredHighlightLanguages": ["mermaid"]
 }
