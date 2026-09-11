@@ -53,52 +53,16 @@ import {
   async_worker,
   CWorkerEvent,
   PROTOCOL_EVENT,
-  QUERY_REQUEST,
-  runtime_query
-} from "./codemelted_core.js";
+  AVAILABILITY_REQUEST,
+  runtime_available
+} from "./codemelted.js";
 
 // ============================================================================
 // [UNSUPPORTED MODULE IMPORTS] ===============================================
 // ============================================================================
 
-describe("UNSUPPORTED MODULE IMPORTS", async () => {
-  // Setup our test function.
-  const testImport = async (name) => {
-    try {
-      const module = await import(name);
-      assert.fail("Should Throw CModuleError");
-    } catch (err) {
-      console.log(err);
-      assert.equal(err instanceof CModuleError, true);
-    }
-  }
-
-  test("codemelted_db.js Test", async () => {
-    await testImport("./codemelted_db.js");
-  });
-  test("codemelted_disk.js Test", async () => {
-    await testImport("./codemelted_disk.js");
-  });
-  test("codemelted_hw.js Test", async () => {
-    await testImport("./codemelted_hw.js");
-  });
-  test("codemelted_network.js Test", async () => {
-    await testImport("./codemelted_network.js");
-  });
-  test("codemelted_storage.js Test", async () => {
-    await testImport("./codemelted_storage.js");
-  });
-  test("codemelted_ui.js Test", async () => {
-    await testImport("./codemelted_ui.js");
-  });
-});
-
-// ===============================================================================
-// [codemelted_core.js Validation] ===============================================
-// ===============================================================================
-
-describe("codemelted_core.js Validation", () => {
-  test("API_XXX (CModuleError) Test", () => {
+describe("CORE MODULE VALIDATION", () => {
+  test("CModuleError Test", () => {
     try {
       throw new CModuleError("test");
     } catch (err) {
@@ -185,7 +149,13 @@ describe("codemelted_core.js Validation", () => {
       assert.equal(err instanceof CModuleError, true);
     }
   });
+});
 
+// ============================================================================
+// [ASYNC USE CASE VALIDATION] ================================================
+// ============================================================================
+
+describe("ASYNC USE CASE VALIDATION", () => {
   test("async_sleep() Test", async () => {
     const start = Date.now();
     await async_sleep(500);
@@ -199,7 +169,6 @@ describe("codemelted_core.js Validation", () => {
       assert.equal(err instanceof CModuleError, true);
     }
   });
-
 
   test("async_task() Test", async () => {
     let task = (data) => { return data + 20; };
@@ -288,7 +257,13 @@ describe("codemelted_core.js Validation", () => {
       assert.equal(err instanceof CModuleError, true);
     }
   });
+});
 
+// ============================================================================
+// [JSON USE CASE VALIDATION] =================================================
+// ============================================================================
+
+describe("JSON USE CASE VALIDATION", () => {
   test("json_atob() / json_btoa() Test", () => {
     // API violations
     assert.throws(() => json_atob(), CModuleError);
@@ -404,7 +379,13 @@ describe("codemelted_core.js Validation", () => {
     parsed = json_parse(stringified);
     assert.equal(json_stringify(parsed), stringified);
   });
+});
 
+// ============================================================================
+// [LOGGER USE CASE VALIDATION] ===============================================
+// ============================================================================
+
+describe("LOGGER USE CASE VALIDATION", () => {
   test("logger_handler() Test", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     assert.throws(() => logger_handler(42), CModuleError);
@@ -484,15 +465,13 @@ describe("codemelted_core.js Validation", () => {
     logger_log({level: LOGGER.Error, data: "Error Event"});
     assert.equal(counter, 0);
   });
+});
 
-  test.skip("npu_compute() Test", () => {
-    // TBD
-  });
+// ============================================================================
+// [RUNTIME USE CASE VALIDATION] ==============================================
+// ============================================================================
 
-  test.skip("npu_math() Test", () => {
-    // TBD
-  });
-
+describe("RUNTIME USE CASE VALIDATION", () => {
   test("runtime_event() Test", () => {
     // API violations
     let handler = (evt) => { };
@@ -511,67 +490,42 @@ describe("codemelted_core.js Validation", () => {
     }
   });
 
-  test("runtime_query() Test", () => {
+  test("runtime_available() Test", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    assert.throws(() => runtime_query());
-    assert.throws(() => runtime_query({request: 42}), CModuleError);
-    assert.throws(() => runtime_query({request: QUERY_REQUEST.AskRuntime, obj: 42}), CModuleError);
-    assert.throws(() => runtime_query({request: QUERY_REQUEST.AskRuntime, name: 42}), CModuleError);
+    assert.throws(() => runtime_available());
+    assert.throws(() => runtime_available({request: 42}), CModuleError);
+    assert.throws(() => runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, obj: 42}), CModuleError);
+    assert.throws(() => runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, name: 42}), CModuleError);
 
     // Now go perform all the queries.
-    assert.equal(runtime_query({request: QUERY_REQUEST.AskRuntime, name: "duh"}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.AvailableHeight}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.AvailableWidth}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ColorDepth}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ColorDepth}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.CssVariable, name: "var"}), "");
-    assert.equal(runtime_query({request: QUERY_REQUEST.DevicePixelRatio}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ElementById, name: "id"}), null);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ElementsByClassName, name: "class"}), null);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ElementsByTagName, name: "tag"}), null);
-    assert.equal(runtime_query({request: QUERY_REQUEST.Environment, name: "q"}), null);
-    assert.equal(runtime_query({request: QUERY_REQUEST.Height}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.Hostname}), "UNKNOWN");
-    assert.equal(runtime_query({request: QUERY_REQUEST.InnerHeight}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.InnerWidth}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsAudio}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsBeacon}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsBluetooth}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsBroadcastChannel}), true);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsBrowser}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsBun}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsDeno}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsCookieStore}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsEventSource}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsLocalStorage}), true);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsIFrame}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsMidi}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsNode}), true);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsOpen}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsOrientation}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsPwa}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsSecureContext}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsSerialPort}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsSessionStorage}), true);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsShare}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsTextToSpeech}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsTouchEnabled}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsUsb}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsWorkerAvailable}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.IsWorkerRuntime}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.Name}), "node");
-    assert.equal(runtime_query({request: QUERY_REQUEST.Online}), false);
-    assert.equal(runtime_query({request: QUERY_REQUEST.OuterHeight}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.OuterWidth}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.PixelDepth}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ScreenLeft}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ScreenOrientationAngle}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ScreenOrientationType}), "UNKNOWN");
-    assert.equal(runtime_query({request: QUERY_REQUEST.ScreenTop}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ScreenX}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ScreenY}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ScrollX}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.ScrollY}), -1);
-    assert.equal(runtime_query({request: QUERY_REQUEST.Width}), -1);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Audio}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Beacon}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Bluetooth}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.BroadcastChannel}), true);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Browser}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Bun}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Deno}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.CookieStore}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.EventSource}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.LocalStorage}), true);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.IFrame}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Midi}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Node}), true);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Open}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Orientation}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Pwa}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.SecureContext}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.SerialPort}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.SessionStorage}), true);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Share}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.TextToSpeech}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.TouchEnabled}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Usb}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.Vibrate}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.WebRTC}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.WebSocket}), true);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.WebTransport}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.WorkerAvailable}), false);
+    assert.equal(runtime_available({request: AVAILABILITY_REQUEST.WorkerRuntime}), false);
   });
 });

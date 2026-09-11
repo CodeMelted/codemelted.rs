@@ -60,54 +60,16 @@ import {
   async_worker,
   CWorkerEvent,
   PROTOCOL_EVENT,
-  QUERY_REQUEST,
-  runtime_query
-} from "./codemelted_core.js";
+  runtime_available,
+  AVAILABILITY_REQUEST,
+} from "./codemelted.js";
 
 // ============================================================================
-// [UNSUPPORTED MODULE IMPORTS] ===============================================
+// [MODULE CORE VALIDATION] ===================================================
 // ============================================================================
 
-const testImport = async (name: string) => {
-  try {
-    const module = await import(name);
-    fail("Should Throw CModuleError");
-  } catch (err) {
-    assertEquals(err instanceof CModuleError, true);
-  }
-}
-
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted_db.js Test", async () => {
-  await testImport("./codemelted_db.js");
-});
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted_disk.js Test", async () => {
-  await testImport("./codemelted_disk.js");
-});
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted_hw.js Test", async () => {
-  await testImport("./codemelted_hw.js");
-});
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted_network.js Test", async () => {
-  await testImport("./codemelted_network.js");
-});
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted_storage.js Test", async () => {
-  await testImport("./codemelted_storage.js");
-});
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("codemelted_ui.js Test", async () => {
-  await testImport("./codemelted_ui.js");
-});
-
-// ===============================================================================
-// [codemelted_core.js Validation] ===============================================
-// ===============================================================================
-
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("API_XXX (CModuleError) Test", () => {
+Deno.test("CModuleError Test", () => {
   try {
     throw new CModuleError("test");
   } catch (err: any) {
@@ -197,6 +159,10 @@ Deno.test("CResult Object Test", () => {
     assertEquals(err instanceof CModuleError, true);
   }
 });
+
+// ============================================================================
+// [ASYNC USE CASE VALIDATION] ================================================
+// ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("async_sleep() Test", async () => {
@@ -325,6 +291,10 @@ Deno.test("async_worker() Test", async () => {
   assertEquals(test_on_error_rx, true);
   assertEquals(test_on_message_error_rx, false);
 });
+
+// ============================================================================
+// [JSON USE CASE VALIDATION] =================================================
+// ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("json_atob() / json_btoa() Test", () => {
@@ -455,6 +425,10 @@ Deno.test("json_parse() / json_stringify() Test", () => {
   assertEquals(json_stringify(parsed), stringified);
 });
 
+// ============================================================================
+// [LOGGER USE CASE VALIDATION] ===============================================
+// ============================================================================
+
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("logger_handler() Test", () => {
   // @ts-ignore TypeScript won't let this happen, JavaScript would
@@ -540,15 +514,9 @@ Deno.test("logger_log() Test", () => {
   assertEquals(counter, 0);
 });
 
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("npu_compute() Test", () => {
-  // TBD
-});
-
-// @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("npu_math() Test", () => {
-  // TBD
-});
+// ============================================================================
+// [RUNTIME USE CASE VALIDATION] ==============================================
+// ============================================================================
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
 Deno.test("runtime_event() Test", () => {
@@ -572,69 +540,45 @@ Deno.test("runtime_event() Test", () => {
 });
 
 // @ts-ignore Deno object exists, but want to make sure codemelted recognized.
-Deno.test("runtime_query() Test", () => {
+Deno.test("runtime_available() Test", () => {
   // @ts-ignore TypeScript won't let this happen, JavaScript would
-  assertThrows(() => runtime_query());
+  assertThrows(() => runtime_available());
   // @ts-ignore TypeScript won't let this happen, JavaScript would
-  assertThrows(() => runtime_query({request: 42}), CModuleError);
+  assertThrows(() => runtime_available({request: 42}), CModuleError);
   // @ts-ignore TypeScript won't let this happen, JavaScript would
-  assertThrows(() => runtime_query({request: QUERY_REQUEST.AskRuntime, obj: 42}), CModuleError);
+  assertThrows(() => runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, obj: 42}), CModuleError);
   // @ts-ignore TypeScript won't let this happen, JavaScript would
-  assertThrows(() => runtime_query({request: QUERY_REQUEST.AskRuntime, name: 42}), CModuleError);
+  assertThrows(() => runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, name: 42}), CModuleError);
 
   // Now go perform all the queries.
-  assertEquals(runtime_query({request: QUERY_REQUEST.AskRuntime, name: "Deno"}), true);
-  assertEquals(runtime_query({request: QUERY_REQUEST.AskRuntime, name: "duh"}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.AvailableHeight}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.AvailableWidth}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ColorDepth}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ColorDepth}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.CssVariable, name: "var"}), "");
-  assertEquals(runtime_query({request: QUERY_REQUEST.DevicePixelRatio}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ElementById, name: "id"}), null);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ElementsByClassName, name: "class"}), null);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ElementsByTagName, name: "tag"}), null);
-  assertEquals(runtime_query({request: QUERY_REQUEST.Environment, name: "q"}), null);
-  assertEquals(runtime_query({request: QUERY_REQUEST.Height}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.Hostname}), "UNKNOWN");
-  assertEquals(runtime_query({request: QUERY_REQUEST.InnerHeight}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.InnerWidth}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsAudio}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsBeacon}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsBluetooth}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsBroadcastChannel}), true);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsBrowser}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsBun}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsDeno}), true);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsCookieStore}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsEventSource}), true);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsLocalStorage}), true);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsIFrame}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsMidi}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsNode}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsOpen}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsOrientation}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsPwa}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsSecureContext}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsSerialPort}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsShare}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsTextToSpeech}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsTouchEnabled}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsUsb}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsWorkerAvailable}), true);
-  assertEquals(runtime_query({request: QUERY_REQUEST.IsWorkerRuntime}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.Name}), "deno");
-  assertEquals(runtime_query({request: QUERY_REQUEST.Online}), false);
-  assertEquals(runtime_query({request: QUERY_REQUEST.OuterHeight}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.OuterWidth}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.PixelDepth}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ScreenLeft}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ScreenOrientationAngle}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ScreenOrientationType}), "UNKNOWN");
-  assertEquals(runtime_query({request: QUERY_REQUEST.ScreenTop}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ScreenX}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ScreenY}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ScrollX}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.ScrollY}), -1);
-  assertEquals(runtime_query({request: QUERY_REQUEST.Width}), -1);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, name: "Deno"}), true);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, name: "duh"}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Audio}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Beacon}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Bluetooth}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.BroadcastChannel}), true);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Browser}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Bun}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Deno}), true);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.CookieStore}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.EventSource}), true);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.LocalStorage}), true);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.IFrame}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Midi}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Node}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Open}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Orientation}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Pwa}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.SecureContext}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.SerialPort}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Share}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.TextToSpeech}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.TouchEnabled}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Usb}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.Vibrate}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.WebRTC}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.WebSocket}), true);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.WebTransport}), false);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.WorkerAvailable}), true);
+  assertEquals(runtime_available({request: AVAILABILITY_REQUEST.WorkerRuntime}), false);
 });

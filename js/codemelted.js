@@ -169,9 +169,9 @@
  * </script>
  * <b>TEST RESULTS:</b>&nbsp;
  * <button style="cursor: pointer;" onclick="open_test('coverage-browser/index.html');">Browser</button>
- * <button style="cursor: pointer;" onclick="open_test('coverage-bun/js/index.html');">Bun</button>
- * <button style="cursor: pointer;" onclick="open_test('coverage-deno/js/index.html');">Deno</button>
- * <button style="cursor: pointer;" onclick="open_test('coverage-node/js/index.html');">NodeJS</button>
+ * <button style="cursor: pointer;" onclick="open_test('coverage-bun/tests/index.html');">Bun</button>
+ * <button style="cursor: pointer;" onclick="open_test('coverage-deno/tests/index.html');">Deno</button>
+ * <button style="cursor: pointer;" onclick="open_test('coverage-node/tests/index.html');">NodeJS</button>
  *
  * **VERSION:** vYY.X.Y (MMM-DD)
  *
@@ -182,8 +182,6 @@
  * - A thing 2
  *
  * @module codemelted
- *
- *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Beacon_API
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Bluetooth
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API
@@ -1296,12 +1294,14 @@ export function disk_read_file({data_type, accept="*"}) {
       w.accept = accept;
 
       // Setup to handle the data read.
-      w.onchange = async (ev) => {
+      w.onchange = async (/** @type {Event} */ ev) => {
         try {
           let value = null;
           // @ts-ignore HTMLInputElement will exist in browser context.
           const file = ev.target instanceof HTMLInputElement
+            // @ts-ignore Will exist in a browser context
             ? ev.target.files != null
+              // @ts-ignore Will exist in a browser context
               ? ev.target.files[0]
               : null
             : null;
@@ -2732,6 +2732,20 @@ export function logger_log({level, data}) {
 // [NETWORK USE CASE] =========================================================
 // ============================================================================
 
+// [ENUMS] --------------------------------------------------------------------
+
+/**
+ * Provides the support for the {@link network_query} function.
+ * @private
+ * @enum {string}
+ * @property {string} Online
+ * @property {string} Hostname
+ */
+export const NETWORK_REQUEST = Object.freeze({
+  Online: "online",
+  Hostname: "hostname",
+});
+
 // [DATA DEFINITION] ----------------------------------------------------------
 
 /**
@@ -3503,23 +3517,37 @@ class CWebTransportProtocol extends CProtocol {
 // [PUBLIC API] ---------------------------------------------------------------
 
 /**
+ * <mark>Expand with all globalThis.location queries</mark>
  * @private
- * TODO: Attach these to classes....
+ * @param {NETWORK_REQUEST} request
+ * @returns {boolean | string}
  */
-export function network_query() {
-    // case QUERY_REQUEST.Online:
-    //   return is_defined({
-    //     property: "onLine",
-    //     obj: globalThis["navigator"]
-    //   })
-    //     // @ts-ignore Property exists in a browser runtime.
-    //     ? globalThis.navigator.onLine
-    //     : false;
-    // case QUERY_REQUEST.Hostname:
-    //   return is_defined({property: "HTMLElement"})
-    //     // @ts-ignore Property exists in a browser runtime.
-    //     ? globalThis.location.hostname
-    //     : "UNKNOWN";
+export function network_query(request) {
+  try {
+    switch (request) {
+      case NETWORK_REQUEST.Online:
+        return runtime_available({
+          request: AVAILABILITY_REQUEST.AskRuntime,
+          name: "onLine",
+          obj: globalThis["navigator"]
+        })
+          // @ts-ignore This will exist in the browser context.
+          ? globalThis.navigator.onLine
+          : false;
+      case NETWORK_REQUEST.Hostname:
+        return runtime_available({
+          request: AVAILABILITY_REQUEST.AskRuntime,
+          name: "location"
+        })
+          ? globalThis.location.hostname
+          : "UNKNOWN";
+      default:
+        throw new CModuleError(CModuleError.MISUSE);
+    }
+  } catch (err) {
+    CModuleError.handle_error(err);
+    throw new CModuleError("network_query() error.", err);
+  }
 }
 
 /**
@@ -3594,7 +3622,8 @@ export async function network_fetch({url, options}) {
 // [ENUMS] --------------------------------------------------------------------
 
 /**
- * The math formula to execute with the {@link npu_math} call.
+ * The math formula to execute with the {@link npu_compute} call.
+ * @private
  * @readonly
  * @enum {string}
  * @property {string} GeodeticDistance
@@ -3636,17 +3665,13 @@ export const MATH_FORMULA = Object.freeze({
 
 /**
  * @private
- * TO BE IMPLEMENTED
+ * @param {object} params The named parameters
+ * @param {MATH_FORMULA} params.formula The formula to run and calculate.
+ * @param {number[]} params.args The arguments of the formula working left to
+ * right for a particular equation.
+ * @returns {number} The calculated result of the computation.
  */
-export function npu_compute() {
-  throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
-}
-
-/**
- * @private
- * TO BE IMPLEMENTED
- */
-export function npu_math() {
+export function npu_compute({formula, args}) {
   throw new CModuleError(CModuleError.NOT_IMPLEMENTED);
 }
 
@@ -3705,8 +3730,12 @@ export function npu_math() {
  * @property {string} Usb Determines if USB is available to the runtime.
  * @property {string} Vibrate Determines if the vibrate function is
  * available to the runtime.
+ * @property {string} WebRTC Determines if WebRTC is available to the
+ * runtime.
  * @property {string} WebSocket Determines if WebSocket is available to the
  * runtime.
+ * @property {string} WebTransport Determines if WebTransport is available to
+ * the runtime.
  * @property {string} WorkerAvailable Determines if a Worker can be created
  * with the runtime.
  * @property {string} WorkerRuntime Determines if the runtime is a Worker
@@ -3738,7 +3767,9 @@ export const AVAILABILITY_REQUEST = Object.freeze({
   TouchEnabled: "touch_enabled",
   Usb: "usb",
   Vibrate: "vibrate",
-  WebSocket: "websocket",
+  WebRTC: "web_rtc",
+  WebSocket: "web_socket",
+  WebTransport: "web_transport",
   WorkerAvailable: "worker_available",
   WorkerRuntime: "worker_runtime",
 });
@@ -3801,7 +3832,11 @@ export function runtime_available({request, name="", obj = globalThis}) {
       case AVAILABILITY_REQUEST.BroadcastChannel:
         return is_available({property: "BroadcastChannel"});
       case AVAILABILITY_REQUEST.Browser:
-        return is_available({property: "HTMLElement"});
+        return is_available({property: "HTMLElement"}) &&
+          !is_available({property: "Bun"}) &&
+          !is_available({property: "Deno"}) &&
+          !is_available({property: "process"}) &&
+          !is_available({property: "WorkerGlobalScope"});
       case AVAILABILITY_REQUEST.Bun:
         return is_available({property: "Bun"});
       case AVAILABILITY_REQUEST.Deno:
@@ -3814,9 +3849,15 @@ export function runtime_available({request, name="", obj = globalThis}) {
         return is_available({property: "localStorage"});
       case AVAILABILITY_REQUEST.IFrame:
         try {
-          return is_available({property: "HTMLElement"}) &&
-            // @ts-ignore This will be within the browser context
-            globalThis.self === globalThis.top;
+          if (is_available({property: "Bun"}) ||
+              is_available({property: "Deno"}) ||
+              is_available({property: "process"}) ||
+              is_available({property: "WorkerGlobalScope"}))
+          {
+            return false;
+          }
+          // @ts-ignore This will be within the browser context
+          return globalThis.self === globalThis.top;
         } catch {
           return false;
         }
@@ -3876,8 +3917,12 @@ export function runtime_available({request, name="", obj = globalThis}) {
           property: "vibrate",
           obj: globalThis["navigator"]
         });
+      case AVAILABILITY_REQUEST.WebRTC:
+        return is_available({property: "RTCPeerConnection"});
       case AVAILABILITY_REQUEST.WebSocket:
         return is_available({property: "WebSocket"});
+      case AVAILABILITY_REQUEST.WebTransport:
+        return is_available({property: "WebTransport"});
       case AVAILABILITY_REQUEST.WorkerAvailable:
         return is_available({property: "Worker"});
       case AVAILABILITY_REQUEST.WorkerRuntime:
@@ -3999,10 +4044,12 @@ export async function storage_clear(type = STORAGE_TYPE.Local) {
         if (!runtime_available({request: AVAILABILITY_REQUEST.CookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
+        // @ts-ignore Will exist in a browser context
         const cookies = await globalThis.cookieStore.getAll();
         for (const cookie of cookies) {
           let name = cookie.name;
           if (name) {
+            // @ts-ignore Will exist in a browser context
             await globalThis.cookieStore.delete(name);
           }
         }
@@ -4051,6 +4098,7 @@ export async function storage_get({type = STORAGE_TYPE.Local, key}) {
         if (!runtime_available({request: AVAILABILITY_REQUEST.CookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
+        // @ts-ignore Will exist in a browser context
         let entry = await globalThis.cookieStore.get(key)
         return entry
           ? entry.value != undefined
@@ -4100,6 +4148,7 @@ export async function storage_key({type = STORAGE_TYPE.Local, index}) {
         if (!runtime_available({request: AVAILABILITY_REQUEST.CookieStore})) {
           throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
         }
+        // @ts-ignore Will exist in a browser context
         const cookies = await globalThis.cookieStore.getAll();
         const key = cookies.at(index)?.name;
         return key != undefined
@@ -4277,106 +4326,6 @@ export async function storage_set({type = STORAGE_TYPE.Local, key, value}) {
 
 // [ENUMS] --------------------------------------------------------------------
 
-// BREAK APART BETWEEN DOCUMENT / SCREEN public functions.
-// /**
-//  * Provides a {@link runtime_query} request to learn about the particular
-//  * environment.
-//  * @readonly
-//  * @enum {string}
-
-//  * @property {string} AvailableHeight the height of the screen, in pixels,
-//  * minus permanent or semipermanent user interface features displayed by
-//  * the operating system, such as the Taskbar on Windows.
-//  * @property {string} AvailableWidth the amount of horizontal space in
-//  * pixels available to the window.
-//  * @property {string} ColorDepth the color depth of the screen.
-//  * @property {string} CpuCount The number of CPUs available for background
-//  * worker processing.
-//  * @property {string} CssVariable Will query the document for a CSS variable.
-//  * @property {string} DevicePixelRatio the ratio of the resolution in
-//  * physical pixels to the resolution in CSS pixels for the current display
-//  * device.
-//  * @property {string} ElementById Will query the document for a particular
-//  * HTMLElement.
-//  * @property {string} ElementsByClassName Will query for a collection of
-//  * HTMLElements by class name.
-//  * @property {string} ElementsByTagName Will query for a collection of
-//  * HTMLElements by tag name.
-//  * @property {string} Environment Determines any passed parameters to the
-//  * runtime.
-//  * @property {string} Height the height of the screen in pixels.
-//  * @property {string} Hostname the hostname of the runtime.
-//  * @property {string} InnerHeight the interior height of the window in
-//  * pixels, including the height of the horizontal scroll bar, if present.
-//  * @property {string} InnerWidth interior width of the window in pixels
-//  * (that is, the width of the window's layout viewport). That includes the
-//  * width of the vertical scroll bar, if one is present.
-//  * @property {string} Name The name of the particular JS runtime.
-//  * @property {string} Online Identifies if their is an Internet connection.
-//  * @property {string} OuterHeight the height in pixels of the whole browser
-//  * window, including any sidebar, window chrome, and window-resizing
-//  * borders/handles.
-//  * @property {string} OuterWidth the width of the outside of the browser
-//  * window. It represents the width of the whole browser window including
-//  * sidebar (if expanded), window chrome and window resizing borders /
-//  * handles.
-//  * @property {string} PixelDepth the bit depth of the screen.
-//  * @property {string} ScreenLeft the horizontal distance, in CSS pixels,
-//  * from the left border of the user's browser viewport to the left side of
-//  * the screen.
-//  * @property {string} ScreenOrientationAngle the document's current
-//  * orientation angle.
-//  * @property {string} ScreenOrientationType the document's current
-//  * orientation type, one of portrait-primary, portrait-secondary,
-//  * landscape-primary, or landscape-secondary.
-//  * @property {string} ScreenTop the vertical distance, in CSS pixels, from
-//  * the top border of the user's browser viewport to the top side of the
-//  * screen.
-//  * @property {string} ScreenX the horizontal distance, in CSS pixels, of the
-//  * left border of the user's browser viewport to the left side of the
-//  * screen.
-//  * @property {string} ScreenY the vertical distance, in CSS pixels, of the
-//  * top border of the user's browser viewport to the top edge of the screen.
-//  * @property {string} ScrollX the number of pixels by which the document is
-//  * currently scrolled horizontally. This value is subpixel precise in modern
-//  * browsers, meaning that it isn't necessarily a whole number.
-//  * @property {string} ScrollY the number of pixels by which the document is
-//  * currently scrolled vertically. This value is subpixel precise in modern
-//  * browsers, meaning that it isn't necessarily a whole number.
-//  * @property {string} Width the width of the screen.
-//  */
-// export const QUERY_REQUEST = Object.freeze({
-//   AvailableHeight: "available_height",
-//   AvailableWidth: "available_width",
-//   ColorDepth: "color_depth",
-//   CpuCount: "cpu_count",
-//   CssVariable: "css_variable",
-//   DevicePixelRatio: "device_pixel_ratio",
-//   ElementById: "element_by_id",
-//   ElementsByClassName: "elements_by_class_name",
-//   ElementsByTagName: "elements_by_tag_name",
-//   Environment: "environment",
-//   Height: "height",
-//   Hostname: "hostname",
-//   InnerHeight: "inner_height",
-//   InnerWidth: "inner_width",
-//   Name: "name",
-//   Online: "online",
-//   OuterHeight: "outer_height",
-//   OuterWidth: "outer_width",
-//   PixelDepth: "pixel_depth",
-//   ScreenLeft: "screen_left",
-//   ScreenOrientationAngle: "screen_orientation_angle",
-//   ScreenOrientationType: "screen_orientation_type",
-//   ScreenTop: "screen_top",
-//   ScreenX: "screen_x",
-//   ScreenY: "screen_y",
-//   ScrollX: "scroll_x",
-//   ScrollY: "scroll_y",
-//   Width: "width",
-// });
-
-
 /**
  * Provides the request actions for the {@link ui_action} function call.
  * @readonly
@@ -4431,6 +4380,28 @@ export const ACTION_REQUEST = Object.freeze({
 });
 
 /**
+ * Provides a {@link ui_document} to interact with the loaded HTML document.
+ * @readonly
+ * @enum {string}
+ * @property {string} CssVariable Will query the document for a CSS variable.
+ * @property {string} ElementById Will query the document for a particular
+ * HTMLElement.
+ * @property {string} ElementsByClassName Will query for a collection of
+ * HTMLElements by class name.
+ * @property {string} ElementsByTagName Will query for a collection of
+ * HTMLElements by tag name.
+ * @property {string} Environment Determines any passed parameters to the
+ * runtime.
+ */
+export const DOCUMENT_REQUEST = Object.freeze({
+  CssVariable: "css_variable",
+  ElementById: "element_by_id",
+  ElementsByClassName: "elements_by_class_name",
+  ElementsByTagName: "elements_by_tag_name",
+  Environment: "environment",
+});
+
+/**
  * Provides the request actions of the {@link ui_notify} function.
  * @readonly
  * @enum {string}
@@ -4478,6 +4449,81 @@ export const SCHEMA_TYPE = Object.freeze({
   Mailto: "mailto:",
   Sms: "sms:",
   Tel: "tel:",
+});
+
+/**
+ * Provides a {@link ui_screen} request to learn about the different device
+ * screen information.
+ * @readonly
+ * @enum {string}
+ * @property {string} AvailableHeight the height of the screen, in pixels,
+ * minus permanent or semipermanent user interface features displayed by
+ * the operating system, such as the Taskbar on Windows.
+ * @property {string} AvailableWidth the amount of horizontal space in
+ * pixels available to the window.
+ * @property {string} ColorDepth the color depth of the screen.
+ * @property {string} DevicePixelRatio the ratio of the resolution in
+ * physical pixels to the resolution in CSS pixels for the current display
+ * device.
+ * @property {string} Height the height of the screen in pixels.
+ * @property {string} InnerHeight the interior height of the window in
+ * pixels, including the height of the horizontal scroll bar, if present.
+ * @property {string} InnerWidth interior width of the window in pixels
+ * (that is, the width of the window's layout viewport). That includes the
+ * width of the vertical scroll bar, if one is present.
+ * @property {string} OuterHeight the height in pixels of the whole browser
+ * window, including any sidebar, window chrome, and window-resizing
+ * borders/handles.
+ * @property {string} OuterWidth the width of the outside of the browser
+ * window. It represents the width of the whole browser window including
+ * sidebar (if expanded), window chrome and window resizing borders /
+ * handles.
+ * @property {string} PixelDepth the bit depth of the screen.
+ * @property {string} ScreenLeft the horizontal distance, in CSS pixels,
+ * from the left border of the user's browser viewport to the left side of
+ * the screen.
+ * @property {string} ScreenOrientationAngle the document's current
+ * orientation angle.
+ * @property {string} ScreenOrientationType the document's current
+ * orientation type, one of portrait-primary, portrait-secondary,
+ * landscape-primary, or landscape-secondary.
+ * @property {string} ScreenTop the vertical distance, in CSS pixels, from
+ * the top border of the user's browser viewport to the top side of the
+ * screen.
+ * @property {string} ScreenX the horizontal distance, in CSS pixels, of the
+ * left border of the user's browser viewport to the left side of the
+ * screen.
+ * @property {string} ScreenY the vertical distance, in CSS pixels, of the
+ * top border of the user's browser viewport to the top edge of the screen.
+ * @property {string} ScrollX the number of pixels by which the document is
+ * currently scrolled horizontally. This value is subpixel precise in modern
+ * browsers, meaning that it isn't necessarily a whole number.
+ * @property {string} ScrollY the number of pixels by which the document is
+ * currently scrolled vertically. This value is subpixel precise in modern
+ * browsers, meaning that it isn't necessarily a whole number.
+ * @property {string} Width the width of the screen.
+ */
+export const SCREEN_REQUEST = Object.freeze({
+  AvailableHeight: "available_height",
+  AvailableWidth: "available_width",
+  ColorDepth: "color_depth",
+  CssVariable: "css_variable",
+  DevicePixelRatio: "device_pixel_ratio",
+  Height: "height",
+  InnerHeight: "inner_height",
+  InnerWidth: "inner_width",
+  OuterHeight: "outer_height",
+  OuterWidth: "outer_width",
+  PixelDepth: "pixel_depth",
+  ScreenLeft: "screen_left",
+  ScreenOrientationAngle: "screen_orientation_angle",
+  ScreenOrientationType: "screen_orientation_type",
+  ScreenTop: "screen_top",
+  ScreenX: "screen_x",
+  ScreenY: "screen_y",
+  ScrollX: "scroll_x",
+  ScrollY: "scroll_y",
+  Width: "width",
 });
 
 /**
@@ -4533,6 +4579,25 @@ class CTextToSpeechProtocol extends CProtocol {
 // [PUBLIC API] ---------------------------------------------------------------
 
 /**
+ * Fake object for Deno Runtime
+ * @private
+ * @typedef {object} HTMLElement
+ */
+
+/**
+ * Fake object for Deno Runtime
+ * @private
+ * @typedef {object} ShadowRoot
+ */
+
+// Add the objects necessary to make non-browser base runtimes happy for
+// TypeScript tsc completion within Bun.
+if (!runtime_available({request: AVAILABILITY_REQUEST.Browser})) {
+  // @ts-ignore Fakes adding a HTMLElement when in a non-browser runtime.
+  globalThis["HTMLElement"] = class { };
+}
+
+/**
  * Provides the ability to carry out actions with the open browser window.
  * @param {object} params The named parameters.
  * @param {ACTION_REQUEST} params.request The enumerated value to carry
@@ -4573,6 +4638,7 @@ export async function ui_action({
         await globalThis.navigator.clipboard.writeText(data);
         break;
       case ACTION_REQUEST.Focus:
+        // @ts-ignore Will exist in a browser context
         globalThis.focus();
         break;
       case ACTION_REQUEST.MoveBy:
@@ -4588,12 +4654,15 @@ export async function ui_action({
         globalThis.moveTo(x, y);
         break;
       case ACTION_REQUEST.Paste:
+        // @ts-ignore Will exist in a browser context
         value = await globalThis.navigator.clipboard.readText();
         break;
       case ACTION_REQUEST.PostMessage:
+        // @ts-ignore Will exist in a browser context
         globalThis.postMessage(data, target_origin);
         break;
       case ACTION_REQUEST.Print:
+        // @ts-ignore Will exist in a browser context
         globalThis.print();
         break;
       case ACTION_REQUEST.ResizeBy:
@@ -4654,35 +4723,52 @@ export async function ui_action({
   }
 }
 
-// TODO - Update @see with the document object.
-
-export class ui_document({request, name}) {
+/**
+ * Provides the ability to interact with the loaded browser runtime HTML
+ * document.
+ * @param {object} params The named parameters
+ * @param {DOCUMENT_REQUEST} params.request The request to carry out with
+ * the document.
+ * @param {string} params.name The name of the element to perform the action.
+ * @returns {HTMLElement | HTMLElement[] | string | null}
+ */
+export function ui_document({request, name}) {
   try {
+    if (!runtime_available({request: AVAILABILITY_REQUEST.Browser})) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
     switch (request) {
-      case QUERY_REQUEST.CssVariable:
+      case DOCUMENT_REQUEST.CssVariable:
+        // @ts-ignore Will exist in the browser context
         let cs = globalThis.window.getComputedStyle(
+          // @ts-ignore Will exist in the browser context
           globalThis.document.documentElement
         );
         return cs.getPropertyValue(name) ?? "";
-      case QUERY_REQUEST.ElementById:
+      case DOCUMENT_REQUEST.ElementById:
+        // @ts-ignore Will exist in the browser context
         let el = globalThis.document.getElementById(name);
         if (!el) {
           throw new CModuleError(CModuleError.MISUSE + name + " not found");
         }
         return el;
-      case QUERY_REQUEST.ElementsByClassName:
+      case DOCUMENT_REQUEST.ElementsByClassName:
+        // @ts-ignore Will exist in the browser context
         let col1 = globalThis.document.getElementsByClassName(name);
         if (col1.length === 0) {
           throw new CModuleError(CModuleError.MISUSE + name + " not found");
         }
+        // @ts-ignore It will be a HTMLElement[]
         return Array.from(col1);
-      case QUERY_REQUEST.ElementsByTagName:
+      case DOCUMENT_REQUEST.ElementsByTagName:
+        // @ts-ignore Will exist in the browser context
         let col2 = globalThis.document.getElementsByTagName(name);
         if (col2.length === 0) {
           throw new CModuleError(CModuleError.MISUSE + name + " not found");
         }
+        // @ts-ignore It will be a HTMLElement[]
         return Array.from(col2);
-      case QUERY_REQUEST.Environment:
+      case DOCUMENT_REQUEST.Environment:
           return (new URLSearchParams(
             globalThis.location.search)
           ).get(name);
@@ -4735,50 +4821,73 @@ export async function ui_notify({request, message}) {
   }
 }
 
-// TODO - Update @see with the Screen object.
-
-export function ui_screen({}) {
+/**
+ *
+ * @param {*} request
+ * @returns
+ */
+export function ui_screen(request) {
   try {
-    json_check_type({type: "string", data: name, should_throw: true});
-    json_check_type({type: "object", data: obj, should_throw: true});
+    if (!runtime_available({request: AVAILABILITY_REQUEST.Browser})) {
+      throw new CModuleError(CModuleError.UNSUPPORTED_RUNTIME);
+    }
     switch (request) {
-      case QUERY_REQUEST.AvailableHeight:
+      case SCREEN_REQUEST.AvailableHeight:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screen.availHeight;
-      case QUERY_REQUEST.AvailableWidth:
+      case SCREEN_REQUEST.AvailableWidth:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screen.availWidth;
-      case QUERY_REQUEST.ColorDepth:
+      case SCREEN_REQUEST.ColorDepth:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screen.colorDepth;
-      case QUERY_REQUEST.DevicePixelRatio:
+      case SCREEN_REQUEST.DevicePixelRatio:
+        // @ts-ignore Will exist in the browser context
         return globalThis.devicePixelRatio;
-      case QUERY_REQUEST.Height:
+      case SCREEN_REQUEST.Height:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screen.height;
-      case QUERY_REQUEST.InnerHeight:
+      case SCREEN_REQUEST.InnerHeight:
+        // @ts-ignore Will exist in the browser context
         return globalThis.innerHeight;
-      case QUERY_REQUEST.InnerWidth:
+      case SCREEN_REQUEST.InnerWidth:
+        // @ts-ignore Will exist in the browser context
         return globalThis.innerWidth;
-      case QUERY_REQUEST.OuterHeight:
+      case SCREEN_REQUEST.OuterHeight:
+        // @ts-ignore Will exist in the browser context
         return globalThis.outerHeight;
-      case QUERY_REQUEST.OuterWidth:
+      case SCREEN_REQUEST.OuterWidth:
+        // @ts-ignore Will exist in the browser context
         return globalThis.outerWidth;
-      case QUERY_REQUEST.PixelDepth:
+      case SCREEN_REQUEST.PixelDepth:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screen.pixelDepth;
-      case QUERY_REQUEST.ScreenLeft:
+      case SCREEN_REQUEST.ScreenLeft:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screenLeft;
-      case QUERY_REQUEST.ScreenOrientationAngle:
+      case SCREEN_REQUEST.ScreenOrientationAngle:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screen.orientation.angle;
-      case QUERY_REQUEST.ScreenOrientationType:
+      case SCREEN_REQUEST.ScreenOrientationType:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screen.orientation.type;
-      case QUERY_REQUEST.ScreenTop:
+      case SCREEN_REQUEST.ScreenTop:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screenTop;
-      case QUERY_REQUEST.ScreenX:
+      case SCREEN_REQUEST.ScreenX:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screenX;
-      case QUERY_REQUEST.ScreenY:
+      case SCREEN_REQUEST.ScreenY:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screenY;
-      case QUERY_REQUEST.ScrollX:
+      case SCREEN_REQUEST.ScrollX:
+        // @ts-ignore Will exist in the browser context
         return globalThis.scrollX;
-      case QUERY_REQUEST.ScrollY:
+      case SCREEN_REQUEST.ScrollY:
+        // @ts-ignore Will exist in the browser context
         return globalThis.scrollY
-      case QUERY_REQUEST.Width:
+      case SCREEN_REQUEST.Width:
+        // @ts-ignore Will exist in the browser context
         return globalThis.screen.width
       default:
         throw new CModuleError(CModuleError.MISUSE);
@@ -4946,8 +5055,8 @@ export function ui_open({
  * interface for a Single Page App (SPA) / Progressive Web App (PWA) or
  * Rust desktop / mobile TAURI app.
  * @abstract
- * @extends {HTMLElement}
  */
+// @ts-ignore HTMLElement will exist in the browser context.
 export class CHtmlComponent extends HTMLElement {
   /** @type {CHtmlComponentCB | undefined} */
   #adopted_cb;
@@ -5031,6 +5140,7 @@ export class CHtmlComponent extends HTMLElement {
       this.#connected_cb = connected_cb;
       this.#connected_move_cb = connected_move_cb;
       this.#disconnected_cb = disconnected_cb;
+      // @ts-ignore Will exist in the browser context
       this.#shadow_root = this.attachShadow({mode: "closed"});
     } catch (err) {
       CModuleError.handle_error(err);
@@ -5046,26 +5156,26 @@ export class CHtmlComponent extends HTMLElement {
    */
   get shadow_root() { return this.#shadow_root; }
 
-  // /**
-  //  * Provides the ability to query the DOM for a given css_value by
-  //  * variable name. The design of this function is if a variable name is not
-  //  * what is specified, it is assumed to be the actual property so it is
-  //  * returned instead.
-  //  * @param {string} attr The variable name to search
-  //  * @returns {string} The value of the CssVariable or the attr returned
-  //  * as it is assumed to be the actual style.
-  //  */
-  // get_css_value(attr) {
-  //   let css_value = runtime_query({
-  //     request: QUERY_REQUEST.CssVariable,
-  //     name: attr
-  //   });
-  //   // @ts-ignore It will return a string value
-  //   return css_value.length > 0
-  //     // @ts-ignore It will return a string value
-  //     ? css_value
-  //     : attr;
-  // }
+  /**
+   * Provides the ability to query the DOM for a given css_value by
+   * variable name. The design of this function is if a variable name is not
+   * what is specified, it is assumed to be the actual property so it is
+   * returned instead.
+   * @param {string} attr The variable name to search
+   * @returns {string} The value of the CssVariable or the attr returned
+   * as it is assumed to be the actual style.
+   */
+  get_css_value(attr) {
+    let css_value = ui_document({
+      request: DOCUMENT_REQUEST.CssVariable,
+      name: attr
+    });
+    // @ts-ignore It will return a string value
+    return css_value.length > 0
+      // @ts-ignore It will return a string value
+      ? css_value
+      : attr;
+  }
 
   /**
    * Called each time the element is moved to a new document.
@@ -5082,7 +5192,12 @@ export class CHtmlComponent extends HTMLElement {
    * @returns {void}
    */
   attributeChangedCallback(name, old_value, new_value) {
-    this.#attribute_changed_cb?.(name, old_value, new_value);
+    try {
+      this.#attribute_changed_cb?.(name, old_value, new_value);
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("attributeChangedCallback() error.", err);
+    }
   }
 
   /**
@@ -5091,7 +5206,14 @@ export class CHtmlComponent extends HTMLElement {
    * element setup in this callback rather than the constructor.
    * @returns {void}
    */
-  connectedCallback() { this.#connected_cb?.(); }
+  connectedCallback() {
+    try {
+      this.#connected_cb?.();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("connectedCallback() error.", err);
+    }
+  }
 
   /**
    * When defined, this is called instead of connectedCallback() and
@@ -5103,21 +5225,38 @@ export class CHtmlComponent extends HTMLElement {
    * state-preserving moves for more details.
    * @returns {void}
    */
-  connectedMoveCallback() { this.#connected_move_cb?.(); }
+  connectedMoveCallback() {
+    try {
+      this.#connected_move_cb?.();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("connectedMoveCallback() error.", err);
+    }
+  }
 
   /**
    * Called each time the element is removed from the document.
    * @returns {void}
    */
-  disconnectedCallback() { this.#disconnected_cb?.(); }
+  disconnectedCallback() {
+    try {
+      this.#disconnected_cb?.();
+    } catch (err) {
+      CModuleError.handle_error(err);
+      throw new CModuleError("disconnectedCallback() error.", err);
+    }
+  }
 
   /**
    * Forces a refresh of the component.
    * @returns {void}
    */
   refresh() {
+    // @ts-ignore This will exist on the browser context.
     const display = this.style.display;
+    // @ts-ignore This will exist on the browser context.
     this.style.display = "";
+    // @ts-ignore This will exist on the browser context.
     this.style.display = display;
   }
 
@@ -5128,68 +5267,71 @@ export class CHtmlComponent extends HTMLElement {
    * @param {any} element_def The constructor definition.
    */
   static register_component(name, element_def) {
+    // @ts-ignore This will exist in a browser context.
     const is_defined =  !!customElements.get(name);
     if (!is_defined) {
+      // @ts-ignore This will exist in a browser context.
       customElements.define(name, element_def);
     }
   }
 }
 
-/**
- * Provides a Material3 icon based button where the icon is to the left of
- * the label (if specified) or it is just the icon.
- * <br><br>
- * <b>DECLARE:</b><br>
- * ```html
- * <cm-icon-button
- *   cm_icon="emoji or URL"
- *   cm_label="Label (optional)"
- *   cm_tooltip="Tooltip (optional)"
- * ></cm-icon-button>
- * ```
- * <br><br>
- * <b>STYLE:</b><br>
- * ```css
- *
- * ```
- * @extends {CHtmlComponent}
- */
-class CIconButton extends CHtmlComponent {
-  constructor() {
-    super({
-      connected_cb: () => {
-        try {
-          // Get the attributes and validate them.
-          this.title = this.getAttribute("cm_tooltip") ?? "";
-          let label = this.getAttribute("cm_label") ?? "";
-          let icon = this.getAttribute("cm_icon") ?? "";
+// TODO: ATTEMPTING TO BUILD A COMPONENT
+// /**
+//  * Provides a Material3 icon based button where the icon is to the left of
+//  * the label (if specified) or it is just the icon.
+//  * <br><br>
+//  * <b>DECLARE:</b><br>
+//  * ```html
+//  * <cm-icon-button
+//  *   cm_icon="emoji or URL"
+//  *   cm_label="Label (optional)"
+//  *   cm_tooltip="Tooltip (optional)"
+//  * ></cm-icon-button>
+//  * ```
+//  * <br><br>
+//  * <b>STYLE:</b><br>
+//  * ```css
+//  *
+//  * ```
+//  * @extends {CHtmlComponent}
+//  */
+// class CIconButton extends CHtmlComponent {
+//   constructor() {
+//     super({
+//       connected_cb: () => {
+//         try {
+//           // Get the attributes and validate them.
+//           this.title = this.getAttribute("cm_tooltip") ?? "";
+//           let label = this.getAttribute("cm_label") ?? "";
+//           let icon = this.getAttribute("cm_icon") ?? "";
 
-          // Setup our style
-          // TODO: Setup :host
-          // TODO: Have :host fill container
-          let style = `
-            <style>
+//           // Setup our style
+//           // TODO: Setup :host
+//           // TODO: Have :host fill container
+//           let style = `
+//             <style>
 
-            </style>
-          `;
+//             </style>
+//           `;
 
-          // Now go build the component
-          if (label.length === 1) {
+//           // Now go build the component
+//           if (label.length === 1) {
 
-          } else if (label.length > 1) {
+//           } else if (label.length > 1) {
 
-          } else {
-            throw new CModuleError(
-              `${CModuleError.MISUSE}: cm_icon must be emoji or url`
-            );
-          }
+//           } else {
+//             throw new CModuleError(
+//               `${CModuleError.MISUSE}: cm_icon must be emoji or url`
+//             );
+//           }
 
-        } catch (err) {
-          CModuleError.handle_error(err);
-          throw new CModuleError(CModuleError.MISUSE, err);
-        }
-      }
-    });
-  }
-}
-CHtmlComponent.register_component("cm-icon-button", CIconButton);
+//         } catch (err) {
+//           CModuleError.handle_error(err);
+//           throw new CModuleError(CModuleError.MISUSE, err);
+//         }
+//       }
+//     });
+//   }
+// }
+// CHtmlComponent.register_component("cm-icon-button", CIconButton);

@@ -53,50 +53,15 @@ import {
   async_worker,
   CWorkerEvent,
   PROTOCOL_EVENT,
-  QUERY_REQUEST,
-  runtime_query
-} from "./codemelted_core.js";
+  runtime_available,
+  AVAILABILITY_REQUEST,
+} from "./codemelted.js";
 
 // ============================================================================
-// [UNSUPPORTED MODULE IMPORTS] ===============================================
+// [MODULE CORE VALIDATION] ===================================================
 // ============================================================================
 
-describe("UNSUPPORTED MODULE IMPORTS", async () => {
-  // Setup our test function.
-  const testImport = async (name: string) => {
-    try {
-      const module = await import(name);
-      expect.fail("Should Throw CModuleError");
-    } catch (err) {
-      expect(err instanceof CModuleError).toBe(true);
-    }
-  }
-
-  test("codemelted_db.js Test", async () => {
-    await testImport("./codemelted_db.js");
-  });
-  test("codemelted_disk.js Test", async () => {
-    await testImport("./codemelted_disk.js");
-  });
-  test("codemelted_hw.js Test", async () => {
-    await testImport("./codemelted_hw.js");
-  });
-  test("codemelted_network.js Test", async () => {
-    await testImport("./codemelted_network.js");
-  });
-  test("codemelted_storage.js Test", async () => {
-    await testImport("./codemelted_storage.js");
-  });
-  test("codemelted_ui.js Test", async () => {
-    await testImport("./codemelted_ui.js");
-  });
-});
-
-// ===============================================================================
-// [codemelted_core.js Validation] ===============================================
-// ===============================================================================
-
-describe("codemelted_core.js Validation", () => {
+describe("MODULE CORE VALIDATION", () => {
   test("API_XXX (CModuleError) Test", () => {
     try {
       throw new CModuleError("test");
@@ -185,7 +150,13 @@ describe("codemelted_core.js Validation", () => {
       expect(err instanceof CModuleError).toBe(true);
     }
   });
+});
 
+// ============================================================================
+// [ASYNC USE CASE VALIDATION] ================================================
+// ============================================================================
+
+describe("ASYNC USE CASE VALIDATION", () => {
   test("async_sleep() Test", async () => {
     const start = Date.now();
     await async_sleep(500);
@@ -301,7 +272,13 @@ describe("codemelted_core.js Validation", () => {
     expect(test_on_error_rx).toBe(true);
     expect(test_on_message_error_rx).toBe(false);
   });
+});
 
+// ============================================================================
+// [JSON USE CASE VALIDATION] =================================================
+// ============================================================================
+
+describe("JSON USE CASE VALIDATION", () => {
   test("json_atob() / json_btoa() Test", () => {
     // API violations
     // @ts-ignore TypeScript won't let this happen, JavaScript would
@@ -425,7 +402,13 @@ describe("codemelted_core.js Validation", () => {
     parsed = json_parse(stringified);
     expect(json_stringify(parsed)).toBe(stringified);
   });
+});
 
+// ============================================================================
+// [LOGGER USE CASE VALIDATION] ===============================================
+// ============================================================================
+
+describe("LOGGER USE CASE VALIDATION", () => {
   test("logger_handler() Test", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
     expect(() => logger_handler(42)).toThrow<CModuleError>();
@@ -503,15 +486,13 @@ describe("codemelted_core.js Validation", () => {
     logger_log({level: LOGGER.Error, data: "Error Event"});
     expect(counter).toBe(0);
   });
+});
 
-  test.skip("npu_compute() Test", () => {
-    // TBD
-  });
+// ============================================================================
+// [RUNTIME USE CASE VALIDATION] ==============================================
+// ============================================================================
 
-  test.skip("npu_math() Test", () => {
-    // TBD
-  });
-
+describe("RUNTIME USE CASE VALIDATION", () => {
   test("runtime_event() Test", () => {
     // API violations
     let handler = (evt: Event) => { };
@@ -532,70 +513,46 @@ describe("codemelted_core.js Validation", () => {
     runtime_event({request: EVENT_REQUEST.Remove, type: "message", handler: handler});
   });
 
-  test("runtime_query() Test", () => {
+  test("runtime_available() Test", () => {
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => runtime_query()).toThrow<CModuleError>();
+    expect(() => runtime_available()).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => runtime_query({request: 42})).toThrow<CModuleError>();
+    expect(() => runtime_available({request: 42})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => runtime_query({request: QUERY_REQUEST.AskRuntime, obj: 42})).toThrow<CModuleError>();
+    expect(() => runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, obj: 42})).toThrow<CModuleError>();
     // @ts-ignore TypeScript won't let this happen, JavaScript would
-    expect(() => runtime_query({request: QUERY_REQUEST.AskRuntime, name: 42})).toThrow<CModuleError>();
+    expect(() => runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, name: 42})).toThrow<CModuleError>();
 
     // Now go perform all the queries.
-    expect(runtime_query({request: QUERY_REQUEST.AskRuntime, name: "Bun"})).toBe(true);
-    expect(runtime_query({request: QUERY_REQUEST.AskRuntime, name: "duh"})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.AvailableHeight})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.AvailableWidth})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ColorDepth})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ColorDepth})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.CssVariable, name: "var"})).toBe("");
-    expect(runtime_query({request: QUERY_REQUEST.DevicePixelRatio})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ElementById, name: "id"})).toBe(null);
-    expect(runtime_query({request: QUERY_REQUEST.ElementsByClassName, name: "class"})).toBe(null);
-    expect(runtime_query({request: QUERY_REQUEST.ElementsByTagName, name: "tag"})).toBe(null);
-    expect(runtime_query({request: QUERY_REQUEST.Environment, name: "q"})).toBe(null);
-    expect(runtime_query({request: QUERY_REQUEST.Height})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.Hostname})).toBe("UNKNOWN");
-    expect(runtime_query({request: QUERY_REQUEST.InnerHeight})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.InnerWidth})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.IsAudio})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsBeacon})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsBluetooth})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsBroadcastChannel})).toBe(true);
-    expect(runtime_query({request: QUERY_REQUEST.IsBrowser})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsBun})).toBe(true);
-    expect(runtime_query({request: QUERY_REQUEST.IsDeno})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsCookieStore})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsEventSource})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsLocalStorage})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsIFrame})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsMidi})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsNode})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsOpen})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsOrientation})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsPwa})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsSecureContext})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsSerialPort})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsShare})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsTextToSpeech})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsTouchEnabled})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsUsb})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.IsWorkerAvailable})).toBe(true);
-    expect(runtime_query({request: QUERY_REQUEST.IsWorkerRuntime})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.Name})).toBe("bun");
-    expect(runtime_query({request: QUERY_REQUEST.Online})).toBe(false);
-    expect(runtime_query({request: QUERY_REQUEST.OuterHeight})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.OuterWidth})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.PixelDepth})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ScreenLeft})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ScreenOrientationAngle})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ScreenOrientationType})).toBe("UNKNOWN");
-    expect(runtime_query({request: QUERY_REQUEST.ScreenTop})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ScreenX})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ScreenY})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ScrollX})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.ScrollY})).toBe(-1);
-    expect(runtime_query({request: QUERY_REQUEST.Width})).toBe(-1);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, name: "Bun"})).toBe(true);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.AskRuntime, name: "duh"})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Audio})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Beacon})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Bluetooth})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.BroadcastChannel})).toBe(true);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Browser})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Bun})).toBe(true);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Deno})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.CookieStore})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.EventSource})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.LocalStorage})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.IFrame})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Midi})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Node})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Open})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Orientation})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Pwa})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.SecureContext})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.SerialPort})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Share})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.TextToSpeech})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.TouchEnabled})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Usb})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.Vibrate})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.WebRTC})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.WebSocket})).toBe(true);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.WebTransport})).toBe(false);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.WorkerAvailable})).toBe(true);
+    expect(runtime_available({request: AVAILABILITY_REQUEST.WorkerRuntime})).toBe(false);
   });
 });

@@ -54,9 +54,9 @@ function deploy_crate {
 }
 
 # Takes care of deploying the full build of the project to the
-# rs.codemelted.com domain.
+# codemelted.com/rs domain.
 function deploy_website {
-  message "Now uploading rs.codemelted.com content."
+  message "Now uploading codemelted.com/rs content."
   Move-Item -Path docs -Destination rs -ErrorAction Stop
   Compress-Archive -Path rs -DestinationPath rs.zip -Force
   $hostService = $env:CODEMELTED_USER_AND_IP + $env:CODEMELTED_HOME
@@ -118,9 +118,9 @@ function make_js {
 }
 
 # Runs the whole make_rust, make_js, then assembles all the output for the
-# rs.codemelted.com domain website.
+# codemelted.com/rs domain website.
 function make_website {
-  message "Now building the rs.codemelted.com website."
+  message "Now building the codemelted.com/rs website."
   make_rust
   make_js
   Remove-Item -Path docs -Force -Recurse -ErrorAction SilentlyContinue
@@ -138,7 +138,7 @@ function make_website {
     -ErrorAction Stop
   Move-Item -Path docs/support/index.html -Destination docs -Force `
     -ErrorAction Stop
-  message "rs.codemelted.com website completed."
+  message "codemelted.com/rs website completed."
 }
 
 # Performs the make based on the specified option.
@@ -159,10 +159,7 @@ function make([string]$option) {
 function lcov_to_html() {
   if ($IsLinux -or $IsMacOS) {
     genhtml -o coverage --ignore-errors empty,unused,inconsistent,inconsistent,range `
-      --dark-mode coverage/lcov.info --exclude 'codemelted_db.js' `
-      --exclude 'codemelted_disk.js' --exclude 'codemelted_hw.js' `
-      --exclude 'codemelted_network.js' --exclude 'codemelted_storage.js' `
-      --exclude 'codemelted_ui.js'
+      --dark-mode coverage/lcov.info
     if ($LASTEXITCODE -ne 0) {
       throw "lcov_to_html failed. no coverage file produced"
     }
@@ -244,7 +241,7 @@ function test_js {
   Set-Location $PSScriptRoot
   message "JavaScript module V8 runtime testing completed." +
     "Execute python3 -m http.server to complete browser testing " +
-    "and validation of the rs.codemelted.com domain."
+    "and validation of the codemelted.com/rs domain."
 }
 
 # Handles the execution of testing the rust based code.
